@@ -1,6 +1,6 @@
 # --- Helper Script for AI-Driven Software Engineering Course ---
 # Description: This script provides a unified interface for interacting with
-#              multiple LLM providers (OpenAI, Anthropic, Hugging Face, Google Gemini)
+#              multiple LLM providers (OpenAI, Hugging Face, Google Gemini)
 #              and simplifies common tasks like artifact management.
 # -----------------------------------------------------------------
 
@@ -11,7 +11,7 @@ from PIL import Image
 from io import BytesIO
 import re
 import base64
-from IPython.display import Image as IPyImage, display
+import time # For loading indicator
 
 # --- Dynamic Library Installation ---
 try:
@@ -20,43 +20,32 @@ try:
     from plantuml import PlantUML
 except ImportError:
     print("Core dependencies not found. Please install them by running:")
-    print("pip install python-dotenv ipython plantuml anthropic")
+    print("pip install python-dotenv ipython plantuml")
 
 # --- Model & Provider Configuration ---
 RECOMMENDED_MODELS = {
-    # Original OpenAI Models
-    "gpt-4o":        {"provider": "openai", "vision": True, "overview": "Latest flagship model, fast and intelligent"},
-    "gpt-4.1":       {"provider": "openai", "vision": True, "overview": "Advanced reasoning and instruction following"},
-    "gpt-4.1-mini":  {"provider": "openai", "vision": True, "overview": "Compact and fast version of gpt-4.1"},
-    "gpt-4.1-nano":  {"provider": "openai", "vision": True, "overview": "Highly efficient and lightweight model"},
-    "gpt-4.5":       {"provider": "openai", "vision": True, "overview": "Next-gen model with enhanced capabilities"},
-    "o3":            {"provider": "openai", "vision": True, "overview": "Specialized model for complex logic"},
-    "o4-mini":       {"provider": "openai", "vision": True, "overview": "Miniature version of the o4 model"},
-    "codex-mini":    {"provider": "openai", "vision": False, "overview": "Optimized for code generation tasks"},
-
-    # Original Gemini Models
-    "gemini-2.5-pro":         {"provider": "gemini", "vision": True, "overview": "High-performance, multimodal model"},
-    "gemini-2.5-flash":       {"provider": "gemini", "vision": True, "overview": "Fast and cost-effective for high-frequency tasks"},
-    "gemini-2.5-flash-lite":  {"provider": "gemini", "vision": True, "overview": "Extremely lightweight and fast model"},
-    "gemini-veo-3":           {"provider": "gemini", "vision": True, "overview": "Advanced model for video understanding"},
-    "gemini-deep-think":      {"provider": "gemini", "vision": True, "overview": "Specialized for deep, complex reasoning"},
-
-    # Original Hugging Face Models
-    "meta-llama/Llama-3.3-70B-Instruct": {"provider": "huggingface", "vision": False, "overview": "Large-scale Llama 3 model for instruction following"},
-    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {"provider": "huggingface", "vision": False, "overview": "8B parameter model with strong instruction capabilities"},
-    "tokyotech-llm/Llama-3.1-Swallow-70B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "overview": "70B parameter model for advanced tasks"},
-    "mistralai/Mistral-7B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "overview": "Popular 7B model known for efficiency and performance"},
-    "deepseek-ai/DeepSeek-VL2":         {"provider": "huggingface", "vision": True, "overview": "Strong vision-language model"},
-    "deepseek-ai/DeepSeek-VL2-Small":   {"provider": "huggingface", "vision": True, "overview": "Smaller, faster version of DeepSeek-VL2"},
-    "deepseek-ai/DeepSeek-VL2-Tiny":    {"provider": "huggingface", "vision": True, "overview": "Lightweight vision-language model for edge devices"},
-    "deepseek-ai/DeepSeek-R1":          {"provider": "huggingface", "vision": False, "overview": "Advanced reasoning model from DeepSeek"},
-    "deepseek-ai/Janus-Pro-7B":         {"provider": "huggingface", "vision": True, "overview": "Multimodal model with strong reasoning skills"},
-
-    # --- Anthropic Models ---
-    "claude-opus-4-20250514":    {"provider": "anthropic", "vision": True, "overview": "Most powerful model for complex, multi-step tasks"},
-    "claude-sonnet-4-20250514":  {"provider": "anthropic", "vision": True, "overview": "Balanced model for enterprise workloads"},
-    "claude-3-7-sonnet-20250219": {"provider": "anthropic", "vision": True, "overview": "Highly capable Sonnet model for complex tasks"},
-    "claude-3-5-haiku-20241022":  {"provider": "anthropic", "vision": True, "overview": "Fastest and most compact model for near-instant responses"},
+    "gpt-4o":        {"provider": "openai", "vision": True, "image_generation": False},
+    "gpt-4.1":       {"provider": "openai", "vision": True, "image_generation": False},
+    "gpt-4.1-mini":  {"provider": "openai", "vision": True, "image_generation": False},
+    "gpt-4.1-nano":  {"provider": "openai", "vision": True, "image_generation": False},
+    "gpt-4.5":       {"provider": "openai", "vision": True, "image_generation": False},
+    "o3":            {"provider": "openai", "vision": True, "image_generation": False},
+    "o4-mini":       {"provider": "openai", "vision": True, "image_generation": False},
+    "codex-mini":    {"provider": "openai", "vision": False, "image_generation": False},
+    "gemini-2.5-pro":         {"provider": "gemini", "vision": True, "image_generation": False},
+    "gemini-2.5-flash":       {"provider": "gemini", "vision": True, "image_generation": False},
+    "gemini-2.5-flash-lite":  {"provider": "gemini", "vision": True, "image_generation": False},
+    "gemini-veo-3":           {"provider": "gemini", "vision": True, "image_generation": False},
+    "gemini-deep-think":      {"provider": "gemini", "vision": True, "image_generation": False},
+    "meta-llama/Llama-3.3-70B-Instruct": {"provider": "huggingface", "vision": False, "image_generation": False},
+    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {"provider": "huggingface", "vision": False, "image_generation": False},
+    "tokyotech-llm/Llama-3.1-Swallow-70B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "image_generation": False},
+    "mistralai/Mistral-7B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "image_generation": False},
+    "deepseek-ai/DeepSeek-VL2":         {"provider": "huggingface", "vision": True, "image_generation": False},
+    "deepseek-ai/DeepSeek-VL2-Small":   {"provider": "huggingface", "vision": True, "image_generation": False},
+    "deepseek-ai/DeepSeek-VL2-Tiny":    {"provider": "huggingface", "vision": True, "image_generation": False},
+    "deepseek-ai/Janus-Pro-7B":         {"provider": "huggingface", "vision": True, "image_generation": False},
+    "imagen-3.0-generate-002": {"provider": "google", "vision": False, "image_generation": True}, # Added for image generation
 }
 
 
@@ -81,7 +70,10 @@ def load_environment():
 
 
 def setup_llm_client(model_name="gpt-4o"):
-    """Initializes and returns the API client for the specified model provider."""
+    """
+    Configures and returns an LLM client based on the specified model name.
+    Supports OpenAI, Hugging Face, and Google Gemini.
+    """
     load_environment()
     if model_name not in RECOMMENDED_MODELS:
         print(f"ERROR: Model '{model_name}' is not in the list of recommended models.")
@@ -95,22 +87,22 @@ def setup_llm_client(model_name="gpt-4o"):
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key: raise ValueError("OPENAI_API_KEY not found in .env file.")
             client = OpenAI(api_key=api_key)
-        elif api_provider == "anthropic":
-            from anthropic import Anthropic
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-            if not api_key: raise ValueError("ANTHROPIC_API_KEY not found in .env file.")
-            client = Anthropic(api_key=api_key)
         elif api_provider == "huggingface":
             from huggingface_hub import InferenceClient
             api_key = os.getenv("HUGGINGFACE_API_KEY")
             if not api_key: raise ValueError("HUGGINGFACE_API_KEY not found in .env file.")
             client = InferenceClient(model=model_name, token=api_key)
-        elif api_provider == "gemini":
+        elif api_provider == "gemini" or api_provider == "google": # Google for image generation
             import google.generativeai as genai
-            api_key = os.getenv("GOOGLE_API_KEY")
+            api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for both Gemini text and Imagen
             if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
             genai.configure(api_key=api_key)
-            client = genai.GenerativeModel(model_name)
+            if config["image_generation"]:
+                # For image generation, the client is not directly a GenerativeModel instance
+                # but rather the genai module itself for the predict call.
+                client = genai
+            else:
+                client = genai.GenerativeModel(model_name)
     except ImportError:
         print(f"ERROR: The required library for '{api_provider}' is not installed.")
         return None, None, None
@@ -123,25 +115,14 @@ def setup_llm_client(model_name="gpt-4o"):
 # --- Core Interaction Functions ---
 
 def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
-    """Gets a text completion from the specified LLM."""
+    """Sends a text-only prompt to the LLM and returns the completion."""
     if not client: return "API client not initialized."
     try:
         if api_provider == "openai":
-            response = client.chat.completions.create(model=model_name, 
-                                                      messages=[{"role": "user", "content": prompt}], 
-                                                      temperature=temperature)
+            response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}], temperature=temperature)
             return response.choices[0].message.content
-        elif api_provider == "anthropic":
-            response = client.messages.create(model=model_name,
-                                              max_tokens=4096,
-                                              temperature=temperature,
-                                              messages=[{"role": "user", "content": prompt}]
-                                              )
-            return response.content[0].text
         elif api_provider == "huggingface":
-            response = client.chat_completion(messages=[{"role": "user", "content": prompt}], 
-                                              temperature=max(0.1, temperature), 
-                                              max_tokens=4096)
+            response = client.chat_completion(messages=[{"role": "user", "content": prompt}], temperature=max(0.1, temperature), max_tokens=4096)
             return response.choices[0].message.content
         elif api_provider == "gemini":
             response = client.generate_content(prompt)
@@ -150,71 +131,124 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
         return f"An API error occurred: {e}"
 
 def get_vision_completion(prompt, image_url, client, model_name, api_provider):
-    """Gets a vision-enhanced completion from the specified LLM."""
+    """Sends an image and a text prompt to a vision-capable LLM and returns the completion."""
     if not client: return "API client not initialized."
     if not RECOMMENDED_MODELS.get(model_name, {}).get("vision"):
         return f"Error: Model '{model_name}' does not support vision."
     try:
-        response = requests.get(image_url)
-        response.raise_for_status()
-        img = Image.open(BytesIO(response.content))
-
+        # Fetch image from URL and convert to base64 for Gemini/HuggingFace if needed, or pass URL for OpenAI
         if api_provider == "openai":
             response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": image_url}}]}], max_tokens=4096)
             return response.choices[0].message.content
-        elif api_provider == "anthropic":
-            buffered = BytesIO()
-            image_format = img.format if img.format else "JPEG"
-            img.save(buffered, format=image_format)
-            img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-            media_type = f"image/{image_format.lower()}"
-
-            response = client.messages.create(
-                model=model_name,
-                max_tokens=4096,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_base64}},
-                        {"type": "text", "text": prompt}
-                    ],
-                }],
-            )
-            return response.content[0].text
         elif api_provider == "gemini":
-            response = client.generate_content([prompt, img])
-            return response.text
+            # For Gemini, we need to convert the image URL to inlineData (base64)
+            response_img = requests.get(image_url)
+            response_img.raise_for_status()
+            img_data = base64.b64encode(response_img.content).decode('utf-8')
+            mime_type = response_img.headers['Content-Type']
+
+            payload = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {"text": prompt},
+                            {"inlineData": {"mimeType": mime_type, "data": img_data}}
+                        ]
+                    }
+                ]
+            }
+            # Use the raw genai client for direct API call
+            # The client here is actually `genai` module from setup_llm_client
+            api_key = "" # Canvas will provide this.
+            api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            response = requests.post(api_url, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
+            response.raise_for_status()
+            result = response.json()
+            if result.get("candidates") and result["candidates"][0].get("content") and result["candidates"][0]["content"].get("parts"):
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+            else:
+                return f"Unexpected Gemini vision response structure: {result}"
         elif api_provider == "huggingface":
+            response_img = requests.get(image_url)
+            response_img.raise_for_status()
+            img = Image.open(BytesIO(response_img.content))
             response = client.image_to_text(image=img, prompt=prompt)
             return response
     except Exception as e:
         return f"An API error occurred during vision completion: {e}"
 
+def get_image_generation_completion(prompt, client, model_name, api_provider):
+    """Generates an image from a text prompt using an image generation LLM."""
+    if not client: return "API client not initialized."
+    if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
+        return f"Error: Model '{model_name}' does not support image generation."
+
+    # Display a loading indicator
+    print("Generating image... This may take a moment.")
+    display(Markdown("⏳ Generating image..."))
+    start_time = time.time()
+
+    try:
+        # For imagen-3.0-generate-002, the client is the `genai` module itself.
+        payload = {"instances": {"prompt": prompt}, "parameters": {"sampleCount": 1}}
+        apiKey = "" # Canvas will automatically provide this.
+        apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:predict?key={apiKey}"
+
+        response = requests.post(apiUrl, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
+        response.raise_for_status() # Raise an exception for HTTP errors
+        result = response.json()
+
+        if result.get("predictions") and len(result["predictions"]) > 0 and result["predictions"][0].get("bytesBase64Encoded"):
+            image_b64 = result["predictions"][0]["bytesBase64Encoded"]
+            image_url = f"data:image/png;base64,{image_b64}"
+            end_time = time.time()
+            print(f"✅ Image generated in {end_time - start_time:.2f} seconds.")
+            return image_url
+        else:
+            return f"Error: Unexpected image generation response structure: {result}"
+    except Exception as e:
+        return f"An API error occurred during image generation: {e}"
+
+
 def clean_llm_output(output_str: str, language: str = 'json') -> str:
-    """Cleans markdown code blocks from LLM output."""
+    """
+    Cleans markdown code fences from LLM output.
+    Supports various languages.
+    """
     if '```' in output_str:
-        pattern = re.compile(rf'```{language}\n(.*?)\n```', re.DOTALL | re.MULTILINE)
+        # Regex to find code blocks with optional language specifier
+        # It looks for ```[language_optional]\n[content]\n```
+        pattern = re.compile(r'```(?:' + re.escape(language) + r')?\s*\n(.*?)\n```', re.DOTALL | re.IGNORECASE)
         match = pattern.search(output_str)
         if match:
             return match.group(1).strip()
         else:
-            cleaned = output_str.split('```', 1)[-1]
-            cleaned = cleaned.rsplit('```', 1)[0]
-            return cleaned.strip().lstrip(language).strip()
+            # Fallback if regex doesn't match perfectly (e.g., no language specified, or extra text)
+            parts = output_str.split('```')
+            if len(parts) >= 3:
+                # Take the content between the first and second ```
+                return parts[1].strip()
+            else:
+                # If only one ``` or malformed, return original string
+                return output_str.strip()
     return output_str.strip()
 
 
 # --- Artifact Management & Display ---
+
 def _find_project_root():
     """
     Finds the project root by searching upwards for a known directory marker
     (like '.git' or 'artifacts'). This is more reliable than just using os.getcwd().
     """
     path = os.getcwd()
-    while path != os.path.dirname(path):
+    while path != os.path.dirname(path):  # Stop at the filesystem root
+        # Check for multiple common markers to increase reliability
         if any(os.path.exists(os.path.join(path, marker)) for marker in ['.git', 'artifacts', 'README.md']):
             return path
         path = os.path.dirname(path)
+    # Fallback if no markers are found (e.g., in a bare directory)
     print("Warning: Project root marker not found. Defaulting to current directory.")
     return os.getcwd()
 
@@ -245,37 +279,15 @@ def load_artifact(file_path):
 def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
     """Renders PlantUML code and saves it as a PNG image."""
     try:
+        # FIX: Corrected the PlantUML URL
         pl = PlantUML(url='http://www.plantuml.com/plantuml/img/')
         project_root = _find_project_root()
+        
         full_path = os.path.join(project_root, output_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        pl.processes_file(puml_code, outfile=full_path)
+        pl.processes(puml_code, outfile=full_path)
         print(f"✅ Diagram rendered and saved to: {output_path}")
         display(IPyImage(url=full_path))
     except Exception as e:
         print(f"❌ Error rendering PlantUML diagram: {e}")
 
-
-def render_mermaid_diagram(mermaid_code, output_path="artifacts/diagram.png"):
-    """Renders Mermaid code and saves it as a PNG image."""
-    try:
-        # Remove erroneous 'ermaid' prefix if present
-        if mermaid_code.startswith("ermaid"):
-            mermaid_code = mermaid_code.replace("ermaid\n", "", 1)
-        # Create JSON payload for Mermaid API
-        data = {"code": mermaid_code, "mermaid": {"theme": "default"}}
-        encoded = base64.b64encode(json.dumps(data).encode("utf-8")).decode("utf-8")
-        url = f"https://mermaid.ink/img/{encoded}"
-        # Use same project root logic as PlantUML
-        project_root = _find_project_root()
-        full_path = os.path.join(project_root, output_path)
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        # Fetch and save the rendered image
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        with open(full_path, "wb") as f:
-            f.write(response.content)
-        print(f"✅ Diagram rendered and saved to: {output_path}")
-        display(IPyImage(filename=full_path))
-    except Exception as e:
-        print(f"❌ Error rendering Mermaid diagram: {e}")

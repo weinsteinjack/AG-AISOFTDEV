@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 7: Advanced Agent Workflows & External Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #63b3ed; /* Blue accent */
+            border-radius: 9999px;
+        }
+        .card {
+            background-color: #2d3748; /* Slightly lighter dark for cards */
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-weight: 600;
+            color: #90cdf4; /* Light blue for interactive headers */
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.open {
+            max-height: 2000px; /* Arbitrarily large value to allow content to expand */
+            transition: max-height 0.5s ease-in;
+        }
+        .code-block {
+            background-color: #232d3a; /* Even darker for code blocks */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Cascadia Code', monospace; /* Monospaced font for code */
+            font-size: 0.9em;
+            color: #a0aec0; /* Lighter gray for code */
+        }
+        .highlight {
+            color: #4fd1c5; /* Teal for highlights */
+        }
+        .accent-text {
+            color: #63b3ed; /* Blue accent */
+        }
+        .spark-creativity {
+            background-color: #3a4a5c; /* A slightly different shade for creativity boxes */
+            border-left: 4px solid #f6ad55; /* Orange accent */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #cbd5e0;
+        }
+        .syntax-list {
+            list-style-type: none; /* Remove default bullet */
+            padding-left: 0;
+        }
+        .syntax-list li {
+            position: relative;
+            padding-left: 1.5em; /* Space for custom bullet */
+            margin-bottom: 0.5em;
+        }
+        .syntax-list li::before {
+            content: '›'; /* Chevron bullet */
+            position: absolute;
+            left: 0;
+            color: #4fd1c5; /* Teal for bullet */
+            font-weight: bold;
+        }
+        .syntax-list.chevrons-only li::before {
+            content: '»'; /* Double chevron */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-gray-800 p-4 sticky top-0 z-50 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white"><span class="accent-text">AI-Driven</span> SWE Program</h1>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#day6-recap" class="text-gray-300 hover:text-white transition duration-300">Day 6 Recap</a></li>
+                    <li><a href="#mcp-protocol" class="text-gray-300 hover:text-white transition duration-300">MCP Protocol</a></li>
+                    <li><a href="#a2a-interoperability" class="text-gray-300 hover:text-white transition duration-300">A2A Interop</a></li>
+                    <li><a href="#image-to-code" class="text-gray-300 hover:text-white transition duration-300">Image-to-Code</a></li>
+                    <li><a href="#capstone-workshop" class="text-gray-300 hover:text-white transition duration-300">Capstone</a></li>
+                    <li><a href="#wrap-up" class="text-gray-300 hover:text-white transition duration-300">Wrap-up</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <section id="day7-intro" class="text-center my-10">
+            <h2 class="text-5xl font-extrabold text-white mb-4">Day 7: Advanced Agent Workflows & External Tools</h2>
+            <p class="text-xl text-gray-400">
+                <span class="accent-text">Theme:</span> Mastering sophisticated AI-driven development workflows and inter-agent communication.
+            </p>
+            <p class="text-lg text-gray-400 mt-2">
+                <span class="accent-text">Core Question:</span> How do we build robust agents that can handle complex, multi-part context, communicate securely, and even translate visual designs into functional code?
+            </p>
+        </section>
+
+        <!-- Day 6 Recap & Q&A -->
+        <section id="day6-recap" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Day 6 Recap & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Review of Key Concepts (15 min)</h4>
+                <p class="text-gray-300 mb-4">
+                    Yesterday, we embarked on building truly intelligent, AI-native applications by diving deep into **Retrieval-Augmented Generation (RAG)** systems. We learned to empower LLMs with private, factual knowledge. Key takeaways included:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Understanding RAG:</span> How it solves LLM hallucination and knowledge limitations by augmenting prompts with retrieved context from your own data.</li>
+                    <li><span class="highlight">LangGraph for Orchestration:</span> Building stateful, multi-actor applications as graphs, enabling complex RAG workflows with nodes, edges, and conditional routing.</li>
+                    <li><span class="highlight">Self-Correcting RAG:</span> Designing systems with 'grader' and 'router' agents to improve retrieval accuracy and adapt dynamically.</li>
+                    <li><span class="highlight">Conversational Memory:</span> Implementing `session_id`s to enable multi-turn, personalized interactions for our AI agents in web applications.</li>
+                    <li><span class="highlight">Full-Stack Agent Deployment:</span> Integrating LangGraph agents into FastAPI backends and Streamlit UIs to create conversational chatbots.</li>
+                </ul>
+                <p class="text-gray-300 mt-4">
+                    This laid the foundation for building AI systems that can reason over proprietary information and engage in natural dialogues.
+                </p>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"Beyond the technical challenges, what are the primary ethical considerations when deploying a RAG system that uses sensitive, internal company data to answer user queries?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Key considerations include data privacy (ensuring sensitive info isn\'t leaked), accuracy (preventing misinterpretations of internal data), bias (if training data for retrieval/ranking is biased), and accountability (who is responsible if the AI provides incorrect or harmful advice based on internal data).')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Q&A (15 min)</h4>
+                <p class="text-gray-300">
+                    This segment is dedicated to addressing any questions regarding Day 6's concepts or the RAG system labs. We encourage sharing insights or challenges encountered. Your practical experiences are invaluable learning opportunities for everyone.
+                </p>
+            </div>
+        </section>
+
+        <!-- Content: The Model Context Protocol (MCP) -->
+        <section id="mcp-protocol" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: The Model Context Protocol (MCP)</h3>
+            <p class="text-gray-300 mb-6">
+                As AI agents become more sophisticated, the way we provide them with information becomes critical. Simple, unstructured text prompts often fall short when dealing with complex, multi-part context. The **Model Context Protocol (MCP)** offers a standardized, machine-readable way to structure the information sent to an LLM, ensuring clarity, reliability, and predictability in agent behavior. This is crucial for building robust, enterprise-grade AI systems.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">The Challenge of Unstructured Prompts</h4>
+                <p class="text-gray-300 mb-2">
+                    Imagine giving a complex task to a human, but all your instructions, background information, and specific data are jumbled together in a single, long paragraph. It's easy to miss details, misinterpret intent, or get overwhelmed. LLMs face a similar challenge with unstructured prompts, leading to unpredictable or suboptimal responses.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Ambiguity:</span> It becomes hard for the LLM to differentiate between core instructions, a user's actual request, and mere background data.</li>
+                    <li><span class="highlight">Inconsistent Behavior:</span> The same prompt might yield different results depending on subtle phrasing or the order of information, leading to unreliable agent performance.</li>
+                    <li><span class="highlight">Scalability Issues:</span> It's incredibly difficult to programmatically build, manage, and version complex prompts when they are just free-form text strings.</li>
+                    <li><span class="highlight">Security Risks:</span> Unstructured prompts are highly vulnerable to prompt injection attacks, where malicious user input can manipulate or override the LLM's intended behavior.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">MCP: Standardizing Context for AI</h4>
+                <p class="text-gray-300 mb-2">
+                    MCP solves these problems by providing a standard, XML-like structure for prompts. It clearly delineates different types of information, making it easier for the LLM to parse and act upon consistently. This is analogous to how well-defined APIs standardize communication between software services.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Clear Delineation:</span> Uses explicit, semantic tags (e.g., `<request>`, `<context>`, `<code>`, `<instructions>`) to categorize information, providing strong structural cues to the LLM.</li>
+                    <li><span class="highlight">Improved Reliability:</span> Reduces misinterpretations and ambiguity, leading to more consistent, predictable, and accurate agent responses.</li>
+                    <li><span class="highlight">Programmatic Construction:</span> Facilitates building complex prompts using SDKs, enabling automation, version control, and templating of prompts, just like code.</li>
+                    <li><span class="highlight">Enhanced Security:</span> By clearly separating user input from system instructions and sensitive context, it significantly helps mitigate prompt injection attacks.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> "A large software company uses MCP internally to standardize prompts for their AI code review agents. This ensures that every code review request provides the AI with the exact same structured context (e.g., the code to review, specific review guidelines, relevant project documentation, previous comments). This leads to significantly more consistent, fair, and reliable feedback across their entire engineering team, improving code quality at scale."
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">MCP Components & Flow</h4>
+                <p class="text-gray-300 mb-2">
+                    At its core, an MCP prompt typically involves:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">`<request>`:</span> This tag encapsulates the user's primary goal, question, or command for the AI agent.</li>
+                    <li><span class="highlight">`<context>`:</span> This acts as a container for all supporting information the agent needs to fulfill the request. Within `<context>`, you can have:
+                        <ul class="syntax-list chevrons-only">
+                            <li>`<code>`: For providing specific code snippets relevant to the task (e.g., code to refactor, code to debug).</li>
+                            <li>`<instructions>`: For explicit directives, guidelines, or constraints on the agent's behavior or output format.</li>
+                            <li>`<data>`: For structured data, such as JSON or YAML objects, relevant to the request (e.g., customer details, configuration settings).</li>
+                            <li>`<history>`: For including previous conversation turns or relevant past interactions to maintain conversational memory.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p class="text-gray-300 mt-2 mb-2">
+                    **Flow of MCP in an AI System:**
+                </p>
+                <ul class="syntax-list chevrons-only">
+                    <li><span class="highlight">Developer/System:</span> Constructs an MCP-formatted prompt using an SDK (like `model_context_protocol` or `langchain-mcp-adapters`).</li>
+                    <li><span class="highlight">MCP Server (Optional but Recommended):</span> An intermediary service can receive the raw context, validate it against schemas, apply transformations, and then format it perfectly before sending to the LLM. Docker even offers a Hub MCP Server for this, providing a centralized, secure gateway.</li>
+                    <li><span class="highlight">LLM:</span> Processes the structured prompt. Because of the clear tags, it precisely understands the different roles of information (what's an instruction vs. what's data).</li>
+                    <li><span class="highlight">Agent:</span> The AI agent then acts based on this clear, unambiguous set of instructions and context provided, leading to more predictable and reliable behavior.</li>
+                </ul>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"How might adopting MCP fundamentally change the way development teams collaborate on designing and maintaining agent prompts, moving from ad-hoc text files to a more formal, engineering-disciplined approach?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: It could lead to version-controlled prompts stored in Git, peer review of prompt structures, automated prompt validation via CI/CD pipelines, and the creation of shared libraries of effective prompt templates. Prompt engineering becomes a more formal, collaborative engineering discipline, much like API design.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">MCP Code Examples & Integration Patterns</h4>
+                <p class="text-gray-300 mb-2">
+                    Let's explore practical examples of how MCP is implemented and integrated into AI workflows.
+                </p>
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Basic MCP Examples: Connecting, Resources, & Tools</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            MCP enables AI models to interact with external data sources (Resources) and execute functions (Tools).
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Connecting to an MCP Server:</h5>
+                        <p class="text-gray-300 mb-2">
+                            This fundamental pattern establishes a client-server connection, allowing an AI client to communicate with an MCP server.
+                        </p>
+                        <div class="code-block">
+                            <pre><code>import asyncio
+from mcp import ClientSession, StdioServerParameters
+
+async def connect_to_mcp_server(server_command: List[str]):
+    server_params = StdioServerParameters(command=server_command[0], args=server_command[1:])
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            info = await session.get_server_info()
+            print(f"Connected to: {info.name} (Version: {info.version})")
+            return session
+# Usage: await connect_to_mcp_server(['python', 'your_mcp_server.py'])</code></pre>
+                        </div>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Working with MCP Resources:</h5>
+                        <p class="text-gray-300 mb-2">
+                            Resources are data sources the AI can read. This shows how to list and fetch content from them.
+                        </p>
+                        <div class="code-block">
+                            <pre><code>async def explore_mcp_resources(session: ClientSession):
+    resources = await session.list_resources()
+    print("Available Resources:")
+    for resource in resources:
+        print(f"  - {resource.uri} ({resource.name})")
+        try:
+            content = await session.read_resource(resource.uri)
+            print(f"    Content Preview: {content.text[:100]}...")
+        except Exception as e:
+            print(f"    Error reading: {e}")
+# Usage: Assuming 'session' is an active ClientSession
+# await explore_mcp_resources(session)</code></pre>
+                        </div>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Using MCP Tools:</h5>
+                        <p class="text-gray-300 mb-2">
+                            Tools are functions the AI can execute. They are similar to function calling in LLMs but standardized across different systems.
+                        </p>
+                        <div class="code-block">
+                            <pre><code>async def demonstrate_mcp_tools(session: ClientSession):
+    tools = await session.list_tools()
+    print("Available Tools:")
+    for tool_info in tools:
+        print(f"  - {tool_info.name}: {tool_info.description}")
+        if tool_info.name == "calculate": # Example tool call
+            arguments = {"operation": "add", "a": 10, "b": 20}
+            result = await session.call_tool(tool_info.name, arguments=arguments)
+            print(f"    Result of 'calculate' tool: {result}")
+# Usage: Assuming 'session' is an active ClientSession
+# await demonstrate_mcp_tools(session)</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Integrating MCP with LangChain</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            `langchain-mcp-adapters` provides a seamless bridge, allowing LangChain agents to use MCP tools as if they were native LangChain tools.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Converting MCP to LangChain Tools:</h5>
+                        <div class="code-block">
+                            <pre><code>from langchain_mcp import create_mcp_tools
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor, create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
+
+async def integrate_mcp_with_langchain_example():
+    # Assume 'mcp_session' is an active ClientSession connected to an MCP server
+    # For demonstration, we'll mock a session and its tools
+    class MockMCPSession:
+        async def list_tools(self):
+            return [
+                {"name": "weather_check", "description": "Get current weather for a location", "inputSchema": {"type": "object", "properties": {"location": {"type": "string"}}}},
+                {"name": "calculate_distance", "description": "Calculate distance between two cities", "inputSchema": {"type": "object", "properties": {"city1": {"type": "string"}, "city2": {"type": "string"}}}}
+            ]
+    mock_mcp_session = MockMCPSession()
+
+    # This is the key step: creating LangChain tools from MCP capabilities
+    langchain_mcp_tools = await create_mcp_tools(mock_mcp_session)
+    print("LangChain tools derived from MCP server capabilities:")
+    for tool in langchain_mcp_tools:
+        print(f"  - {tool.name}: {tool.description}")
+
+    # Now, create a LangChain agent using these tools
+    llm = ChatOpenAI(model="gpt-4o") # Or your preferred LLM
+    memory = MemorySaver()
+    agent_executor = create_react_agent(llm, langchain_mcp_tools, checkpointer=memory)
+
+    # Example query for the agent
+    # response = await agent_executor.invoke({"messages": [HumanMessage("What's the weather in London and how far is it from Paris?")]})
+    # print(response['messages'][-1].content)
+# Usage: await integrate_mcp_with_langchain_example()</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Building Custom MCP Servers</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            For ultimate control, you can build your own MCP server. This allows you to expose custom resources, tools, and prompts tailored to your specific needs.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Custom MCP Server Implementation Snippet:</h5>
+                        <div class="code-block">
+                            <pre><code>from mcp.server.stdio import StdioServer
+from mcp.server.types import ServerInfo, Resource, Tool, Prompt
+from mcp.server.exceptions import MethodNotFound
+
+class MyCustomMCPServer(StdioServer):
+    def __init__(self):
+        super().__init__()
+        self.resources = {
+            "file:///data/config.json": Resource(uri="file:///data/config.json", name="Config", description="App config"),
+            # ... define more resources
+        }
+        self.tools = {
+            "process_report": Tool(name="process_report", description="Processes a report", inputSchema={"type": "object", "properties": {"report_id": {"type": "string"}}}),
+            # ... define more tools
+        }
+
+    async def get_server_info(self) -> ServerInfo:
+        return ServerInfo(name="MyCustomAgentServer", version="1.0.0", protocolVersion="2024-10-07")
+
+    async def list_resources(self) -> List[Resource]:
+        return list(self.resources.values())
+
+    async def read_resource(self, uri: str) -> Dict[str, Any]:
+        if uri == "file:///data/config.json":
+            return {"contents": [{"uri": uri, "mimeType": "application/json", "text": '{"setting": "value"}'}]}
+        raise MethodNotFound(f"Resource {uri} not found")
+
+    async def list_tools(self) -> List[Tool]:
+        return list(self.tools.values())
+
+    async def call_tool(self, name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        if name == "process_report":
+            return {"result": f"Report {arguments['report_id']} processed successfully"}
+        raise MethodNotFound(f"Tool {name} not found")
+
+# To run this server (typically in a separate process):
+# server_instance = MyCustomMCPServer()
+# asyncio.run(server_instance.run_forever()) # Simplified run method
+
+print("Custom MCP Server example structure defined.")</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Resources for MCP:</h4>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Official MCP Documentation:</span> <a href="https://docs.anthropic.com/en/docs/mcp" target="_blank" class="accent-text hover:underline">https://docs.anthropic.com/en/docs/mcp</a></li>
+                    <li><span class="highlight">Python SDK:</span> <a href="https://github.com/modelcontextprotocol/python-sdk" target="_blank" class="accent-text hover:underline">https://github.com/modelcontextprotocol/python-sdk</a></li>
+                    <li><span class="highlight">LangChain MCP Adapters:</span> <a href="https://github.com/langchain-ai/langchain-mcp-adapters" target="_blank" class="accent-text hover:underline">https://github.com/langchain-ai/langchain-mcp-adapters</a></li>
+                    <li><span class="highlight">Community Examples:</span> <a href="https://github.com/modelcontextprotocol/examples" target="_blank" class="accent-text hover:underline">https://github.com/modelcontextprotocol/examples</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Content: Agent-to-Agent (A2A) Interoperability -->
+        <section id="a2a-interoperability" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: Agent-to-Agent (A2A) Interoperability</h3>
+            <p class="text-gray-300 mb-6">
+                For AI agents to truly collaborate effectively without constant human intervention, they need a shared language and a standardized way to discover each other and communicate. The **Agent-to-Agent (A2A) Protocol** provides this crucial standard, enabling agents to discover available services, understand their capabilities, and communicate securely and programmatically. This is the foundation for building truly decentralized and dynamic AI ecosystems.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">The Need for Agent Protocols</h4>
+                <p class="text-gray-300 mb-2">
+                    Imagine a team of human experts trying to collaborate on a complex project without a common language, clear roles, or a way to find each other's specialized skills. It would be chaos. Similarly, for AI agents to form dynamic, intelligent teams, they need:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Service Discovery:</span> How does Agent A know Agent B exists on the network and what specific services it offers?</li>
+                    <li><span class="highlight">Capability Description:</span> How does Agent A understand what inputs Agent B's service needs and what outputs it provides, in a machine-readable format?</li>
+                    <li><span class="highlight">Standardized Communication:</span> A common message format for requests and responses, ensuring all agents 'speak the same language'.</li>
+                    <li><span class="highlight">Security:</span> Ensuring interactions between agents are authenticated, authorized, and encrypted.</li>
+                </ul>
+                <p class="text-gray-300 mt-2">
+                    A2A addresses these fundamental needs, moving beyond simple function calling (where one LLM calls a pre-defined tool) to true inter-agent communication, where agents are peers in a network.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">A2A Protocol: How It Works</h4>
+                <p class="text-gray-300 mb-2">
+                    The A2A Protocol defines a set of rules and mechanisms for agents to interact within a distributed environment:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Responder Agents:</span> These are agents that *offer* specific services. They publish their capabilities (service name, inputs, outputs, descriptions) on the network, making themselves discoverable. Think of them as service providers.</li>
+                    <li><span class="highlight">Requester Agents:</span> These are agents that *consume* services. They can dynamically discover Responders on the network and then invoke their services by sending structured requests. Think of them as service consumers.</li>
+                    <li><span class="highlight">Service Definition:</span> Services are defined with clear names, detailed descriptions, and precise type-hinted inputs/outputs (often using JSON Schema), allowing other agents to programmatically understand how to use them.</li>
+                    <li><span class="highlight">Network Discovery:</span> Agents can broadcast their presence and listen for other agents advertising their services on the local network, or register with a centralized discovery registry.</li>
+                    <li><span class="highlight">Secure Invocation:</span> Requests and responses are sent over a standardized, secure channel, ensuring data integrity and confidentiality between agents.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> "Imagine a large enterprise where different departments deploy highly specialized AI agents. An 'HR Agent' might offer a 'lookup_employee_info' service, a 'Finance Agent' offers 'process_expense_report', and a 'Project Management Agent' offers 'create_jira_ticket'. A higher-level 'Workflow Orchestrator Agent' could dynamically discover and invoke these services across departments to automate complex, cross-functional business processes, like onboarding a new employee or closing a quarterly financial report."
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Integrating A2A with High-Level Agents</h4>
+                <p class="text-gray-300 mb-2">
+                    While A2A handles the low-level communication and discovery, high-level reasoning agents (like those built with LangChain or AutoGen) need to be able to *use* A2A services as part of their broader problem-solving capabilities.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">A2A Client as a Tool:</span> The A2A Requester client, which handles the underlying protocol communication, is wrapped into a standard LangChain tool. This makes it consumable by any LangChain agent.</li>
+                    <li><span class="highlight">LLM Reasoning:</span> The LLM within the high-level agent then decides when to call this A2A tool. It makes this decision based on the user's query and the tool's descriptive docstring, which explains its capabilities.</li>
+                    <li><span class="highlight">Dynamic Service Invocation:</span> When the LLM decides to use the A2A tool, the tool's implementation uses the A2A client to dynamically discover and invoke the appropriate service on a Responder agent, retrieving the necessary information or triggering an action.</li>
+                </ul>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"How might A2A protocols fundamentally change the way traditional software systems are designed and integrated in a future where services are offered not just by fixed APIs, but by dynamic, autonomous AI agents? Could this lead to self-assembling software?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: It could lead to highly dynamic, self-assembling systems where agents discover and compose workflows on the fly. Traditional API contracts might evolve into agent capability descriptions. It enables truly decentralized and adaptive automation, potentially creating 'living' software systems that reconfigure themselves.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">A2A Code Examples & Integration Patterns</h4>
+                <p class="text-gray-300 mb-2">
+                    Let's explore practical examples of how A2A is implemented and integrated into multi-agent workflows.
+                </p>
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Basic A2A Agents & Communication</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            This demonstrates the fundamental pattern of A2A agent creation, capability declaration, and message handling.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Creating Your First A2A Agent:</h5>
+                        <div class="code-block">
+                            <pre><code>import asyncio
+from a2a import Agent, Capability, Request, Response
+import uuid
+from datetime import datetime
+
+class SimpleAgent(Agent):
+    def __init__(self, name: str, description: str):
+        super().__init__(name=name)
+        self.description = description
+        self.message_count = 0
+        self.capabilities = [
+            Capability(name="echo", description="Echoes back any message sent to it", input_schema={"type": "object", "properties": {"message": {"type": "string"}}, "required": ["message"]}),
+            Capability(name="get_info", description="Returns information about this agent", input_schema={"type": "object", "properties": {}})
+        ]
+    
+    async def handle_request(self, request: Request) -> Response:
+        self.message_count += 1
+        if request.capability == "echo":
+            message = request.data.get("message", "")
+            return Response(request_id=request.id, data={"echo": message, "count": self.message_count})
+        elif request.capability == "get_info":
+            return Response(request_id=request.id, data={"name": self.name, "description": self.description, "capabilities": [cap.name for cap in self.capabilities], "messages_processed": self.message_count})
+        else:
+            return Response(request_id=request.id, error={"code": "UNKNOWN_CAPABILITY", "message": f"Unknown capability: {request.capability}"})
+
+echo_agent = SimpleAgent(name="EchoBot", description="A simple agent that echoes messages and provides information")
+print(f"Created agent: {echo_agent.name} (ID: {echo_agent.id})")
+print(f"Capabilities: {[cap.name for cap in echo_agent.capabilities]}")</code></pre>
+                        </div>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Agent-to-Agent Communication:</h5>
+                        <p class="text-gray-300 mb-2">
+                            This shows how agents send requests and process responses, forming the basis of inter-agent dialogue.
+                        </p>
+                        <div class="code-block">
+                            <pre><code>class AnalyzerAgent(Agent):
+    def __init__(self):
+        super().__init__(name="TextAnalyzer")
+        self.capabilities = [
+            Capability(name="analyze_sentiment", description="Analyzes the sentiment of text", input_schema={"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}),
+            Capability(name="extract_keywords", description="Extracts key words from text", input_schema={"type": "object", "properties": {"text": {"type": "string"}, "max_keywords": {"type": "integer", "default": 5}}, "required": ["text"]})
+        ]
+    async def handle_request(self, request: Request) -> Response:
+        if request.capability == "analyze_sentiment":
+            text = request.data["text"]
+            sentiment = "positive" if "good" in text.lower() or "great" in text.lower() else "neutral"
+            return Response(request_id=request.id, data={"sentiment": sentiment, "confidence": 0.85})
+        elif request.capability == "extract_keywords":
+            text = request.data["text"]
+            max_keywords = request.data.get("max_keywords", 5)
+            words = text.lower().split()
+            keywords = [w for w in words if len(w) > 4][:max_keywords]
+            return Response(request_id=request.id, data={"keywords": keywords, "count": len(keywords)})
+
+async def demonstrate_communication():
+    analyzer = AnalyzerAgent()
+    echo = SimpleAgent("EchoBot", "Echo service")
+    
+    sentiment_request = Request(id=str(uuid.uuid4()), from_agent=echo.id, to_agent=analyzer.id, capability="analyze_sentiment", data={"text": "This is a great example!"})
+    print("Sending sentiment analysis request...")
+    response = await analyzer.handle_request(sentiment_request)
+    print(f"Response: {response.data}")
+
+    keyword_request = Request(id=str(uuid.uuid4()), from_agent=echo.id, to_agent=analyzer.id, capability="extract_keywords", data={"text": "AI enables autonomous agents to collaborate", "max_keywords": 3})
+    print("\nSending keyword extraction request...")
+    response = await analyzer.handle_request(keyword_request)
+    print(f"Response: {response.data}")
+
+# To run this, uncomment: asyncio.run(demonstrate_communication())</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Service Discovery & Dynamic Connections</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            A2A includes service discovery, allowing agents to find each other dynamically on a network.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Discovery Hub & Agent Search:</h5>
+                        <div class="code-block">
+                            <pre><code>from a2a import Agent, Capability, Request, Response
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+import uuid
+
+class DiscoveryHub: # Simplified for demo
+    def __init__(self):
+        self.agents: Dict[str, Dict[str, Any]] = {}
+        self.capabilities_index: Dict[str, List[str]] = {}
+    async def register_agent(self, agent: Agent):
+        agent_info = {"id": agent.id, "name": agent.name, "capabilities": [{"name": cap.name} for cap in agent.capabilities]}
+        self.agents[agent.id] = agent_info
+        for cap in agent.capabilities:
+            self.capabilities_index.setdefault(cap.name, []).append(agent.id)
+        print(f"Registered agent: {agent.name} with capabilities: {[cap.name for cap in agent.capabilities]}")
+    async def find_agents_by_capability(self, capability: str) -> List[Dict[str, Any]]:
+        agent_ids = self.capabilities_index.get(capability, [])
+        return [self.agents[aid] for aid in agent_ids if aid in self.agents]
+
+class TranslatorAgent(Agent):
+    def __init__(self):
+        super().__init__(name="Translator")
+        self.capabilities = [Capability(name="translate", description="Translates text", input_schema={"type": "object"})]
+    async def handle_request(self, request: Request) -> Response: return Response(request_id=request.id, data={"translated_text": "[Translated]"})
+
+class SummarizerAgent(Agent):
+    def __init__(self):
+        super().__init__(name="Summarizer")
+        self.capabilities = [Capability(name="summarize", description="Summarizes text", input_schema={"type": "object"})]
+    async def handle_request(self, request: Request) -> Response: return Response(request_id=request.id, data={"summary": "[Summary]"})
+
+async def demonstrate_discovery():
+    discovery = DiscoveryHub()
+    agents = [AnalyzerAgent(), TranslatorAgent(), SummarizerAgent(), SimpleAgent("Helper", "General purpose")]
+    print("Registering agents with discovery service...\n")
+    for agent in agents: await discovery.register_agent(agent)
+    
+    print("\nSearching for agents with 'translate' capability:")
+    translators = await discovery.find_agents_by_capability("translate")
+    for agent_info in translators: print(f"  Found: {agent_info['name']}")
+    
+    print("\nAll available capabilities:")
+    for capability, agent_ids in discovery.capabilities_index.items(): print(f"  {capability}: {len(agent_ids)} agent(s)")
+
+# To run this, uncomment: asyncio.run(demonstrate_discovery())</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Integrating A2A with LangChain</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            `langchain-a2a-adapters` (or similar custom adapters) provides a seamless bridge, allowing LangChain agents to use A2A agents as if they were native LangChain tools.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: A2A Agent as LangChain Tool:</h5>
+                        <div class="code-block">
+                            <pre><code>from langchain_core.tools import Tool
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor, create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import HumanMessage
+
+class A2AToolAdapter: # Simplified for demo
+    def __init__(self, agent: Agent, capability: str):
+        self.agent = agent
+        self.capability = capability
+        self.capability_def = next((cap for cap in agent.capabilities if cap.name == capability), None)
+    def to_langchain_tool(self) -> Tool:
+        async def tool_func(**kwargs) -> str:
+            request = Request(id=str(uuid.uuid4()), from_agent="langchain_agent", to_agent=self.agent.id, capability=self.capability, data=kwargs)
+            response = await self.agent.handle_request(request)
+            if response.error: return f"Error: {response.error['message']}"
+            return json.dumps(response.data)
+        def sync_tool_func(**kwargs) -> str: return asyncio.run(tool_func(**kwargs))
+        return Tool(name=f"{self.agent.name}_{self.capability}", description=self.capability_def.description, func=sync_tool_func)
+
+async def create_a2a_langchain_tools_example():
+    analyzer = AnalyzerAgent()
+    translator = TranslatorAgent()
+    a2a_tools = [A2AToolAdapter(analyzer, "analyze_sentiment").to_langchain_tool(), A2AToolAdapter(translator, "translate").to_langchain_tool()]
+    
+    llm = ChatOpenAI(model="gpt-4o")
+    memory = MemorySaver()
+    agent_executor = create_react_agent(llm, a2a_tools, checkpointer=memory)
+    
+    # Example query for the agent
+    # response = await agent_executor.invoke({"messages": [HumanMessage(content="Analyze the sentiment of 'I love AI' and translate 'Hello' to Spanish.")]})
+    # print(response['messages'][-1].content)
+
+# To run this, uncomment: asyncio.run(create_a2a_langchain_tools_example())</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Advanced Multi-Agent Collaboration Patterns with LangGraph</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            LangGraph enables complex, stateful multi-agent systems where A2A agents can be integrated into sophisticated workflows, demonstrating task decomposition, parallel execution, and result synthesis.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Collaborative Research Workflow:</h5>
+                        <div class="code-block">
+                            <pre><code>from typing import TypedDict, Annotated, Sequence
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
+from langgraph.graph import StateGraph, END
+import operator
+
+class ResearchCollaborationState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], operator.add]
+    research_topic: str
+    current_phase: str # Use string for simplicity, or define Enum
+    research_plan: List[str]
+    collected_data: Dict[str, Any]
+    analysis_results: Dict[str, Any]
+    final_report: Optional[str]
+    consensus_reached: bool
+
+# Simplified nodes for demonstration
+def planning_phase(state: ResearchCollaborationState) -> ResearchCollaborationState:
+    state["current_phase"] = "planning"
+    state["research_plan"] = ["Define objectives", "Identify resources", "Outline methodology"]
+    state["messages"].append(AIMessage(content="Research plan created."))
+    return state
+
+def research_phase(state: ResearchCollaborationState) -> ResearchCollaborationState:
+    state["current_phase"] = "research"
+    state["collected_data"] = {"web_data": "AI trends", "internal_docs": "Company policies"}
+    state["messages"].append(AIMessage(content="Data gathering complete."))
+    return state
+
+def analysis_phase(state: ResearchCollaborationState) -> ResearchCollaborationState:
+    state["current_phase"] = "analysis"
+    state["analysis_results"] = {"sentiment": "positive", "keywords": ["AI", "agents"]}
+    state["messages"].append(AIMessage(content="Analysis complete."))
+    return state
+
+def review_phase(state: ResearchCollaborationState) -> ResearchCollaborationState:
+    state["current_phase"] = "review"
+    state["peer_reviews"] = [{"reviewer": "Critic1", "approved": True}]
+    state["consensus_reached"] = True # Simulate consensus
+    state["messages"].append(AIMessage(content="Review complete. Consensus reached."))
+    return state
+
+def delivery_phase(state: ResearchCollaborationState) -> ResearchCollaborationState:
+    state["current_phase"] = "delivery"
+    state["final_report"] = "Final report on AI trends."
+    state["messages"].append(AIMessage(content="Final report delivered."))
+    return state
+
+def create_collaborative_research_workflow():
+    workflow = StateGraph(ResearchCollaborationState)
+    workflow.add_node("planning", planning_phase)
+    workflow.add_node("research", research_phase)
+    workflow.add_node("analysis", analysis_phase)
+    workflow.add_node("review", review_phase)
+    workflow.add_node("delivery", delivery_phase)
+    
+    workflow.set_entry_point("planning")
+    workflow.add_edge("planning", "research")
+    workflow.add_edge("research", "analysis")
+    workflow.add_edge("analysis", "review")
+    
+    # Conditional edge for review
+    def check_consensus(state: ResearchCollaborationState) -> str:
+        if state.get("consensus_reached", False):
+            return "delivery"
+        return "analysis" # Loop back for revision
+    
+    workflow.add_conditional_edges("review", check_consensus)
+    workflow.add_edge("delivery", END)
+    
+    return workflow.compile()
+
+# To run this, uncomment:
+# research_app = create_collaborative_research_workflow()
+# final_state = asyncio.run(research_app.invoke({"messages": [HumanMessage(content="Conduct research on AI trends.")]}))
+# print(final_state["final_report"])</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-container">
+                    <div class="collapsible-header">
+                        <span>Building Custom A2A Agent Servers</span>
+                        <span class="arrow">&#9660;</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p class="text-gray-300 mb-2">
+                            For ultimate control and production deployment, you can implement your own A2A agent server, exposing capabilities via a robust API.
+                        </p>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Production-Ready A2A Agent:</h5>
+                        <div class="code-block">
+                            <pre><code>from a2a import Agent, Capability, Request, Response
+from dataclasses import dataclass
+import time
+import hashlib
+from collections import defaultdict
+from typing import Set, AsyncGenerator
+
+@dataclass
+class AgentConfig:
+    name: str
+    version: str
+    description: str
+    max_concurrent_requests: int = 10
+    request_timeout: float = 30.0
+    enable_auth: bool = True
+    rate_limit_per_minute: int = 100
+
+class ProductionA2AAgent(Agent):
+    def __init__(self, config: AgentConfig):
+        super().__init__(name=config.name)
+        self.config = config
+        self.version = config.version
+        self.authorized_agents: Set[str] = set()
+        self.api_keys: Dict[str, str] = {}
+        self.request_counts: defaultdict = defaultdict(list)
+        self.metrics = {"total_requests": 0, "successful_requests": 0, "failed_requests": 0, "average_response_time": 0.0, "active_connections": 0}
+        self.active_requests: Dict[str, float] = {}
+        self._setup_capabilities()
+
+    def _setup_capabilities(self):
+        self.capabilities = [
+            Capability(name="process_data", description="Process data with validation and transformation", input_schema={"type": "object", "properties": {"data": {"type": "object"}, "operations": {"type": "array", "items": {"type": "string", "enum": ["validate", "transform", "aggregate"]}}, "stream": {"type": "boolean", "default": False}}, "required": ["data", "operations"]}),
+            Capability(name="health_check", description="Check agent health and status", input_schema={"type": "object", "properties": {}})
+        ]
+    
+    def generate_api_key(self, agent_id: str) -> str:
+        timestamp = str(time.time())
+        key_data = f"{agent_id}:{self.id}:{timestamp}"
+        api_key = hashlib.sha256(key_data.encode()).hexdigest()
+        self.api_keys[api_key] = agent_id
+        return api_key
+
+    async def authenticate_request(self, request: Request) -> bool:
+        if not self.config.enable_auth: return True
+        if request.from_agent in self.authorized_agents: return True
+        api_key = request.metadata.get("api_key")
+        if api_key and api_key in self.api_keys: return True
+        return False
+
+    async def check_rate_limit(self, agent_id: str) -> bool:
+        if not self.config.rate_limit_per_minute: return True
+        now = time.time()
+        minute_ago = now - 60
+        self.request_counts[agent_id] = [ts for ts in self.request_counts[agent_id] if ts > minute_ago]
+        if len(self.request_counts[agent_id]) >= self.config.rate_limit_per_minute: return False
+        self.request_counts[agent_id].append(now)
+        return True
+
+    async def validate_request(self, request: Request) -> Optional[str]:
+        capability_def = next((cap for cap in self.capabilities if cap.name == request.capability), None)
+        if not capability_def: return f"Unknown capability: {request.capability}"
+        schema = capability_def.input_schema
+        required_fields = schema.get("required", [])
+        for field in required_fields:
+            if field not in request.data: return f"Missing required field: {field}"
+        return None
+
+    async def handle_request(self, request: Request) -> Response:
+        start_time = time.time()
+        self.metrics["total_requests"] += 1
+        self.metrics["active_connections"] += 1
+        try:
+            if not await self.authenticate_request(request): raise ValueError("Authentication failed")
+            if not await self.check_rate_limit(request.from_agent): raise ValueError("Rate limit exceeded")
+            validation_error = await self.validate_request(request)
+            if validation_error: raise ValueError(validation_error)
+            if len(self.active_requests) >= self.config.max_concurrent_requests: raise ValueError("Agent at maximum capacity")
+            self.active_requests[request.id] = start_time
+            
+            response_data = {}
+            if request.capability == "health_check": response_data = {"status": "healthy", "version": self.version, "metrics": self.metrics}
+            elif request.capability == "process_data": response_data = {"processed": True, "operations_applied": request.data["operations"]}
+            else: response_data = {"message": "Capability processed"}
+            
+            self.metrics["successful_requests"] += 1
+            return Response(request_id=request.id, data=response_data, metadata={"agent_version": self.version, "processing_time": time.time() - start_time})
+        except Exception as e:
+            self.metrics["failed_requests"] += 1
+            return Response(request_id=request.id, error={"code": "ERROR", "message": str(e)})
+        finally:
+            self.active_requests.pop(request.id, None)
+            self.metrics["active_connections"] -= 1
+            # Update average response time (simplified)
+            if self.metrics["successful_requests"] > 0:
+                self.metrics["average_response_time"] = (self.metrics["average_response_time"] * (self.metrics["successful_requests"] - 1) + (time.time() - start_time)) / self.metrics["successful_requests"]
+
+    async def handle_streaming_request(self, request: Request) -> AsyncGenerator[Event, None]:
+        if not request.data.get("stream", False): yield Event(type="error", data={"message": "Streaming not requested"}); return
+        operations = request.data["operations"]
+        for i, op in enumerate(operations):
+            await asyncio.sleep(0.1)
+            yield Event(type="progress", data={"operation": op, "progress": (i+1)/len(operations)})
+        yield Event(type="complete", data={"message": "All operations completed"})
+
+# Example: Create and configure a production agent
+config = AgentConfig(name="DataProcessor", version="2.0.0", description="Production-grade data processing agent", max_concurrent_requests=20, rate_limit_per_minute=200)
+production_agent = ProductionA2AAgent(config)
+print(f"Created production agent: {production_agent.name} v{production_agent.version}")</code></pre>
+                        </div>
+                        <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Building an A2A Agent Server (FastAPI Integration):</h5>
+                        <p class="text-gray-300 mb-2">
+                            This demonstrates how to expose your A2A agent's capabilities via a robust web server, supporting both REST APIs and real-time WebSockets.
+                        </p>
+                        <div class="code-block">
+                            <pre><code>from fastapi import FastAPI, WebSocket, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+import json
+import uuid # For request IDs
+import asyncio # For async operations
+
+class A2AAgentServer:
+    def __init__(self, agent: ProductionA2AAgent, port: int = 8000):
+        self.agent = agent
+        self.port = port
+        self.app = FastAPI(title=f"{agent.name} A2A Server", version=agent.version)
+        self.connected_agents: Dict[str, WebSocket] = {}
+        self._setup_middleware()
+        self._setup_routes()
+
+    def _setup_middleware(self):
+        self.app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+    def _setup_routes(self):
+        @self.app.get("/")
+        async def root(): return {"agent": self.agent.name, "version": self.agent.version, "status": "online"}
+        
+        @self.app.get("/capabilities")
+        async def get_capabilities(): return {"capabilities": [{"name": cap.name, "description": cap.description, "schema": cap.input_schema} for cap in self.agent.capabilities]}
+        
+        @self.app.get("/health")
+        async def health_check():
+            req = Request(id=str(uuid.uuid4()), from_agent="health_monitor", to_agent=self.agent.id, capability="health_check", data={})
+            res = await self.agent.handle_request(req)
+            return res.data
+        
+        @self.app.get("/metrics")
+        async def get_metrics(): return {"metrics": self.agent.metrics, "connected_agents": len(self.connected_agents)}
+        
+        @self.app.post("/authorize/{agent_id}")
+        async def authorize_agent(agent_id: str):
+            self.agent.authorized_agents.add(agent_id)
+            api_key = self.agent.generate_api_key(agent_id)
+            return {"agent_id": agent_id, "api_key": api_key, "status": "authorized"}
+        
+        @self.app.websocket("/ws/{agent_id}")
+        async def websocket_endpoint(websocket: WebSocket, agent_id: str):
+            await websocket.accept()
+            self.connected_agents[agent_id] = websocket
+            try:
+                while True:
+                    data = await websocket.receive_text()
+                    message = json.loads(data)
+                    if message["type"] == "request":
+                        req = Request(**message["data"])
+                        res = await self.agent.handle_request(req)
+                        await websocket.send_text(json.dumps({"type": "response", "data": res.__dict__}))
+                    elif message["type"] == "stream_request":
+                        req = Request(**message["data"])
+                        async for event in self.agent.handle_streaming_request(req):
+                            await websocket.send_text(json.dumps({"type": "stream_event", "data": event.__dict__}))
+                    elif message["type"] == "ping":
+                        await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()}))
+            except websockets.exceptions.ConnectionClosed: pass
+            finally: del self.connected_agents[agent_id]
+
+    def run(self):
+        print(f"Starting {self.agent.name} A2A Server on port {self.port}")
+        print(f"WebSocket endpoint: ws://localhost:{self.port}/ws/[agent_id]")
+        print(f"REST API: http://localhost:{self.port}")
+        # To run this server, save this code to a file (e.g., a2a_server.py) and use:
+        # uvicorn.run(self.app, host="0.0.0.0", port=self.port)
+
+# Example usage:
+# server_instance = A2AAgentServer(production_agent, port=8001)
+# server_instance.run() # This will block and start the Uvicorn server</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Resources for A2A:</h4>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Official A2A Documentation:</span> <a href="https://a2a-protocol.org/latest/" target="_blank" class="accent-text hover:underline">https://a2a-protocol.org/latest/</a></li>
+                    <li><span class="highlight">Python SDK Reference:</span> <a href="https://a2a-protocol.org/latest/sdk/python/" target="_blank" class="accent-text hover:underline">https://a2a-protocol.org/latest/sdk/python/</a></li>
+                    <li><span class="highlight">Tutorial Series:</span> <a href="https://a2a-protocol.org/latest/tutorials/python/1-introduction/" target="_blank" class="accent-text hover:underline">https://a2a-protocol.org/latest/tutorials/python/1-introduction/</a></li>
+                    <li><span class="highlight">GitHub Repository:</span> <a href="https://github.com/a2a-protocol/python-sdk" target="_blank" class="accent-text hover:underline">https://github.com/a2a-protocol/python-sdk</a></li>
+                    <li><span class="highlight">Community Forum:</span> <a href="https://community.a2a-protocol.org" target="_blank" class="accent-text hover:underline">https://community.a2a-protocol.org</a></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Content: Image-to-Code Generation -->
+        <section id="image-to-code" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: Image-to-Code Generation</h3>
+            <p class="text-gray-300 mb-6">
+                One of the most visually impressive and productivity-boosting applications of multi-modal AI is **image-to-code generation**. This capability allows AI models to analyze a visual input – such as a design mockup, a hand-drawn sketch, or a screenshot of an existing UI – and directly generate the corresponding frontend code (e.g., HTML, CSS, React, Vue, Tailwind CSS). This capability is rapidly transforming the design-to-development workflow.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">The Vision-to-Code Revolution: Bridging Design and Development</h4>
+                <p class="text-gray-300 mb-2">
+                    Traditionally, converting a static design mockup into interactive frontend code is a manual, pixel-perfect translation process. This often leads to communication gaps, iterative feedback loops, and significant time investment. Image-to-code generation automates this, dramatically accelerating the prototyping and development of user interfaces.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Accelerated Prototyping:</span> Rapidly convert design ideas into interactive, runnable prototypes in minutes, not days. This speeds up validation and feedback cycles.</li>
+                    <li><span class="highlight">Reduced Manual Effort:</span> Automate the tedious, repetitive task of translating visual elements (layout, spacing, components) into code, freeing developers for complex logic.</li>
+                    <li><span class="highlight">Enhanced Consistency:</span> By training AI on specific design systems or UI component libraries, it can help enforce brand guidelines and visual consistency across an application.</li>
+                    <li><span class="highlight">Seamless Design-Dev Handoff:</span> Creates a more fluid transition between design teams and development teams, minimizing misinterpretations.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Application:</span> "Leading design agencies are now using vision-to-code tools to rapidly generate initial UI components for A/B testing different layouts, create accessible versions of existing UIs from screenshots, or even bootstrap entire web pages directly from design tools like Figma or Sketch. This is particularly powerful for generating repetitive UI elements or standard layouts across large applications."
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">How Multi-Modal AI Powers Vision-to-Code</h4>
+                <p class="text-gray-300 mb-2">
+                    This impressive capability relies on advanced multi-modal Large Language Models that can process and understand both visual (image) and textual (prompt) inputs simultaneously.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Visual Understanding:</span> The AI model meticulously analyzes the input image to identify distinct UI elements (buttons, text fields, images, icons), their spatial layout, relative spacing, color palettes, font styles, and overall visual hierarchy.</li>
+                    <li><span class="highlight">Prompt Guidance:</span> The textual prompt you provide is crucial. It gives the AI explicit instructions, such as the desired programming language (e.g., React), styling framework (e.g., Tailwind CSS, Bootstrap), and any specific component requirements or naming conventions.</li>
+                    <li><span class="highlight">Code Generation:</span> Based on its visual understanding and your textual instructions, the LLM then generates the corresponding frontend code, attempting to replicate the visual design as accurately as possible.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Leading Tools & Platforms:</span> "At the forefront of image-to-code generation are leading LLMs like GPT-4 Vision, Google Gemini (with its robust vision capabilities), and specialized platforms such as Vercel's v0.dev. These tools often allow for iterative refinement, where you can generate an initial draft, review it, and then provide targeted feedback to the AI to incrementally improve the output until it meets your exact specifications."
+                </p>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"If AI can generate UI code directly from a design, how might this fundamentally alter the day-to-day role of a frontend developer, and what new, critical skills will become essential for them to master in this evolving landscape?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Frontend developers might shift from pixel-pushing to prompt engineering for UI generation, reviewing and refining AI-generated code, integrating AI-generated components, and focusing on complex interactivity, performance optimization, and accessibility audits. Design system expertise will become even more critical.')">Reveal Instructor Thoughts</sbutton>
+                </div>
+            </div>
+        </section>
+
+        <!-- Capstone Project Workshop -->
+        <section id="capstone-workshop" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: Capstone Project Workshop</h3>
+            <p class="text-gray-300 mb-6">
+                The Capstone Project is the culmination of your learning throughout this program. It's your opportunity to apply all the concepts, techniques, and tools from both Week 1 (AI-Assisted SDLC) and Week 2 (Building AI-Native Applications) to a real-world problem. This workshop is designed to help you finalize your project proposals, ensure achievable scope, and get initial instructor feedback.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Project Goals & Deliverables</h4>
+                <p class="text-gray-300 mb-2">
+                    Your Capstone Project should serve as a comprehensive demonstration of your ability to integrate Generative AI across multiple phases of the software development lifecycle.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Problem Identification:</span> Choose a problem that can be meaningfully enhanced or solved using AI.</li>
+                    <li><span class="highlight">AI-Enhanced SDLC:</span> Explicitly showcase how you utilized AI tools and techniques in various phases: requirements, design, coding, testing, and deployment preparation.</li>
+                    <li><span class="highlight">AI-Native Features:</span> Incorporate at least one intelligent, AI-native feature, such as a RAG system, a multi-agent collaboration, or a vision-to-code component.</li>
+                    <li><span class="highlight">Working Prototype:</span> Deliver a functional and demonstrable application. This could be a deployed web app, a runnable script, or a live demo.</li>
+                    <li><span class="highlight">Presentation:</span> Prepare a clear and concise presentation (10-15 minutes) demonstrating your project, highlighting the AI integrations, and sharing your key learnings and challenges.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Workshop Focus Areas</h4>
+                <p class="text-gray-300 mb-2">
+                    During this kickoff workshop, we'll focus on:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Proposal Finalization:</span> Refining your project idea, clearly defining its scope, and setting achievable objectives.</li>
+                    <li><span class="highlight">Team Formation:</span> Organizing into small teams for collaborative development (if applicable).</li>
+                    <li><span class="highlight">Technology Stack Alignment:</span> Ensuring your chosen AI tools, frameworks, and supporting technologies are appropriate and feasible for your project's goals.</li>
+                    <li><span class="highlight">AI Integration Strategy:</span> Clearly articulating *where* and *how* AI will be integrated into your project's architecture and workflows.</li>
+                    <li><span class="highlight">Achievable Scope:</span> Breaking down the project into manageable milestones and tasks for the remaining two dedicated project days (Days 9 and 10).</li>
+                    <li><span class="highlight">Initial Feedback:</span> Receiving direct, constructive feedback from instructors to help guide your development path.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Thought:</span> "This is your ultimate opportunity to build something truly impactful and showcase your newfound AI engineering skills. Don't be afraid to be ambitious and innovative, but also be realistic about what's achievable in the remaining time. Focus on demonstrating the *AI-driven* aspects of your development process."
+                </p>
+            </div>
+        </section>
+
+        <!-- Daily Wrap-up & Q&A -->
+        <section id="wrap-up" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Daily Wrap-up & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Key Takeaways</h4>
+                <ul class="syntax-list">
+                    <li>**Model Context Protocol (MCP)** standardizes how we provide complex context to LLMs, improving agent reliability and security.</li>
+                    <li>**Agent-to-Agent (A2A) Protocol** enables autonomous agents to discover, understand, and securely communicate with each other, fostering decentralized collaboration.</li>
+                    <li>**Image-to-code generation** leverages multi-modal AI to translate visual designs into functional code, dramatically accelerating UI development.</li>
+                    <li>The Capstone Project is the pinnacle of the program, where you'll apply all AI-driven SDLC concepts to build a tangible, intelligent application.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Daily Wrap-up & Capstone Project Kickoff (30 min)</h4>
+                <p class="text-gray-300 italic">
+                    We'll consolidate today's deep dive into multi-modal AI, evaluation techniques, and AI security. The majority of this session will be dedicated to officially kicking off the Capstone Project, forming teams, and reviewing initial proposals.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Preview Day 8</h4>
+                <p class="text-gray-300">
+                    Tomorrow, we'll focus on **Vision, Evaluation, & Security** for AI systems. We'll delve deeper into multi-modal AI for UI generation and, crucially, learn to evaluate AI agent performance, implement robust safety guardrails, and use 'Red Teaming' techniques to find vulnerabilities. This is about building responsible and resilient AI applications!
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 p-4 text-center text-gray-400 text-sm">
+        <p>&copy; 2025 Booz Allen Hamilton Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const arrow = this.querySelector('.arrow');
+
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        arrow.innerHTML = '&#9660;'; // Down arrow
+                    } else {
+                        content.classList.add('open');
+                        arrow.innerHTML = '&#9650;'; // Up arrow
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

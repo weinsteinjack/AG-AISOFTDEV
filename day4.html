@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 4: AI Agent Frameworks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #63b3ed; /* Blue accent */
+            border-radius: 9999px;
+        }
+        .card {
+            background-color: #2d3748; /* Slightly lighter dark for cards */
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-weight: 600;
+            color: #90cdf4; /* Light blue for interactive headers */
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.open {
+            max-height: 2000px; /* Arbitrarily large value to allow content to expand */
+            transition: max-height 0.5s ease-in;
+        }
+        .code-block {
+            background-color: #232d3a; /* Even darker for code blocks */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Cascadia Code', monospace; /* Monospaced font for code */
+            font-size: 0.9em;
+            color: #a0aec0; /* Lighter gray for code */
+        }
+        .highlight {
+            color: #4fd1c5; /* Teal for highlights */
+        }
+        .accent-text {
+            color: #63b3ed; /* Blue accent */
+        }
+        .spark-creativity {
+            background-color: #3a4a5c; /* A slightly different shade for creativity boxes */
+            border-left: 4px solid #f6ad55; /* Orange accent */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #cbd5e0;
+        }
+        .syntax-list {
+            list-style-type: none; /* Remove default bullet */
+            padding-left: 0;
+        }
+        .syntax-list li {
+            position: relative;
+            padding-left: 1.5em; /* Space for custom bullet */
+            margin-bottom: 0.5em;
+        }
+        .syntax-list li::before {
+            content: '›'; /* Chevron bullet */
+            position: absolute;
+            left: 0;
+            color: #4fd1c5; /* Teal for bullet */
+            font-weight: bold;
+        }
+        .syntax-list.chevrons-only li::before {
+            content: '»'; /* Double chevron */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-gray-800 p-4 sticky top-0 z-50 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white"><span class="accent-text">AI-Driven</span> SWE Program</h1>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#day3-recap" class="text-gray-300 hover:text-white transition duration-300">Day 3 Recap</a></li>
+                    <li><a href="#intro-agents" class="text-gray-300 hover:text-white transition duration-300">Intro to Agents</a></li>
+                    <li><a href="#framework-setup" class="text-gray-300 hover:text-white transition duration-300">Frameworks</a></li>
+                    <li><a href="#tools-integration" class="text-gray-300 hover:text-white transition duration-300">Tools</a></li>
+                    <li><a href="#memory-systems" class="text-gray-300 hover:text-white transition duration-300">Memory</a></li>
+                    <li><a href="#multi-agent" class="text-gray-300 hover:text-white transition duration-300">Multi-Agent</a></li>
+                    <li><a href="#comparisons" class="text-gray-300 hover:text-white transition duration-300">Comparisons</a></li>
+                    <li><a href="#choosing-framework" class="text-gray-300 hover:text-white transition duration-300">Choosing</a></li>
+                    <li><a href="#wrap-up" class="text-gray-300 hover:text-white transition duration-300">Wrap-up</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <section id="day4-intro" class="text-center my-10">
+            <h2 class="text-5xl font-extrabold text-white mb-4">Day 4: Comprehensive Guide to AI Agent Frameworks</h2>
+            <p class="text-xl text-gray-400">
+                <span class="accent-text">Theme:</span> Building autonomous AI systems that perceive, reason, and act.
+            </p>
+            <p class="text-lg text-gray-400 mt-2">
+                <span class="accent-text">Core Question:</span> How do we select and leverage the right AI agent framework to develop intelligent, goal-oriented applications?
+            </p>
+        </section>
+
+        <!-- Day 3 Recap & Q&A -->
+        <section id="day3-recap" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Day 3 Recap & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Recap (15 min)</h4>
+                <p class="text-gray-300 mb-4">
+                    Yesterday, we immersed ourselves in the practical realm of AI-assisted development. We discovered how AI can act as your coding partner, enhancing various stages of the software creation process. Key areas we explored included:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">AI Pair Programming:</span> Leveraging tools like GitHub Copilot to accelerate code generation, smart completions, and even proactive bug detection.</li>
+                    <li><span class="highlight">Code Refactoring with LLMs:</span> Using AI to clean up code, improve readability, apply design principles, and optimize existing logic without altering functionality.</li>
+                    <li><span class="highlight">Automated Documentation:</span> Generating essential docstrings, inline comments, and comprehensive README files directly from code and project context.</li>
+                    <li><span class="highlight">Bridging Design to Code:</span> Connecting our AI-generated database schemas to live FastAPI backends, transforming theoretical designs into functional applications.</li>
+                </ul>
+                <p class="text-gray-300 mt-4">
+                    This hands-on experience demonstrated how AI can significantly boost developer productivity and code quality.
+                </p>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"Given AI's growing ability to write and refactor code, how do you foresee the essential skills for a software engineer evolving over the next 5-10 years? What new competencies will become paramount?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Focus will shift from rote coding to prompt engineering, critical evaluation of AI output, understanding system architecture, debugging complex AI-generated issues, and ensuring ethical AI use. Human skills like creativity, problem-solving, and collaboration will be amplified.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Q&A (15 min)</h4>
+                <p class="text-gray-300">
+                    This segment is dedicated to addressing any questions regarding Day 3's concepts or labs. We encourage sharing successful prompts or interesting AI outputs observed. Your practical experiences are invaluable learning opportunities for everyone.
+                </p>
+            </div>
+        </section>
+
+        <!-- Introduction to AI Agents -->
+        <section id="intro-agents" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Introduction to AI Agents</h3>
+            <p class="text-gray-300 mb-6">
+                Beyond simply responding to queries, AI agents represent a paradigm shift in how we build intelligent software. They are autonomous entities capable of perceiving their environment, making reasoned decisions, and executing actions to achieve specific goals. This moves us from static applications to dynamic, goal-oriented systems.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">What Makes an AI Agent Different?</h4>
+                <p class="text-gray-300 mb-2">
+                    Unlike traditional programs, agents exhibit a degree of autonomy and intelligence. They can:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Execute Actions:</span> Agents can interact with external systems, databases, or APIs by using specialized tools and functions. Think of them as having 'hands' to manipulate their environment.</li>
+                    <li><span class="highlight">Maintain State:</span> They remember past interactions, context, and information across multiple turns, allowing for coherent and continuous conversations or workflows.</li>
+                    <li><span class="highlight">Reason and Plan:</span> Given a complex objective, agents can break it down into a sequence of smaller, manageable steps, devising a plan to achieve the goal.</li>
+                    <li><span class="highlight">Collaborate:</span> Multiple agents can work together, each specializing in a different aspect of a problem, to solve challenges beyond the scope of a single agent.</li>
+                    <li><span class="highlight">Learn and Adapt:</span> Over time, with appropriate feedback mechanisms, agents can refine their strategies and improve their performance.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Core Components of AI Agents</h4>
+                <p class="text-gray-300 mb-2">
+                    At their heart, most AI agents share a common architecture:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Language Model (LLM):</span> This is the 'brain' of the agent, responsible for processing information, understanding intent, making decisions, and generating responses.</li>
+                    <li><span class="highlight">Tools/Functions:</span> These are the 'hands' and 'eyes' of the agent – capabilities that allow it to interact with external systems, fetch data, perform calculations, or trigger actions (e.g., a web search tool, a code interpreter).</li>
+                    <li><span class="highlight">Memory:</span> This component stores and retrieves context, conversation history, and relevant information, enabling the agent to maintain state across interactions.</li>
+                    <li><span class="highlight">Orchestration/Reasoning Logic:</span> This is the 'decision-maker' that manages the agent's internal thought process, determining when to use a tool, what to remember, or how to plan its next action.</li>
+                    <li><span class="highlight">Environment:</span> The context in which the agent operates, including available data, systems, and constraints.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Why Use AI Agent Frameworks?</h4>
+                <p class="text-gray-300 mb-2">
+                    Building robust AI agents from scratch can be complex. Frameworks provide essential abstractions and utilities that simplify development, allowing you to focus on the agent's core logic rather than boilerplate. They handle:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Streamlined Tool Integration:</span> Simplifying how agents discover and call external functions.</li>
+                    <li><span class="highlight">Automated Memory Management:</span> Handling the complexities of storing and retrieving conversational context.</li>
+                    <li><span class="highlight">Multi-Agent Coordination:</span> Providing mechanisms for multiple agents to collaborate effectively.</li>
+                    <li><span class="highlight">Robust Error Handling:</span> Implementing strategies for graceful failure and recovery.</li>
+                    <li><span class="highlight">Built-in Monitoring:</span> Offering tools for observing agent behavior and debugging workflows.</li>
+                </ul>
+                <p class="text-gray-300 mt-4">
+                    Today, we'll explore five major AI agent frameworks, starting with their basic implementations and progressively adding complexity to understand their unique strengths.
+                </p>
+            </div>
+        </section>
+
+        <!-- Framework Setup and Basic Agents -->
+        <section id="framework-setup" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Framework Setup and Basic Agents</h3>
+            <p class="text-gray-300 mb-6">
+                Getting started with AI agents often begins with a simple 'Hello World' example. These foundational setups demonstrate how to initialize an agent and run a basic query. Understanding these core patterns is key to appreciating the more advanced features each framework offers.
+            </p>
+
+            <!-- OpenAI Agents -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>OpenAI Agents: Lightweight & Production-Ready</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        OpenAI Agents SDK is a sleek, production-oriented framework designed as an evolution of OpenAI's earlier experimental agent work. It prioritizes simplicity and performance, making it ideal for straightforward agent deployments.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Installation:</h5>
+                    <div class="code-block">
+                        <pre><code># Create virtual environment
+python -m venv agents-env
+source agents-env/bin/activate  # Windows: agents-env\Scripts\activate
+
+# Install OpenAI Agents
+pip install openai-agents
+
+# Set API key (important for authentication)
+export OPENAI_API_KEY="your-api-key-here"</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Hello World Agent:</h5>
+                    <div class="code-block">
+                        <pre><code>from agents import Agent, Runner
+import asyncio
+
+# Create the simplest possible agent
+agent = Agent(
+    name="Assistant",  # Required: identifies the agent
+    instructions="You are a helpful assistant"  # Defines the agent's core behavior
+)
+
+# Synchronous execution (quick for simple scripts)
+result_sync = Runner.run_sync(agent, "Write a haiku about Python programming.")
+print(f"Sync Result: {result_sync.final_output}")
+
+# Asynchronous execution (recommended for production, handles I/O efficiently)
+async def main():
+    result_async = await Runner.run(agent, "What is the capital of France?")
+    print(f"Async Result: {result_async.final_output}")
+
+if __name__ == "__main__":
+    asyncio.run(main())</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>Agent</code>:</span> The fundamental class representing an AI agent, encapsulating its identity and instructions.</li>
+                        <li><span class="highlight"><code>Runner</code>:</span> The utility that orchestrates the agent's execution and manages the conversation flow.</li>
+                        <li><span class="highlight"><code>instructions</code>:</span> This is akin to a system prompt, defining the agent's persona and core directives.</li>
+                        <li>Supports both synchronous (blocking) and asynchronous (non-blocking) execution patterns, offering flexibility for different application needs.</li>
+                    </ul>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Why it matters:</p>
+                        <p>OpenAI Agents are designed for developers who need a straightforward path to deploying production-ready agents without excessive overhead. Their simplicity makes them excellent for quick prototypes and focused tasks. Imagine building a simple internal Q&A bot that provides concise, direct answers based on a defined persona.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HuggingFace smolagents -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>HuggingFace smolagents: The Code-First Approach</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        smolagents is a unique, lightweight framework that introduces a "code agents" paradigm. Instead of relying solely on JSON tool calls, these agents write and execute Python code to perform actions, offering a more natural and composable way to extend agent capabilities.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Installation:</h5>
+                    <div class="code-block">
+                        <pre><code>pip install smolagents
+
+# Optional dependencies for enhanced capabilities
+pip install smolagents[search]  # For web search functionality
+pip install smolagents[e2b]     # For secure, sandboxed code execution
+
+# Authentication (necessary for Hugging Face models)
+from huggingface_hub import login
+login('YOUR-HF-API-KEY')</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Hello World Agent:</h5>
+                    <div class="code-block">
+                        <pre><code>from smolagents import CodeAgent, InferenceClientModel
+
+# Initialize a model (defaults to a suitable Hugging Face model via Inference API)
+model = InferenceClientModel()
+
+# Create an agent with no external tools initially
+agent = CodeAgent(tools=[], model=model)
+
+# Run the agent with a simple computational task
+result = agent.run("Calculate the sum of numbers from 1 to 10")
+print(result)</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>CodeAgent</code>:</span> The core agent type that generates and executes Python code to fulfill tasks.</li>
+                        <li><span class="highlight"><code>InferenceClientModel</code>:</span> Provides a unified gateway to various LLM providers, primarily Hugging Face models.</li>
+                        <li>Emphasizes a code-first approach, allowing for highly natural and composable actions directly within the Python environment.</li>
+                    </ul>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Why it matters:</p>
+                        <p>smolagents is perfect for tasks requiring dynamic, on-the-fly computation or complex data manipulation. Think of it for scientific computing, data analysis, or even automating complex scripting tasks where the agent needs to write and execute custom logic. It's a powerful choice when you need the agent to be a true 'programmer'.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Microsoft AutoGen -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Microsoft AutoGen: Orchestrating Multi-Agent Teams</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        AutoGen, developed by Microsoft, stands out for its robust support for multi-agent scenarios. Its event-driven architecture and flexible abstractions make it an excellent choice for orchestrating complex workflows where multiple specialized AI agents collaborate to achieve a common goal.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Installation:</h5>
+                    <div class="code-block">
+                        <pre><code># Install core AgentChat and OpenAI client for AutoGen
+pip install -U "autogen-agentchat" "autogen-ext[openai]"
+
+# Optional: AutoGen Studio for visual development and experimentation
+pip install -U "autogenstudio"
+
+# Set API key (for OpenAI models)
+export OPENAI_API_KEY="your-openai-api-key"</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Hello World Agent:</h5>
+                    <div class="code-block">
+                        <pre><code>import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+async def main():
+    # Initialize the model client (e.g., connecting to GPT-4o)
+    model_client = OpenAIChatCompletionClient(model="gpt-4o")
+    
+    # Create an assistant agent with a defined role
+    agent = AssistantAgent(
+        name="assistant",
+        model_client=model_client,
+        system_message="You are a helpful AI assistant. Be concise and clear.",
+        description="An agent that provides assistance with general tasks."
+    )
+    
+    # Run the agent with a simple task
+    result = await agent.run(task="Say 'Hello World!' and briefly explain what you can help with.")
+    print(result.messages[-1].content) # Access the last message content
+    
+    # Ensure to close the model client connection
+    await model_client.close()
+
+asyncio.run(main())</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>AssistantAgent</code>:</span> The primary agent type for task completion, designed for conversational interaction.</li>
+                        <li><span class="highlight"><code>model_client</code>:</span> An abstraction layer that allows AutoGen to connect to various LLM providers seamlessly.</li>
+                        <li>Features an event-driven, asynchronous architecture for efficient handling of concurrent agent interactions.</li>
+                        <li>Offers robust, built-in support for orchestrating complex multi-agent scenarios.</li>
+                    </ul>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Why it matters:</p>
+                        <p>AutoGen is a powerhouse for enterprise-grade applications requiring complex, automated workflows. Imagine a team of AI agents collaborating to write a blog post (researcher, writer, editor), or a customer support system where a triage agent hands off to a specialist based on query complexity. Its strength lies in orchestrating intelligent conversations between multiple AI entities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CrewAI -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>CrewAI: The Collaborative Team Approach</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        CrewAI takes a unique, intuitive approach by treating AI agents as specialized team members. Each agent is assigned a distinct role, specific goals, and a backstory, fostering a sense of collaborative intelligence within a 'crew' that works together to achieve a shared objective.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Installation:</h5>
+                    <div class="code-block">
+                        <pre><code># Install CrewAI
+pip install crewai
+
+# You can also start a new project with a template
+crewai create crew my_project
+cd my_project</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Hello World Agent:</h5>
+                    <div class="code-block">
+                        <pre><code>from crewai import Agent, Task, Crew, Process
+
+# Define a simple agent with a clear role, goal, and backstory
+researcher = Agent(
+    role="Research Assistant",
+    goal="Help users find accurate information quickly",
+    backstory="""You are an experienced research assistant 
+    with a talent for finding precise and reliable information from various sources.""",
+    verbose=True, # Shows agent's thought process
+    allow_delegation=False # Agent handles tasks directly, doesn't pass to others
+)
+
+# Define a specific task for the researcher agent
+research_task = Task(
+    description="Research the core benefits and applications of AI agents in software engineering.",
+    expected_output="A concise, bullet-point summary of AI agent benefits in SWE.",
+    agent=researcher # Assign the task to the researcher agent
+)
+
+# Create a crew, which orchestrates the agents and tasks
+crew = Crew(
+    agents=[researcher], # List of agents in this crew
+    tasks=[research_task], # List of tasks for the crew
+    process=Process.sequential, # Tasks are executed one after another
+    verbose=True # Shows crew's execution flow
+)
+
+# Execute the crew's workflow
+result = crew.kickoff()
+print(result.raw) # Print the raw output from the crew</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>Agent</code>:</span> An autonomous entity defined by its `role`, `goal`, and `backstory`, which influences its behavior.</li>
+                        <li><span class="highlight"><code>Task</code>:</span> A specific assignment for an agent, with a clear `description` and `expected_output`.</li>
+                        <li><span class="highlight"><code>Crew</code>:</span> The central orchestrator that manages a collection of agents and their assigned tasks, defining the overall workflow.</li>
+                        <li>Emphasizes a role-based approach to agent design, making it intuitive to model real-world team collaborations.</li>
+                    </ul>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Why it matters:</p>
+                        <p>CrewAI is ideal for automating workflows that naturally map to human team structures. Think content creation (researcher, writer, editor), project management (planner, developer, QA), or even sales operations (lead qualifier, outreach specialist). Its intuitive metaphor makes complex multi-agent systems accessible and easy to design.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LangChain -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>LangChain: Maximum Flexibility & Ecosystem</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        LangChain provides an incredibly extensive set of abstractions and integrations, making it perhaps the most flexible framework. While it might have a slightly steeper learning curve due to its breadth, its vast ecosystem allows for highly customized and complex agentic solutions.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Installation:</h5>
+                    <div class="code-block">
+                        <pre><code># Install core LangChain components
+pip install langchain langchain-community
+
+# Install specific model providers (e.g., OpenAI)
+pip install langchain-openai
+
+# Install LangGraph for advanced, stateful agent workflows
+pip install langgraph
+
+# Set your OpenAI API key
+export OPENAI_API_KEY="your-api-key"</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Hello World Agent:</h5>
+                    <div class="code-block">
+                        <pre><code>from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import HumanMessage # For explicit message types
+
+# Initialize the LLM model
+model = ChatOpenAI(model="gpt-4") # Or "gpt-4o", "gemini-pro", etc.
+
+# Initialize a memory system for the agent
+memory = MemorySaver()
+
+# Create a basic ReAct agent (no tools yet, but ready for them)
+agent_executor = create_react_agent(
+    model, 
+    tools=[],  # Initially empty list of tools
+    checkpointer=memory # Connects the agent to the memory system
+)
+
+# Invoke the agent with a user message. Config handles session state.
+config = {"configurable": {"thread_id": "abc123"}} # Unique ID for conversation thread
+response = agent_executor.invoke(
+    {"messages": [HumanMessage(content="Hello! What can you help me with?")]},
+    config=config
+)
+
+# Print the agent's final response
+print(response['messages'][-1].content)</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>create_react_agent</code>:</span> A factory function that simplifies building agents adhering to the ReAct (Reasoning and Acting) pattern.</li>
+                        <li><span class="highlight"><code>MemorySaver</code>:</span> A built-in component for managing conversation history and state, crucial for multi-turn interactions.</li>
+                        <li>Utilizes a message-based interaction model, where inputs and outputs are structured as lists of messages.</li>
+                        <li>Boasts an extensive ecosystem of integrations with various LLMs, tools, and data sources.</li>
+                    </ul>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Why it matters:</p>
+                        <p>LangChain is the go-to for developers who need ultimate control and flexibility. If you're building highly custom agent architectures, integrating with niche data sources, or designing complex multi-step reasoning chains, LangChain provides the modularity and vast library of components to achieve it. It's the Swiss Army knife of agent development.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools and Function Integration -->
+        <section id="tools-integration" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Tools and Function Integration</h3>
+            <p class="text-gray-300 mb-6">
+                AI agents gain their true power by interacting with the outside world. This is achieved through **tools** (also known as functions). Tools enable agents to perform actions beyond their core language model capabilities, such as searching the web, performing calculations, querying databases, or interacting with external APIs. Let's see how each framework facilitates this crucial integration.
+            </p>
+
+            <!-- OpenAI Agents - Tools -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>OpenAI Agents: Simple & Powerful Tool Decorators</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        OpenAI Agents make tool definition straightforward using a decorator. This automatically generates the necessary schema for the LLM to understand how and when to call your Python functions.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Basic Function Tools</h5>
+                    <div class="code-block">
+                        <pre><code>from agents import Agent, Runner, function_tool
+import asyncio
+
+# Define a simple tool using the @function_tool decorator
+@function_tool
+def get_weather(city: str) -> str:
+    """Get the current weather for a specified city.
+    
+    Args:
+        city: The name of the city (e.g., "London", "Tokyo").
+    """
+    # In a real application, this would call an actual weather API
+    return f"The weather in {city} is sunny and 72°F."
+
+# Define another tool for calculations
+@function_tool
+def calculate_sum(numbers: list[float]) -> float:
+    """Calculate the sum of a list of numbers.
+    
+    Args:
+        numbers: A list of floating-point numbers.
+    """
+    return sum(numbers)
+
+# Create the agent and provide it with the defined tools
+agent = Agent(
+    name="Utility Assistant",
+    instructions="Help users by providing weather information and performing calculations.",
+    tools=[get_weather, calculate_sum] # Pass the function objects as tools
+)
+
+async def main():
+    # Agent will decide which tool(s) to use based on the query
+    query = "What's the weather like in Tokyo? Also, what's the sum of 10, 20, and 30?"
+    result = await Runner.run(agent, query)
+    print(result.final_output)
+
+asyncio.run(main())</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Advanced Tool with Context</h5>
+                    <p class="text-gray-300 mb-2">
+                        You can also pass contextual information, like user details, to tools using `RunContextWrapper`.
+                    </p>
+                    <div class="code-block">
+                        <pre><code>from agents import function_tool, RunContextWrapper
+from dataclasses import dataclass
+
+@dataclass
+class UserContext: # Define a dataclass for user-specific context
+    user_id: str
+    preferences: dict
+
+@function_tool
+async def get_user_preferences(
+    ctx: RunContextWrapper[UserContext], # Tool receives a context wrapper
+    category: str
+) -> str:
+    """Get user preferences for a specific category.
+    
+    Args:
+        category: The preference category (e.g., "notifications", "theme").
+    """
+    user_context = ctx.context # Access the user context
+    prefs = user_context.preferences.get(category, "No preferences set for this category.")
+    return f"User {user_context.user_id} preferences for {category}: {prefs}"
+
+# To run this, you'd pass a UserContext instance to Runner.run(agent, ..., context=UserContext(...))
+# Example usage:
+# user_specific_agent = Agent(name="Personal Assistant", instructions="...", tools=[get_user_preferences])
+# user_context_data = UserContext(user_id="user_abc", preferences={"notifications": "email", "theme": "dark"})
+# result = await Runner.run(user_specific_agent, "What are my notification preferences?", context=user_context_data)
+# print(result.final_output)</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>This decorator-based approach is incredibly clean for exposing existing Python functions as agent tools. Imagine a financial assistant agent that can `get_stock_price(symbol: str)` or `calculate_loan_payment(amount, rate, term)`. The simplicity means faster development and easier maintenance of your agent's capabilities. The context passing is vital for personalized agent interactions, where tools need to know about the current user or session state.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HuggingFace smolagents - Tools -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>HuggingFace smolagents: Code Execution as a Tool</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        smolagents' unique "code agent" paradigm means agents can write and execute Python code directly. Tools are functions that the agent can *call within its generated code*. This offers immense flexibility for complex, dynamic tasks.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Custom Tool with Decorator</h5>
+                    <div class="code-block">
+                        <pre><code>from smolagents import CodeAgent, InferenceClientModel, tool
+import datetime
+import pytz # Make sure pytz is installed: pip install pytz
+
+# Create a custom tool using the @tool decorator
+@tool
+def get_current_time_in_timezone(timezone: str) -> str:
+    """A tool that fetches the current time in a specified timezone.
+    
+    Args:
+        timezone: A valid timezone string (e.g., 'America/New_York', 'Asia/Tokyo').
+    """
+    try:
+        tz = pytz.timezone(timezone)
+        local_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S %Z%z")
+        return f"The current time in {timezone} is: {local_time}"
+    except Exception as e:
+        return f"Error: Invalid timezone or other issue: {str(e)}"
+
+# Create the agent, providing the custom tool and authorized imports
+model = InferenceClientModel()
+agent = CodeAgent(
+    tools=[get_current_time_in_timezone], # Agent can now use this tool
+    model=model,
+    # Crucial: explicitly allow imports the agent might use in its generated code
+    additional_authorized_imports=["datetime", "pytz"] 
+)
+
+# The agent will generate Python code to call the tool
+result = agent.run("What time is it right now in Tokyo and New York? Provide both.")
+print(result)</code></pre>
+                    </div>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Class-based Tool Definition</h5>
+                    <p class="text-gray-300 mb-2">
+                        For more complex tools, you can define them as classes inheriting from `smolagents.Tool`.
+                    </p>
+                    <div class="code-block">
+                        <pre><code>from smolagents import Tool
+
+class WeatherTool(Tool):
+    name = "weather_checker" # Unique name for the tool
+    description = "Gets current weather information for a given city."
+    inputs = { # Define the expected inputs with types and descriptions
+        "city": {
+            "type": "string",
+            "description": "The name of the city to check weather for."
+        }
+    }
+    output_type = "string" # Define the expected output type
+    
+    def forward(self, city: str) -> str:
+        # This is where the actual logic for fetching weather would go
+        # For demonstration, it's a mock implementation:
+        return f"Weather in {city}: 22°C, Partly cloudy with a chance of AI."
+
+# To use:
+# agent_with_weather = CodeAgent(tools=[WeatherTool()], model=model)
+# result = agent_with_weather.run("What's the weather in Paris?")
+# print(result)</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>smolagents is incredibly powerful for tasks that demand dynamic scripting. Imagine an agent that needs to analyze a CSV file, write a quick Python script to calculate statistics, or even interact with a local file system. Its ability to generate and execute code makes it a true 'developer agent'. The `additional_authorized_imports` is a critical security feature, allowing you to control what libraries the agent's generated code can access.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AutoGen - Tools -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>AutoGen: Robust Tooling for Collaborative Agents</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        AutoGen provides a flexible way to define tools as asynchronous Python functions. These tools can then be seamlessly integrated into your `AssistantAgent` instances, allowing them to perform external actions within multi-agent conversations.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Multiple Custom Tools</h5>
+                    <div class="code-block">
+                        <pre><code>import asyncio
+from typing import Annotated # For clear type hints and descriptions
+from autogen_agentchat.agents import AssistantAgent
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+# Define an asynchronous tool to get weather information
+async def get_weather(location: Annotated[str, "The city name to get weather for"]) -> str:
+    """Get current weather for a specified location."""
+    # Simulate an API call
+    await asyncio.sleep(0.5) # Simulate network delay
+    return f"The weather in {location} is sunny and 72°F with a gentle AI breeze."
+
+# Define a synchronous tool to calculate a tip
+def calculate_tip(
+    bill_amount: Annotated[float, "The total bill amount"], 
+    tip_percentage: Annotated[float, "The tip percentage (e.g., 0.18 for 18%)"]
+) -> str:
+    """Calculate the tip amount and total bill."""
+    tip = bill_amount * tip_percentage
+    total = bill_amount + tip
+    return f"Calculated: Tip: ${tip:.2f}, Total: ${total:.2f}"
+
+async def main():
+    # Initialize the model client
+    model_client = OpenAIChatCompletionClient(model="gpt-4o")
+    
+    # Create an assistant agent and provide it with the defined tools
+    agent = AssistantAgent(
+        name="assistant_with_tools",
+        model_client=model_client,
+        tools=[get_weather, calculate_tip], # List of tools the agent can use
+        system_message="You are a helpful assistant capable of providing weather information and performing calculations."
+    )
+    
+    # Run the agent with a task requiring multiple tool calls
+    query = "What's the weather in New York? Also, calculate an 18% tip on a bill of $45.50."
+    result = await agent.run(task=query)
+    print(result.messages[-1].content) # Print the agent's final response
+    
+    await model_client.close()
+
+asyncio.run(main())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>AutoGen's tool integration is highly effective for building agents that participate in complex, multi-turn conversations where tools are dynamically invoked. Consider a project management bot that can `create_jira_ticket(summary, description)` or `update_sprint_status(sprint_id, status)`. The clear type annotations (`Annotated`) improve the LLM's understanding of tool parameters, leading to more reliable tool calls.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CrewAI - Tools -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>CrewAI: Tools as Agent Capabilities</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        CrewAI integrates tools directly into the agent's definition, making them part of the agent's inherent capabilities. It supports both built-in tools (like web search) and custom functions, allowing agents to perform specific actions aligned with their roles.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Built-in & Custom Tools</h5>
+                    <div class="code-block">
+                        <pre><code>from crewai import Agent, tool
+from crewai_tools import SerperDevTool, ScrapeWebsiteTool # Popular built-in tools
+
+# Initialize built-in tools
+search_tool = SerperDevTool()  # Tool for web searching (requires Serper API key)
+scrape_tool = ScrapeWebsiteTool()  # Tool for scraping content from websites
+
+# Define a custom tool using the @tool decorator
+@tool("Calculate Statistics") # Name the tool for the LLM
+def calculate_statistics(numbers: list[float]) -> dict:
+    """Calculate basic statistics (mean, median, std dev, min, max) for a list of numbers.
+    
+    Args:
+        numbers: A list of floating-point numbers.
+    """
+    import statistics # Import inside the function to avoid global dependencies
+    
+    if not numbers:
+        return {"error": "Input list cannot be empty."}
+
+    return {
+        'mean': statistics.mean(numbers),
+        'median': statistics.median(numbers),
+        'std_dev': statistics.stdev(numbers) if len(numbers) > 1 else 0,
+        'min': min(numbers),
+        'max': max(numbers)
+    }
+
+# Define an agent and assign it the relevant tools
+analyst = Agent(
+    role="Data Analyst",
+    goal="Analyze data and provide insightful statistical summaries",
+    backstory="""You are an expert statistician with years of experience 
+    in quantitative analysis and data interpretation.""",
+    tools=[search_tool, calculate_statistics], # Agent has access to these tools
+    verbose=True # See the agent's thought process
+)
+
+# You would then define tasks for this agent and add it to a Crew
+# Example usage (not runnable without full Crew setup):
+# analysis_task = Task(description="Analyze sales data and provide key statistics.", agent=analyst)
+# crew = Crew(agents=[analyst], tasks=[analysis_task], process=Process.sequential)
+# result = crew.kickoff()</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>CrewAI's tool integration is intuitive for building agents with well-defined roles. Imagine a content researcher agent with a `web_search` tool, or a sales agent with a `CRM_lookup` tool. The ability to assign tools directly to roles enhances the agent's specialized behavior, making it easier to design complex, multi-step workflows where each 'team member' uses their specific capabilities.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LangChain - Tools -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>LangChain: The Most Extensive Tool Library</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        LangChain offers unparalleled flexibility in defining and integrating tools. It boasts an enormous library of pre-built tools for various services and allows for easy creation of custom tools using decorators or explicit `BaseTool` classes.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Built-in & Custom Tools</h5>
+                    <div class="code-block">
+                        <pre><code>from langchain_core.tools import tool # For custom tool creation
+from langchain_community.tools import DuckDuckGoSearchRun # A popular web search tool
+from langchain_experimental.tools import PythonREPLTool # Tool to execute Python code
+from typing import Annotated # For detailed type hints in tools
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver # For agent memory
+
+# Initialize the LLM model
+model = ChatOpenAI(model="gpt-4") # Use a capable model for tool use
+
+# Built-in tools:
+search_tool = DuckDuckGoSearchRun() # Performs web searches
+python_repl_tool = PythonREPLTool() # Executes Python code in a REPL environment
+
+# Custom tool with a decorator
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two integers together. Use this tool for multiplication operations."""
+    return a * b
+
+# Advanced custom tool with type annotations for clarity
+@tool
+def search_internal_database(
+    query: Annotated[str, "The search query for the internal database"],
+    limit: Annotated[int, "Maximum number of results to return"] = 10
+) -> str:
+    """Search an internal, proprietary database for specific information.
+    Useful for retrieving company-specific documents or data."""
+    # In a real scenario, this would connect to your actual database
+    return f"Found {limit} relevant results in the internal database for query: '{query}'"
+
+# Combine all tools for the agent
+tools = [search_tool, python_repl_tool, multiply, search_internal_database]
+
+# Create a ReAct agent with the defined tools
+memory = MemorySaver() # For persistent conversations
+agent_executor = create_react_agent(model, tools, checkpointer=memory)
+
+# Example invocation (agent decides which tool to use)
+async def run_agent_with_tools():
+    config = {"configurable": {"thread_id": "tool_demo_user"}}
+    
+    # Query requiring web search
+    response1 = await agent_executor.invoke(
+        {"messages": [HumanMessage(content="What is the capital of Canada?")]},
+        config=config
+    )
+    print(f"Query 1: {response1['messages'][-1].content}\n")
+
+    # Query requiring multiplication
+    response2 = await agent_executor.invoke(
+        {"messages": [HumanMessage(content="What is 15 multiplied by 23?")]},
+        config=config
+    )
+    print(f"Query 2: {response2['messages'][-1'].content}\n")
+
+    # Query requiring internal database search
+    response3 = await agent_executor.invoke(
+        {"messages": [HumanMessage(content="Search our internal database for 'Q3 sales report' and give me the top 5 results.")]},
+        config=config
+    )
+    print(f"Query 3: {response3['messages'][-1].content}\n")
+
+# To run this, uncomment the line below and execute in an async environment
+# asyncio.run(run_agent_with_tools())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>LangChain's extensive tool ecosystem makes it incredibly versatile. You can build agents that interact with almost anything: Google Calendar, Jira, Salesforce, custom internal APIs, or even complex data visualization libraries. This breadth is crucial for enterprise applications where agents need to automate workflows spanning diverse systems. The clear `Annotated` types help the LLM understand complex tool signatures.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Memory Systems -->
+        <section id="memory-systems" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Memory Systems</h3>
+            <p class="text-gray-300 mb-6">
+                For AI agents to engage in meaningful, multi-turn conversations and build on past knowledge, they need **memory**. Memory systems allow agents to maintain context across interactions, preventing them from repeating information or losing track of the conversation's history. This is fundamental for creating truly conversational and intelligent agents.
+            </p>
+
+            <!-- OpenAI Agents - Memory -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>OpenAI Agents: Persistent SQLite Sessions</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        OpenAI Agents provide a simple, built-in way to manage persistent conversation memory using SQLite sessions. This means conversation history can be stored locally and retrieved across different runs or user sessions.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Persistent Conversation Memory</h5>
+                    <div class="code-block">
+                        <pre><code>from agents import Agent, Runner, SQLiteSession
+import asyncio
+
+agent = Agent(
+    name="Memory Assistant",
+    instructions="You are a helpful assistant that remembers our conversation and personal details."
+)
+
+async def main():
+    # Create a persistent session for a specific user. This will create/use 'conversations.db'.
+    session_for_user_123 = SQLiteSession("user_123", "conversations.db")
+    
+    # === First conversation turn ===
+    print("--- Turn 1: User introduces themselves ---")
+    query1 = "My name is Alice and I love programming in Python."
+    result1 = await Runner.run(agent, query1, session=session_for_user_123)
+    print(f"Assistant: {result1.final_output}")
+    
+    # === Second conversation turn - agent remembers ===
+    print("\n--- Turn 2: User asks a follow-up ---")
+    query2 = "What programming language do I like?"
+    result2 = await Runner.run(agent, query2, session=session_for_user_123)
+    print(f"Assistant: {result2.final_output}")
+
+    # You can close the session when done, or it persists
+    # session_for_user_123.close() 
+
+asyncio.run(main())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>This is crucial for building personalized chatbots or virtual assistants. Imagine a customer support agent remembering a user's previous issues, or a personal finance assistant recalling your last budget query. Persistent memory allows for seamless, multi-turn interactions that feel natural and intelligent, significantly improving user experience.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HuggingFace smolagents - Memory -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>HuggingFace smolagents: Contextual Memory via Execution History</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        smolagents maintains memory primarily through the agent's execution history. By default, subsequent `run` calls on the same agent instance will build upon the previous context, allowing the agent to 'remember' past actions and outputs.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Contextual Awareness</h5>
+                    <div class="code-block">
+                        <pre><code>from smolagents import CodeAgent, InferenceClientModel
+
+model = InferenceClientModel()
+agent = CodeAgent(tools=[], model=model, verbosity_level=1) # verbosity_level shows internal steps
+
+# First task: Agent processes and remembers this information
+print("--- Task 1: Agent learns a fact ---")
+result1 = agent.run("Remember that my favorite color is blue.")
+print(f"Agent's response to Task 1: {result1}")
+
+# Second task: Agent leverages previous context (reset=False is default for same instance)
+print("\n--- Task 2: Agent recalls the fact ---")
+result2 = agent.run("What's my favorite color?") # No 'reset=False' needed, it's implicit for continued runs
+print(f"Agent's response to Task 2: {result2}")
+
+# Accessing the agent's internal memory (for inspection)
+print("\n--- Inspecting Agent's Internal Memory ---")
+print(f"Number of steps in memory: {len(agent.memory.steps)}")
+# You can further inspect agent.memory.steps to see the thought process and outputs</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>This memory model is highly effective for sequential problem-solving tasks, like a multi-step data analysis workflow where each step builds on the previous one. Imagine an agent that first loads a dataset, then cleans it, then performs calculations, all while remembering the state of the data. This implicit memory simplifies complex scripting and analytical tasks, as the agent maintains context through its execution history.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AutoGen - Memory -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>AutoGen: Buffered Chat Completion Context</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        AutoGen agents manage memory through a `BufferedChatCompletionContext` which stores recent messages. This allows agents to maintain a conversational history, crucial for multi-turn dialogues and collaborative agent teams.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Conversational History</h5>
+                    <div class="code-block">
+                        <pre><code>import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_core.model_context import BufferedChatCompletionContext # For managing memory buffer
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+async def memory_example():
+    model_client = OpenAIChatCompletionClient(model="gpt-4o")
+    
+    # Create a buffered context to manage conversation memory.
+    # buffer_size defines how many recent messages to remember.
+    model_context = BufferedChatCompletionContext(buffer_size=10) 
+    
+    # Create the agent and attach the model_context for memory
+    agent = AssistantAgent(
+        name="memory_agent",
+        model_client=model_client,
+        model_context=model_context, # Link the memory context to the agent
+        system_message="You are a helpful assistant that remembers our conversation history."
+    )
+    
+    # First interaction: Agent learns a detail
+    result1 = await agent.run(task="My name is Bob and I'm learning AI.")
+    print(f"Agent's response to Turn 1: {result1.messages[-1].content}")
+    
+    # Second interaction: Agent recalls the detail from memory
+    result2 = await agent.run(task="What's my name and what am I learning?")
+    print(f"Agent's response to Turn 2: {result2.messages[-1].content}")
+    
+    await model_client.close()
+
+asyncio.run(memory_example())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>AutoGen's memory is foundational for building sophisticated conversational agents and multi-agent teams. Imagine a virtual onboarding assistant that remembers a new hire's role and previous questions, providing tailored follow-ups. Or a coding assistant that recalls previous code snippets and error messages, offering context-aware debugging help. This enables natural, flowing interactions over extended periods.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CrewAI - Memory -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>CrewAI: Agent & Crew-Level Memory</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        CrewAI provides memory capabilities at both the individual agent level and the collective crew level. This allows agents to remember their own specific interactions and also share a common pool of knowledge within the team.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Shared & Individual Memory</h5>
+                    <div class="code-block">
+                        <pre><code>from crewai import Agent, Task, Crew, Process
+# Ensure you have crewai_tools installed if using SerperDevTool for web search
+# pip install crewai_tools
+
+# Create agents with memory enabled
+researcher = Agent(
+    role="Research Specialist",
+    goal="Gather and remember important information about AI agent frameworks",
+    backstory="Expert researcher with an excellent memory for details and facts.",
+    memory=True,  # Enable individual agent memory
+    verbose=True
+)
+
+analyst = Agent(
+    role="Data Analyst",
+    goal="Analyze information based on research findings and provide insights",
+    backstory="Analytical mind with meticulous attention to detail and a knack for synthesizing complex data.",
+    memory=True, # Enable individual agent memory
+    verbose=True
+)
+
+# Define tasks for the agents
+research_task = Task(
+    description="Research AI agent frameworks, focusing on their key features, strengths, and ideal use cases.",
+    expected_output="A concise summary of at least 3 popular AI agent frameworks with their main characteristics.",
+    agent=researcher
+)
+
+analysis_task = Task(
+    description="Based on the research, analyze which AI agent framework would be best suited for beginners in software engineering, providing clear reasoning.",
+    expected_output="A recommendation for a beginner-friendly AI agent framework, justified by research findings.",
+    agent=analyst,
+    context=[research_task]  # The analyst receives the researcher's output as context
+)
+
+# Create a crew with shared memory enabled
+content_crew = Crew(
+    agents=[researcher, analyst], # Agents participating in the crew
+    tasks=[research_task, analysis_task], # Tasks for the crew
+    process=Process.sequential, # Tasks run one after another
+    memory=True,  # Enable crew-level shared memory
+    verbose=True # See the detailed execution flow
+)
+
+# Execute the workflow
+result = content_crew.kickoff()
+print(result)</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>CrewAI's memory model is highly effective for collaborative workflows where agents need to build on each other's work. Imagine a content marketing team: the researcher gathers facts, the writer drafts an article, and the editor refines it. Each agent needs to remember the evolving content, and the shared crew memory ensures seamless handoffs and consistent context across the entire process. This mimics real human team dynamics very effectively.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LangChain - Memory -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>LangChain: Flexible Memory Backends & Multi-User Support</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        LangChain offers highly flexible memory management, allowing you to choose from various memory backends (in-memory, database, Redis, etc.) and explicitly manage conversation history. It also provides robust support for multi-user scenarios using unique thread IDs.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Multi-User Conversational Memory</h5>
+                    <div class="code-block">
+                        <pre><code>from langgraph.checkpoint.memory import MemorySaver # For in-memory checkpointing
+from langchain_core.messages import HumanMessage, AIMessage # Explicit message types
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+import asyncio
+
+# Create a memory system (in-memory for this example)
+memory_backend = MemorySaver()
+# Initialize the LLM model
+model = ChatOpenAI(model="gpt-4") # Or "gpt-4o"
+
+# Create a basic ReAct agent and attach the memory system
+agent_with_memory = create_react_agent(model, tools=[], checkpointer=memory_backend)
+
+async def run_multi_user_memory_demo():
+    # Define unique configuration for two different users
+    config_user1 = {"configurable": {"thread_id": "user_alice_session"}}
+    config_user2 = {"configurable": {"thread_id": "user_bob_session"}}
+
+    # === Interaction for User 1 (Alice) ===
+    print("--- User 1 (Alice) introduces herself ---")
+    response1_turn1 = await agent_with_memory.invoke(
+        {"messages": [HumanMessage(content="Hello! I'm Alice and I enjoy hiking.")]},
+        config_user1
+    )
+    print(f"Agent for Alice: {response1_turn1['messages'][-1].content}\n")
+
+    # === Interaction for User 2 (Bob) ===
+    print("--- User 2 (Bob) introduces himself ---")
+    response2_turn1 = await agent_with_memory.invoke(
+        {"messages": [HumanMessage(content="Hi there! My name is Bob and I'm into photography.")]},
+        config_user2
+    )
+    print(f"Agent for Bob: {response2_turn1['messages'][-1].content}\n")
+
+    # === Follow-up for User 1 (Alice) - agent should remember Alice's name ===
+    print("--- User 1 (Alice) asks a follow-up ---")
+    response1_turn2 = await agent_with_memory.invoke(
+        {"messages": [HumanMessage(content="What's my name and what's my hobby?")]},
+        config_user1
+    )
+    print(f"Agent for Alice: {response1_turn2['messages'][-1].content}\n")
+
+    # === Follow-up for User 2 (Bob) - agent should remember Bob's name ===
+    print("--- User 2 (Bob) asks a follow-up ---")
+    response2_turn2 = await agent_with_memory.invoke(
+        {"messages": [HumanMessage(content="Can you remind me of my name and hobby?")]},
+        config_user2
+    )
+    print(f"Agent for Bob: {response2_turn2['messages'][-1].content}\n")
+
+# To run this, uncomment the line below and execute in an async environment
+# asyncio.run(run_multi_user_memory_demo())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>LangChain's memory system is critical for building scalable, multi-user AI applications. Imagine a personalized learning platform where each student's progress and questions are remembered across sessions, or a complex enterprise knowledge base where different users have distinct conversational histories. This flexibility in memory management allows for highly customized and stateful user experiences, essential for production-grade AI systems.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multi-Agent Interaction -->
+        <section id="multi-agent" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Multi-Agent Interaction</h3>
+            <p class="text-gray-300 mb-6">
+                The true frontier of AI agents lies in **multi-agent systems**. These are architectures where multiple specialized agents collaborate, communicate, and delegate tasks to solve problems that are too complex for a single agent. This mimics human team dynamics, allowing for more robust, scalable, and intelligent solutions.
+            </p>
+
+            <!-- OpenAI Agents - Multi-Agent -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>OpenAI Agents: Simple Handoffs for Specialization</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        OpenAI Agents facilitate multi-agent interaction through a straightforward handoff mechanism. A 'triage' agent can intelligently route a user's query to a more specialized agent based on the nature of the question.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Triage and Specialist Handoff</h5>
+                    <div class="code-block">
+                        <pre><code>from agents import Agent, Runner
+import asyncio
+
+# Create specialist agents with clear roles and handoff descriptions
+math_agent = Agent(
+    name="Math Tutor",
+    handoff_description="Specialist for mathematical questions and problem-solving.",
+    instructions="You are an expert math tutor. Explain concepts step by step and solve problems accurately."
+)
+
+history_agent = Agent(
+    name="History Expert", 
+    handoff_description="Specialist for historical questions and providing detailed context.",
+    instructions="You are a history expert. Provide detailed context and accurate historical facts."
+)
+
+# Create a triage agent that decides where to hand off the query
+triage_agent = Agent(
+    name="Triage Agent",
+    instructions="""Your role is to determine which specialist agent should handle the user's question.
+    Route mathematical questions to the Math Tutor.
+    Route historical questions to the History Expert.
+    Handle general or simple questions yourself.""",
+    handoffs=[math_agent, history_agent] # List of agents this triage agent can hand off to
+)
+
+async def main():
+    # Test a query that requires a handoff to the Math Tutor
+    query1 = "What is the derivative of x squared (x^2)?"
+    result1 = await Runner.run(triage_agent, query1)
+    print(f"Query: '{query1}'")
+    print(f"Answer from {result1.last_agent.name}: {result1.final_output}\n")
+
+    # Test a query that requires a handoff to the History Expert
+    query2 = "Who was the first Roman Emperor?"
+    result2 = await Runner.run(triage_agent, query2)
+    print(f"Query: '{query2}'")
+    print(f"Answer from {result2.last_agent.name}: {result2.final_output}\n")
+
+    # Test a general query handled by the Triage Agent itself
+    query3 = "What is the capital of Canada?"
+    result3 = await Runner.run(triage_agent, query3)
+    print(f"Query: '{query3}'")
+    print(f"Answer from {result3.last_agent.name}: {result3.final_output}")
+
+asyncio.run(main())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>This handoff pattern is ideal for building advanced customer support systems or internal knowledge bases. Imagine a helpdesk bot that identifies the type of user problem (e.g., billing, technical, product inquiry) and automatically routes it to the correct specialist AI. This improves efficiency and ensures users receive answers from the most knowledgeable 'agent' for their specific need.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HuggingFace smolagents - Multi-Agent -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>HuggingFace smolagents: Hierarchical Agent Coordination</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        smolagents supports multi-agent systems through a hierarchical structure, where a 'manager' agent coordinates the activities of 'managed agents'. This allows for complex, multi-step tasks to be broken down and delegated.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Manager Coordinating Specialists</h5>
+                    <div class="code-block">
+                        <pre><code>from smolagents import CodeAgent, InferenceClientModel, ManagedAgent
+from smolagents import DuckDuckGoSearchTool # Built-in search tool
+from smolagents import load_tool # For loading remote tools
+
+model = InferenceClientModel()
+
+# Create specialized agents with specific tools and descriptions
+web_agent = CodeAgent(
+    tools=[DuckDuckGoSearchTool()], 
+    model=model,
+    name="WebSearcher",
+    description="Specialized in searching the web for current information."
+)
+
+# Load a remote image generation tool (requires API key or local setup)
+# Note: 'm-ric/text-to-image' is a Hugging Face model, ensure it's accessible.
+# This might require specific HF API tokens or local model setup.
+try:
+    image_tool = load_tool("m-ric/text-to-image", trust_remote_code=True)
+    image_agent = CodeAgent(
+        tools=[image_tool], 
+        model=model,
+        name="ImageGenerator", 
+        description="Specialized in generating images from textual descriptions."
+    )
+    managed_image = ManagedAgent(
+        agent=image_agent,
+        name="image_gen",
+        description="Generates images from textual descriptions using a text-to-image model."
+    )
+except Exception as e:
+    print(f"Warning: Could not load image generation tool. Image agent will be skipped. Error: {e}")
+    managed_image = None
+
+
+# Create managed agents for coordination by the manager
+managed_web = ManagedAgent(
+    agent=web_agent,
+    name="web_search",
+    description="Searches the web for information using DuckDuckGo."
+)
+
+# Manager agent coordinates the managed agents
+manager = CodeAgent(
+    tools=[], # Manager itself might not have tools, but coordinates others
+    model=model,
+    managed_agents=[managed_web] + ([managed_image] if managed_image else []) # Include image agent if loaded
+)
+
+# Define a complex multi-step task for the manager
+query = "Find information about the Eiffel Tower, then generate an image of it at sunset."
+result = manager.run(query)
+print(result)</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>This hierarchical approach is excellent for automating complex, multi-stage tasks. Imagine a content creation pipeline: a manager agent delegates research to a 'WebSearcher', then passes findings to a 'Writer', and finally to an 'ImageGenerator' for visuals. This structured delegation ensures each sub-task is handled by the most appropriate specialist, leading to more reliable and efficient complex workflows.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AutoGen - Multi-Agent -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>AutoGen: Dynamic Group Chats for Collaboration</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        AutoGen truly shines in multi-agent collaboration. It enables agents to engage in dynamic group chats, where they can communicate, delegate, and even write code to solve problems together. This creates highly flexible and powerful automated workflows.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Collaborative Blog Post Team</h5>
+                    <div class="code-block">
+                        <pre><code>import asyncio
+from autogen_agentchat.agents import AssistantAgent, UserProxyAgent # UserProxyAgent represents the human
+from autogen_agentchat.teams import RoundRobinGroupChat # For simple team coordination
+from autogen_agentchat.conditions import TextMentionTermination # To define when the conversation ends
+from autogen_agentchat.ui import Console # For a nice console output
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+async def multi_agent_blog_team():
+    model_client = OpenAIChatCompletionClient(model="gpt-4o") # Use a capable model
+
+    # Create specialized agents, each with a distinct role and system message
+    researcher = AssistantAgent(
+        name="Researcher",
+        model_client=model_client,
+        system_message="Your role is to research topics thoroughly and provide key facts and insights. When done, pass to the Writer.",
+        description="Conducts in-depth research on given topics."
+    )
+    
+    writer = AssistantAgent(
+        name="Writer",
+        model_client=model_client,
+        system_message="Your role is to create engaging and well-structured content based on the Researcher's findings. When done, pass to the Editor.",
+        description="Writes compelling content."
+    )
+    
+    editor = AssistantAgent(
+        name="Editor",
+        model_client=model_client,
+        system_message="Your role is to meticulously review and improve content quality for clarity, grammar, and style. When the content is perfect, you must say 'PUBLISH'.",
+        description="Edits and refines content for publication."
+    )
+    
+    # User proxy agent represents the human user in the chat
+    user_proxy = UserProxyAgent(
+        name="User_Proxy",
+        human_input_mode="NEVER", # Agent won't ask for human input during the chat
+        max_consecutive_auto_reply=10, # Max auto replies before stopping
+        is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("PUBLISH"), # Conversation ends when Editor says PUBLISH
+        code_execution_config={"work_dir": "coding_output", "use_docker": False} # Allow code execution in a directory
+    )
+
+    # Create a group chat team
+    blog_team = RoundRobinGroupChat( # Simple round-robin turns
+        participants=[user_proxy, researcher, writer, editor], # All agents in the chat
+        termination_condition=TextMentionTermination("PUBLISH"), # Explicit termination
+        max_turns=15 # Max turns to prevent infinite loops
+    )
+    
+    # Run the collaborative task and stream output to console
+    await Console(blog_team.run_stream(
+        task="Create a detailed blog post about the benefits of AI agents in software engineering. Start with research, then writing, then editing. The final output should be ready for publication."
+    ))
+    
+    await model_client.close()
+
+asyncio.run(multi_agent_blog_team())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>AutoGen is a powerful framework for automating complex, open-ended tasks that require multiple perspectives and iterative refinement. Imagine an AI team designing a new software feature: a 'Product Manager' agent clarifies requirements, a 'Developer' writes code, and a 'QA Engineer' writes tests, all collaborating in a chat. This dynamic interaction leads to more robust and comprehensive solutions than single-agent approaches.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CrewAI - Multi-Agent -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>CrewAI: Sequential Team Workflows</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        CrewAI excels at defining sequential workflows where tasks are passed from one specialized agent to the next. This models a clear handoff process, ensuring each step is completed by the most appropriate 'team member'.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Content Creation Pipeline</h5>
+                    <div class="code-block">
+                        <pre><code>from crewai import Agent, Task, Crew, Process
+from crewai_tools import SerperDevTool # For web search
+
+# Define specialized agents with clear roles, goals, and tools
+researcher = Agent(
+    role="Content Researcher",
+    goal="Research comprehensive and accurate information on a given topic",
+    backstory="You are an expert at finding precise and reliable information from diverse web sources.",
+    tools=[SerperDevTool()], # Assign web search tool
+    verbose=True
+)
+
+writer = Agent(
+    role="Content Writer",
+    goal="Create engaging, well-structured, and original content based on research findings",
+    backstory="You are a skilled writer with a talent for transforming raw research into compelling narratives.",
+    verbose=True
+)
+
+editor = Agent(
+    role="Content Editor",
+    goal="Review and improve content quality, ensuring clarity, grammar, and adherence to style guides",
+    backstory="You are a meticulous editor focused on clarity, conciseness, and overall content polish.",
+    verbose=True
+)
+
+# Define collaborative tasks with dependencies (context)
+research_task = Task(
+    description="Research the latest trends and benefits in AI Agent Frameworks.",
+    expected_output="Comprehensive research findings in bullet points, including key frameworks and their advantages.",
+    agent=researcher
+)
+
+writing_task = Task(
+    description="Write a 1000-word article about 'The Rise of AI Agent Frameworks' based on the research findings. Ensure it's engaging and informative.",
+    expected_output="A well-structured, 1000-word article in markdown format.",
+    agent=writer,
+    context=[research_task]  # This task depends on the research_task's output
+)
+
+editing_task = Task(
+    description="Edit and polish the article for clarity, grammar, tone, and overall quality. Ensure it is publication-ready.",
+    expected_output="A publication-ready article in markdown format.",
+    agent=editor,
+    context=[writing_task], # This task depends on the writing_task's output
+    output_file="final_article.md" # Optionally save the final output to a file
+)
+
+# Create the collaborative crew
+content_crew = Crew(
+    agents=[researcher, writer, editor], # All agents participating in the crew
+    tasks=[research_task, writing_task, editing_task], # The sequence of tasks
+    process=Process.sequential, # Tasks are executed one after another in order
+    verbose=True # See the detailed execution flow of the crew
+)
+
+# Execute the workflow with an initial input
+result = content_crew.kickoff(inputs={'topic': 'AI Agent Frameworks'})
+print(result)</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>CrewAI's sequential processing is perfect for automating business processes that involve clear handoffs between different roles. Think of a sales lead qualification process (researcher -> qualifier -> outreach specialist), or a software release pipeline (developer -> tester -> deployment specialist). Its intuitive team metaphor makes it easy to design and visualize complex automated workflows, mirroring real-world team dynamics.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LangChain - Multi-Agent -->
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>LangChain: Flexible State Graphs for Custom Orchestration</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        LangChain, particularly through its LangGraph library, provides the most flexible way to build multi-agent systems using state graphs. This allows you to define highly customized orchestration logic, including conditional routing and loops, to create sophisticated agent workflows.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Example: Research & Writing Supervisor</h5>
+                    <div class="code-block">
+                        <pre><code>from typing import Literal # For type hints like "researcher" or "writer"
+from langgraph.graph import StateGraph, END # Core LangGraph components
+from langgraph.types import Command # For supervisor to issue commands
+from langchain_core.messages import SystemMessage, HumanMessage # Message types
+from langgraph.prebuilt import create_react_agent # For creating individual agents
+from langchain_community.tools.tavily_search import TavilySearchResults # Search tool
+from langchain_experimental.tools import PythonREPLTool # Python interpreter tool
+from langchain_openai import ChatOpenAI
+import asyncio
+
+# Initialize the LLM model (used by all agents)
+model = ChatOpenAI(model="gpt-4") # Or "gpt-4o"
+
+# Define a simple state for the graph (just messages for now)
+class AgentState(TypedDict):
+    messages: List[BaseMessage]
+
+# Factory functions to create specialized ReAct agents
+def create_researcher_agent():
+    tools = [TavilySearchResults(max_results=3)] # Researcher needs web search
+    return create_react_agent(model, tools)
+
+def create_writer_agent():
+    tools = [PythonREPLTool()] # Writer might use REPL for code examples or formatting
+    return create_react_agent(model, tools)
+
+# Supervisor agent logic: decides next step based on conversation history
+def supervisor_agent(state: AgentState) -> Command[Literal["researcher", "writer", END]]:
+    system_prompt = """You are a supervisor managing a team of specialized AI agents:
+    - 'researcher': searches for information using web tools.
+    - 'writer': writes and formats content, can use a Python interpreter for formatting.
+    
+    Your task is to determine which agent should act next based on the ongoing conversation, or if the task is complete.
+    If the user's request requires information gathering, route to 'researcher'.
+    If the user's request requires content creation or formatting, route to 'writer'.
+    If the task is completed and a final answer is ready, or if you cannot proceed, return END.
+    """
+    
+    # Combine system prompt with current messages to decide
+    messages = [SystemMessage(content=system_prompt)] + state["messages"]
+    response = model.invoke(messages) # LLM makes the routing decision
+    
+    # Based on LLM's response, decide the next node
+    if "research" in response.content.lower():
+        return Command(goto="researcher")
+    elif "write" in response.content.lower():
+        return Command(goto="writer")
+    else:
+        return Command(goto=END) # End if no clear next step
+
+# Build the multi-agent workflow using a StateGraph
+workflow = StateGraph(AgentState)
+
+# Add nodes (agents) to the graph
+workflow.add_node("supervisor", supervisor_agent)
+workflow.add_node("researcher", lambda s: create_researcher_agent().invoke(s)) # Lambda to invoke agent
+workflow.add_node("writer", lambda s: create_writer_agent().invoke(s))
+
+# Define the entry point and edges (workflow transitions)
+workflow.add_edge(START, "supervisor") # Start by going to the supervisor
+workflow.add_edge("researcher", "supervisor") # After research, go back to supervisor for next decision
+workflow.add_edge("writer", "supervisor") # After writing, go back to supervisor
+
+# Compile the graph into a runnable application
+multi_agent_system = workflow.compile()
+
+async def run_multi_agent_demo():
+    # Example query for the system
+    query = "Please research the latest AI agent frameworks and then write a short summary about them."
+    
+    # Invoke the multi-agent system
+    final_state = await multi_agent_system.invoke({"messages": [HumanMessage(content=query)]})
+    
+    # Print the final output from the system
+    print(f"Final Output: {final_state['messages'][-1].content}")
+
+# To run this, uncomment the line below and execute in an async environment
+# asyncio.run(run_multi_agent_demo())</code></pre>
+                    </div>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Use Case & Importance:</p>
+                        <p>LangChain's state graphs are indispensable for building highly complex, adaptive enterprise workflows. Imagine an AI system for legal document review: it could have a 'Researcher' agent for case law, a 'Summarizer' agent, and a 'Compliance Checker' agent, with a supervisor dynamically routing tasks based on document content. This level of custom orchestration allows you to build truly intelligent automation that adapts to diverse and unpredictable scenarios.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Framework Comparisons -->
+        <section id="comparisons" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Framework Comparisons</h3>
+            <p class="text-gray-300 mb-6">
+                Understanding the nuances between AI agent frameworks is crucial for selecting the right tool for your project. While all aim to build intelligent agents, their underlying architectures, design philosophies, and strengths vary significantly.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Architectural Philosophy & Core Strengths</h4>
+                <p class="text-gray-300 mb-2">
+                    Each framework approaches agent design with a distinct philosophy, influencing its ideal use cases:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">OpenAI Agents:</span> Emphasizes a lightweight, event-driven architecture, focusing on simplicity and high performance for production-ready deployments.</li>
+                    <li><span class="highlight">smolagents:</span> Pioneers a "code-first" execution model where agents directly generate and run Python code, enabling natural composability for dynamic tasks.</li>
+                    <li><span class="highlight">Microsoft AutoGen:</span> Built for robust multi-agent collaboration with a layered, event-driven design, excelling in enterprise-grade orchestration of complex workflows.</li>
+                    <li><span class="highlight">CrewAI:</span> Offers an intuitive, role-based team metaphor, where agents are specialized team members, making collaborative intelligence easy to design and manage.</li>
+                    <li><span class="highlight">LangChain:</span> Provides a highly modular, component-based, and extensible architecture, offering maximum flexibility and leveraging a vast ecosystem of integrations.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Tool Integration Approaches</h4>
+                <p class="text-gray-300 mb-2">
+                    The method for defining and integrating external tools varies, impacting ease of use and flexibility:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">OpenAI Agents:</span> Uses simple `@function_tool` decorators for automatic schema generation, making Python function exposure seamless but primarily limited to Python.</li>
+                    <li><span class="highlight">smolagents:</span> Supports `@tool` decorators or explicit `Tool` classes, enabling flexible code execution but requiring careful sandboxing for security.</li>
+                    <li><span class="highlight">AutoGen:</span> Leverages type-annotated functions for tool definitions, offering native asynchronous support and clear parameter understanding, though its built-in tool ecosystem is smaller.</li>
+                    <li><span class="highlight">CrewAI:</span> Integrates tools via `@tool` decorators, providing good built-in tools and clear assignment to agent roles, but offers fewer options for highly custom tool definitions.</li>
+                    <li><span class="highlight">LangChain:</span> Provides multiple flexible approaches (decorators, `BaseTool` classes) and boasts the most extensive pre-built tool library, though creating highly complex custom tools can be involved.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Memory Management Strategies</h4>
+                <p class="text-gray-300 mb-2">
+                    How each framework handles agent memory impacts persistence and multi-user support:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">OpenAI Agents:</span> Utilizes SQLite sessions for built-in, persistent memory, offering excellent multi-user support via session IDs.</li>
+                    <li><span class="highlight">smolagents:</span> Primarily uses in-memory execution steps for context, offering limited built-in persistence or multi-user support out-of-the-box.</li>
+                    <li><span class="highlight">AutoGen:</span> Employs buffered or token-limited chat contexts, configurable for various persistence needs, and supports memory per conversation thread.</li>
+                    <li><span class="highlight">CrewAI:</span> Provides explicit agent-level and crew-level memory flags, often leveraging RAG storage for context, with limited direct multi-user features.</li>
+                    <li><span class="highlight">LangChain:</span> Offers extensive memory backends (in-memory, database, Redis, etc.) and explicit thread IDs for robust multi-user conversational memory.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Multi-Agent Capabilities & Performance</h4>
+                <p class="text-gray-300 mb-2">
+                    The sophistication of multi-agent patterns and overall performance characteristics differ:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">OpenAI Agents:</span> Focuses on direct handoffs between agents for simple delegation, offering high performance due to minimal overhead.</li>
+                    <li><span class="highlight">smolagents:</span> Utilizes managed agents for hierarchical, code-based coordination, demonstrating high performance with fewer LLM calls.</li>
+                    <li><span class="highlight">AutoGen:</span> Excels with dynamic group chats and flexible coordination mechanisms (round-robin, custom), providing excellent scalability for complex workflows.</li>
+                    <li><span class="highlight">CrewAI:</span> Implements sequential or hierarchical 'crews' for team-based tasks, known for good performance and an intuitive team metaphor.</li>
+                    <li><span class="highlight">LangChain:</span> Employs flexible state graphs for custom orchestration, offering excellent scalability and a vast ecosystem, though initial complexity can be higher.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Choosing the Right Framework -->
+        <section id="choosing-framework" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Choosing the Right Framework</h3>
+            <p class="text-gray-300 mb-6">
+                Selecting the optimal AI agent framework depends heavily on your project's specific requirements, your team's expertise, and the desired complexity of your autonomous system. Here's a guide to help you navigate the choices.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Decision Matrix: When to Choose Which Framework</h4>
+                <ul class="syntax-list">
+                    <li><span class="highlight">OpenAI Agents:</span> Ideal for projects demanding a **production-ready, low-overhead solution** with minimal complexity. Choose this for straightforward agent handoffs and built-in conversation persistence. Avoid if you need highly complex multi-agent orchestration.</li>
+                    <li><span class="highlight">smolagents:</span> Opt for this if your agents need to perform **code-based actions**, offering exceptional flexibility in execution and reduced LLM calls. Be mindful of the need for sandboxed execution for safety.</li>
+                    <li><span class="highlight">AutoGen:</span> Your go-to for **enterprise-grade multi-agent systems** requiring sophisticated orchestration. It's excellent for complex agent interactions, offers visual development tools, and supports cross-language environments. Less suited for trivial single-agent tasks.</li>
+                    <li><span class="highlight">CrewAI:</span> Select this for an **intuitive, team-based approach** to agent design. Its role-based metaphor simplifies collaborative intelligence and offers fast execution with built-in memory. Less flexible for very low-level control requirements.</li>
+                    <li><span class="highlight">LangChain:</span> Choose this when you need **maximum flexibility**, an extensive ecosystem of integrations, and the ability to design highly custom agent architectures. Be prepared for a potentially steeper learning curve due to its breadth.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Use Case Recommendations: Matching Framework to Problem</h4>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Research and Analysis:</span>
+                        <ul class="syntax-list chevrons-only">
+                            <li>**Best Choices: CrewAI or AutoGen.** CrewAI's natural team structure (e.g., researcher, analyst roles) and built-in memory are perfect. AutoGen excels with complex, iterative research workflows.</li>
+                            <li>*Example:* Automating market research reports where one agent gathers data, another synthesizes it, and a third generates insights.</li>
+                        </ul>
+                    </li>
+                    <li><span class="highlight">Customer Service Automation:</span>
+                        <ul class="syntax-list chevrons-only">
+                            <li>**Best Choices: OpenAI Agents or AutoGen.** OpenAI Agents offer simple handoffs between specialists and persistent conversation history for seamless support. AutoGen provides robust multi-agent orchestration for complex customer journeys.</li>
+                            <li>*Example:* A virtual helpdesk where a general inquiry agent routes to a billing specialist or a technical support agent based on the user's initial query.</li>
+                        </ul>
+                    </li>
+                    <li><span class="highlight">Code Generation & Development:</span>
+                        <ul class="syntax-list chevrons-only">
+                            <li>**Best Choices: smolagents or LangChain.** smolagents' code-first execution model is ideal for dynamic script generation. LangChain's flexible tool integration and REPL capabilities make it powerful for complex coding tasks.</li>
+                            <li>*Example:* An agent that can read a design specification, write a Python script to implement a feature, and then generate unit tests for it.</li>
+                        </ul>
+                    </li>
+                    <li><span class="highlight">Content Creation Workflows:</span>
+                        <ul class="syntax-list chevrons-only">
+                            <li>**Best Choice: CrewAI.** Its intuitive role-based agents (e.g., researcher, writer, editor) and sequential task execution perfectly mirror real-world content pipelines.</li>
+                            <li>*Example:* Automating the creation of blog posts, social media updates, or marketing copy from a high-level topic.</li>
+                        </ul>
+                    </li>
+                    <li><span class="highlight">Complex Enterprise Automation:</span>
+                        <ul class="syntax-list chevrons-only">
+                            <li>**Best Choices: AutoGen or LangChain.** Both offer sophisticated orchestration options, enterprise features, and extensive customization for highly complex, adaptive workflows spanning multiple systems.</li>
+                            <li>*Example:* An AI system that manages a software release, coordinating between development, testing, security, and deployment stages, interacting with various internal tools.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Getting Started Recommendations: Your Learning Path</h4>
+                <ul class="syntax-list">
+                    <li><span class="highlight">For Beginners:</span> Start with **CrewAI** for its intuitive concepts and excellent documentation, or **OpenAI Agents** for their minimal complexity and quick path to production.</li>
+                    <li><span class="highlight">For Intermediate Developers:</span> Explore **AutoGen** to delve into powerful multi-agent capabilities, or experiment with **smolagents** for its unique code-first approach to agent actions.</li>
+                    <li><span class="highlight">For Advanced Users:</span> Master **LangChain** to unlock maximum flexibility and customization for complex, bespoke agent solutions. Consider combining frameworks to leverage their individual strengths for hybrid architectures.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="wrap-up" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Conclusion</h3>
+            <p class="text-gray-300 mb-6">
+                The landscape of AI agent frameworks is rapidly evolving, offering diverse and powerful approaches to building autonomous AI systems. Each framework brings unique strengths to the table:
+            </p>
+            <ul class="syntax-list">
+                <li><span class="highlight">OpenAI Agents:</span> Excels in simplicity and readiness for production environments.</li>
+                <li><span class="highlight">smolagents:</span> Innovates with its code-based actions, offering unique flexibility for dynamic tasks.</li>
+                <li><span class="highlight">AutoGen:</span> Leads the way in sophisticated multi-agent orchestration and collaborative intelligence.</li>
+                <li><span class="highlight">CrewAI:</span> Shines with its intuitive team-based design, making complex workflows feel natural.</li>
+                <li><span class="highlight">LangChain:</span> Provides unmatched flexibility and the broadest ecosystem for highly customized solutions.</li>
+            </ul>
+            <p class="text-gray-300 mt-4 mb-2">
+                The strategic choice of framework should align with your specific project requirements, your team's existing expertise, and the desired complexity of your autonomous system. A good starting point is often a simpler framework to grasp core concepts, then progressively moving to more complex systems as your needs and ambitions grow.
+            </p>
+            <p class="text-gray-300 mb-2">
+                Remember that this field is incredibly dynamic, with new features and improvements being released constantly. Staying updated with official documentation and community resources is key to leveraging the latest capabilities.
+            </p>
+            <p class="text-gray-300">
+                The future of AI development lies in these agent frameworks, empowering developers to build increasingly sophisticated AI systems that can reason, effectively use tools, maintain persistent memory, and seamlessly collaborate – bringing us closer to truly intelligent automation across all domains.
+            </p>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 p-4 text-center text-gray-400 text-sm">
+        <p>&copy; 2025 Booz Allen Hamilton Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const arrow = this.querySelector('.arrow');
+
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        arrow.innerHTML = '&#9660;'; // Down arrow
+                    } else {
+                        content.classList.add('open');
+                        arrow.innerHTML = '&#9650;'; // Up arrow
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

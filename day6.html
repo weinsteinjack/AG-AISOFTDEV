@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 6: Building and Deploying RAG Systems</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #63b3ed; /* Blue accent */
+            border-radius: 9999px;
+        }
+        .card {
+            background-color: #2d3748; /* Slightly lighter dark for cards */
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-weight: 600;
+            color: #90cdf4; /* Light blue for interactive headers */
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.open {
+            max-height: 2000px; /* Arbitrarily large value to allow content to expand */
+            transition: max-height 0.5s ease-in;
+        }
+        .code-block {
+            background-color: #232d3a; /* Even darker for code blocks */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Cascadia Code', monospace; /* Monospaced font for code */
+            font-size: 0.9em;
+            color: #a0aec0; /* Lighter gray for code */
+        }
+        .highlight {
+            color: #4fd1c5; /* Teal for highlights */
+        }
+        .accent-text {
+            color: #63b3ed; /* Blue accent */
+        }
+        .spark-creativity {
+            background-color: #3a4a5c; /* A slightly different shade for creativity boxes */
+            border-left: 4px solid #f6ad55; /* Orange accent */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #cbd5e0;
+        }
+        .syntax-list {
+            list-style-type: none; /* Remove default bullet */
+            padding-left: 0;
+        }
+        .syntax-list li {
+            position: relative;
+            padding-left: 1.5em; /* Space for custom bullet */
+            margin-bottom: 0.5em;
+        }
+        .syntax-list li::before {
+            content: '›'; /* Chevron bullet */
+            position: absolute;
+            left: 0;
+            color: #4fd1c5; /* Teal for bullet */
+            font-weight: bold;
+        }
+        .syntax-list.chevrons-only li::before {
+            content: '»'; /* Double chevron */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-gray-800 p-4 sticky top-0 z-50 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white"><span class="accent-text">AI-Driven</span> SWE Program</h1>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#week1-recap" class="text-gray-300 hover:text-white transition duration-300">Week 1 Recap</a></li>
+                    <li><a href="#week2-preview" class="text-gray-300 hover:text-white transition duration-300">Week 2 Preview</a></li>
+                    <li><a href="#rag-langgraph" class="text-gray-300 hover:text-white transition duration-300">RAG & LangGraph</a></li>
+                    <li><a href="#lab1" class="text-gray-300 hover:text-white transition duration-300">Lab 1</a></li>
+                    <li><a href="#conversational-memory" class="text-gray-300 hover:text-white transition duration-300">Memory</a></li>
+                    <li><a href="#lab2" class="text-gray-300 hover:text-white transition duration-300">Lab 2</a></li>
+                    <li><a href="#wrap-up" class="text-gray-300 hover:text-white transition duration-300">Wrap-up</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <section id="day6-intro" class="text-center my-10">
+            <h2 class="text-5xl font-extrabold text-white mb-4">Day 6: Building and Deploying RAG Systems</h2>
+            <p class="text-xl text-gray-400">
+                <span class="accent-text">Theme:</span> Building intelligent applications that can reason over private data.
+            </p>
+            <p class="text-lg text-gray-400 mt-2">
+                <span class="accent-text">Core Question:</span> How do we build and deploy a conversational agent capable of answering questions using our internal, proprietary documents?
+            </p>
+        </section>
+
+        <!-- Week 1 Recap -->
+        <section id="week1-recap" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Week 1 Recap: Foundations of AI-Assisted SDLC</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Review of Key Concepts (20 min)</h4>
+                <p class="text-gray-300 mb-4">
+                    As we kick off Week 2, let's take a moment to consolidate our learning from the past five days. Week 1 focused on integrating Generative AI across the traditional Software Development Lifecycle, transforming how we approach each phase.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Day 1: AI-Powered Planning & Requirements:</span> We learned to transform vague ideas into structured user stories, generate detailed acceptance criteria, and create machine-readable PRDs using LLMs. This accelerated project initiation and established a 'source of truth.'</li>
+                    <li><span class="highlight">Day 2: AI-Driven Design & Architecture:</span> We leveraged AI as an architectural co-pilot, generating database schemas, realistic seed data, and formal Architectural Decision Records (ADRs). We also explored AI-assisted diagramming to visualize system designs.</li>
+                    <li><span class="highlight">Day 3: AI-Assisted Development & Documentation:</span> We experienced AI pair programming firsthand, using LLMs to generate and refactor code, create comprehensive docstrings, and automate README file generation, significantly boosting coding productivity and quality.</li>
+                    <li><span class="highlight">Day 4: AI Agent Frameworks:</span> We dove into the exciting world of AI agents, understanding their core components, exploring five major frameworks (OpenAI Agents, smolagents, AutoGen, CrewAI, LangChain), and learning how they handle tool integration, memory, and multi-agent collaboration.</li>
+                    <li><span class="highlight">Day 5: AI-Powered Deployment & Maintenance:</span> We saw how AI streamlines DevOps, from generating CI/CD configurations (requirements.txt, Dockerfiles, GitHub Actions workflows) to assisting with monitoring, incident response, and drafting runbooks and postmortems.</li>
+                </ul>
+                <p class="text-gray-300 mt-4">
+                    Week 1 has equipped you with practical skills to integrate AI into every stage of software delivery, making you a more efficient and effective engineer.
+                </p>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"Reflecting on Week 1, which AI application or technique do you believe will have the most immediate and significant impact on your daily software engineering tasks, and why?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Answers might vary, but common themes could be AI pair programming for code generation, automated test generation for QA, or AI-assisted documentation for project clarity. Encourage participants to explain their reasoning based on their current workflows.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Week 2 Preview -->
+        <section id="week2-preview" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Week 2 Preview: Building AI-Native Applications</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">What's Ahead (10 min)</h4>
+                <p class="text-gray-300 mb-4">
+                    Welcome to Week 2! This week, we shift our focus from using AI *to assist* traditional software development to *building applications that are inherently intelligent*. We'll dive deep into modern Generative AI toolchains, focusing on creating AI-native features and deploying sophisticated AI systems.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Day 6: Building and Deploying RAG Systems:</span> Today, we'll master Retrieval-Augmented Generation (RAG), enabling our agents to answer questions using private, internal documents. We'll build conversational agents that leverage your own data.</li>
+                    <li><span class="highlight">Day 7: Advanced Agent Workflows & Protocols:</span> We'll explore sophisticated agent communication using protocols like MCP (Model Context Protocol) and A2A (Agent2Agent), allowing agents to collaborate and interoperate reliably.</li>
+                    <li><span class="highlight">Day 8: Vision, Evaluation, & Security:</span> We'll delve into multi-modal AI, generating UI from design images. Crucially, we'll learn to evaluate AI agent performance and implement robust security guardrails, including 'Red Teaming' to find vulnerabilities.</li>
+                    <li><span class="highlight">Days 9-10: Capstone Project:</span> The culmination of your learning! You'll apply all concepts from both weeks to design, build, and present a working prototype of an AI-enhanced application.</li>
+                </ul>
+                <p class="text-gray-300 mt-4">
+                    This week is about transforming you from an AI-assisted engineer to an engineer who builds truly intelligent, AI-native systems.
+                </p>
+            </div>
+        </section>
+
+        <!-- Content: The RAG Pattern & LangGraph -->
+        <section id="rag-langgraph" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: The RAG Pattern & LangGraph</h3>
+            <p class="text-gray-300 mb-6">
+                Today, we're tackling one of the most powerful and widely adopted patterns in enterprise AI: **Retrieval-Augmented Generation (RAG)**. Imagine an AI that can answer complex questions not just from its general training data, but by referencing your company's private documents, internal knowledge bases, or proprietary data. RAG makes this possible, bridging the gap between general LLM intelligence and specific, factual accuracy.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Understanding Retrieval-Augmented Generation (RAG)</h4>
+                <p class="text-gray-300 mb-2">
+                    Traditional LLMs are powerful but have limitations: they can hallucinate (make up facts), their knowledge is limited to their training data (often not current or proprietary), and they can't cite sources. RAG addresses these by adding a retrieval step before generation.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">The Problem:</span> LLMs lack real-time or private knowledge, leading to outdated or fabricated answers.</li>
+                    <li><span class="highlight">The Solution:</span> RAG injects relevant, up-to-date, and factual information into the LLM's context *before* it generates a response.</li>
+                </ul>
+                <p class="text-gray-300 mt-2 mb-2">
+                    **How RAG Works (Simplified Flow):**
+                </p>
+                <ul class="syntax-list chevrons-only">
+                    <li><span class="highlight">User Query:</span> A user asks a question (e.g., "What's our Q3 sales strategy?").</li>
+                    <li><span class="highlight">Retrieval:</span> A retrieval system (e.g., a vector database) searches your private documents for relevant chunks of information.</li>
+                    <li><span class="highlight">Augmentation:</span> The retrieved information is then added to the user's original query as context.</li>
+                    <li><span class="highlight">Generation:</span> This augmented prompt is sent to the LLM, which generates an answer *based on the provided context*.</li>
+                    <li><span class="highlight">Citation:</span> (Optional but recommended) The system can also cite the source documents.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> "Imagine a legal firm using RAG to answer client questions by referencing thousands of internal case documents, or a pharmaceutical company querying their vast research papers for drug discovery. This ensures answers are factual, current, and verifiable."
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">LangGraph: Orchestrating Stateful Agent Workflows</h4>
+                <p class="text-gray-300 mb-2">
+                    While RAG seems straightforward, real-world RAG systems often involve complex, multi-step processes. This is where **LangGraph** comes in. LangGraph is a library built on LangChain that allows you to build **stateful, multi-actor applications as graphs**. It's perfect for orchestrating sophisticated agent workflows, where agents need to make decisions, remember state, and collaborate.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Nodes:</span> Each node in a LangGraph represents a step or an 'agent' (e.g., a retriever agent, a grader agent, a generator agent).</li>
+                    <li><span class="highlight">Edges:</span> Define the transitions between nodes, dictating the flow of information and control.</li>
+                    <li><span class="highlight">State:</span> A shared object that holds the current context and information, accessible and modifiable by all nodes in the graph. This is how agents 'remember' and pass information.</li>
+                    <li><span class="highlight">Conditional Edges:</span> Allow for dynamic routing. Based on the outcome of a node (e.g., "Is the retrieved document relevant?"), the graph can choose different paths.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Why LangGraph for RAG?</span> "Traditional RAG is linear. LangGraph allows for 'self-correcting' RAG. If the initial retrieval isn't good, a 'grader' agent can detect it and trigger a 're-ranker' or 'query rewriter' agent, then try retrieval again. This creates a much more robust and intelligent RAG system."
+                </p>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"Beyond just Q&A, what other types of AI-native applications or workflows could benefit immensely from a RAG system orchestrated by a state graph like LangGraph?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Think about automated legal document drafting (retrieving clauses), personalized content generation (retrieving user preferences), code generation from internal docs, or even complex decision support systems that need to reference vast internal policies.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lab 1: Building RAG Systems with LangGraph -->
+        <section id="lab1" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Assisted Practice: Building RAG Systems with LangGraph</h3>
+            <p class="text-gray-300 mb-4">
+                <span class="font-semibold">Lab Overview:</span> In this lab, you will build your first sophisticated RAG (Retrieval-Augmented Generation) system, orchestrated by the powerful LangGraph library. You'll start with a foundational RAG setup and progressively scale its complexity. Your mission is to create a system capable of answering questions by intelligently retrieving context from our project documents, demonstrating how to build a robust and intelligent knowledge base.
+            </p>
+            <p class="text-gray-400 text-sm italic mb-6">
+                (Detailed instructions are in: `D6_Lab1_Building_RAG_Systems.ipynb`)
+            </p>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Python Libraries & Concepts for this Lab</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>langgraph</code>:</span> The core library for building stateful, multi-actor applications as graphs. It enables complex orchestration of agent workflows.</li>
+                        <li><span class="highlight"><code>langchain</code>:</span> Provides the foundational building blocks for working with LLMs, including document loaders, text splitters, and prompt templates.</li>
+                        <li><span class="highlight"><code>faiss-cpu</code>:</span> A library for efficient similarity search and clustering of dense vectors. We'll use it for our local vector store (FAISS is Facebook AI Similarity Search).</li>
+                        <li><span class="highlight"><code>pypdf</code>:</span> A Python library for working with PDF files, enabling us to extract text from documents.</li>
+                        <li><span class="highlight"><code>TypedDict</code> (from `typing`):</span> Used to define the schema for our shared `AgentState` object in LangGraph, ensuring type safety.</li>
+                        <li><span class="highlight"><code>Document</code> (from `langchain_core.documents`):</span> A standard representation for a piece of text content with associated metadata.</li>
+                        <li><span class="highlight"><code>FAISS.from_documents()</code>:</span> A method to create a FAISS vector store directly from a list of documents.</li>
+                        <li><span class="highlight"><code>OpenAIEmbeddings()</code>:</span> Used to convert text into numerical vector representations (embeddings) that can be stored in a vector database.</li>
+                        <li><span class="highlight"><code>TextLoader</code> (from `langchain_community.document_loaders`):</span> Loads text content from files.</li>
+                        <li><span class="highlight"><code>RecursiveCharacterTextSplitter</code> (from `langchain.text_splitter`):</span> Splits large documents into smaller, manageable chunks for retrieval.</li>
+                        <li><span class="highlight"><code>StateGraph</code> (from `langgraph.graph`):</span> The class used to define and build your LangGraph workflow.</li>
+                        <li><span class="highlight"><code>END</code> (from `langgraph.graph`):</span> A special node in LangGraph that signifies the termination of a workflow path.</li>
+                        <li><span class="highlight">Helper Functions (`utils.py`):</span> <code>setup_llm_client()</code>, <code>load_artifact()</code>.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Step 2: Building the Knowledge Base</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        An AI agent's intelligence is often limited by the information it can access. Here, we'll create a vector store containing all the project artifacts we've generated so far. This will serve as our agent's 'knowledge base' for answering specific questions.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Process:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">Load Documents:</span> Read text from our `day1_prd.md`, `schema.sql`, and `adr_001_database_choice.md` files.</li>
+                        <li><span class="highlight">Split Text:</span> Break down large documents into smaller, overlapping chunks (e.g., 1000 characters with 200 character overlap) to ensure relevant context is captured.</li>
+                        <li><span class="highlight">Embeddings:</span> Convert these text chunks into high-dimensional numerical vectors using an embedding model (e.g., OpenAIEmbeddings).</li>
+                        <li><span class="highlight">Vector Store:</span> Store these embeddings in a FAISS vector database, enabling rapid similarity searches.</li>
+                        <li><span class="highlight">Retriever:</span> Create a retriever object from the vector store, which will be used by our agents to find relevant document chunks based on a query.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 1 (Foundational): A Simple RAG Graph</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Build a straightforward LangGraph with two essential nodes: one for retrieving documents and another for generating an answer based on those documents.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>AgentState</code>:</span> Think of this as the shared 'whiteboard' for your agent team. It's a `TypedDict` that defines the structure of the data passed between nodes in the graph (e.g., `question`, `documents`, `answer`). Every agent (or 'node') can read from and write to this state.</li>
+                        <li><span class="highlight">Nodes:</span> Each node is a Python function that performs a specific, atomic action. Here, you'll have a 'Retriever' node and a 'Generator' node.</li>
+                        <li><span class="highlight">Edges:</span> These define the transitions between nodes, dictating the directed flow of the workflow (e.g., `RETRIEVE` always leads to `GENERATE`).</li>
+                        <li><span class="highlight"><code>StateGraph</code>:</span> The class used to define and build the graph structure.</li>
+                        <li><span class="highlight"><code>compile()</code>:</span> Transforms your graph definition into a runnable application.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This foundational graph demonstrates the core RAG pattern. It's a functional system that answers questions by retrieving context from your knowledge base.
+                    </p>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Spark Your Creativity:</p>
+                        <p>How would you add a simple 'Logger' node to this graph that just prints the retrieved documents before generation? What if you wanted to count the number of tokens in the retrieved documents to manage LLM costs?</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 2 (Intermediate): A Graph with a Grader Agent</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Enhance your RAG graph by introducing a 'Grader' agent. This new agent will evaluate whether the retrieved documents are sufficiently relevant to answer the user's question.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>GraderAgent</code> Node:</span> A new node whose sole purpose is to act as a 'quality control' agent. It will call an LLM with a specific prompt (e.g., "Is this document relevant to the question? Answer 'yes' or 'no'").</li>
+                        <li><span class="highlight">Conditional Edges:</span> This is a powerful feature that allows for dynamic routing. After the `GRADE` node, the graph will execute a function that checks the grader's response. If the documents are 'yes' (relevant), it proceeds to the `GENERATE` node. If 'no' (not relevant), it can go to an `END` node, gracefully concluding that it cannot answer the question.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This makes your RAG system more robust. It can gracefully handle cases where its knowledge base doesn't contain the answer, preventing it from 'hallucinating' or making up information. It introduces a crucial self-correction mechanism.
+                    </p>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Spark Your Creativity:</p>
+                        <p>Instead of just ending if documents are irrelevant, how could you add a 'Query Rewriter' node? If the grader says 'no', the graph could route to a new node that uses an LLM to rephrase the original query, then loop back to retrieval for another attempt. This would make the system even more resilient.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 3 (Advanced): A Multi-Agent Research Team</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Build a sophisticated "research team" of specialized agents. This team will include a router to intelligently delegate tasks to the correct specialist, mimicking a real-world organizational structure.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">Specialized Retrievers:</span> Instead of one general retriever, create separate retrievers for different types of documents (e.g., `prd_retriever` for product requirements, `tech_retriever` for technical designs).</li>
+                        <li><span class="highlight">Router/ProjectManagerAgent:</span> This acts as the entry point and the 'traffic controller'. It uses an LLM to analyze the user's question and decide whether it's about product requirements or technical details, then routes it to the appropriate specialist researcher. This is a highly efficient pattern.</li>
+                        <li><span class="highlight">Specialist Researcher Agents:</span> Dedicated nodes like `PRDResearcherAgent` and `TechResearcherAgent`, each using their specialized retriever.</li>
+                        <li><span class="highlight">SynthesizerAgent:</span> A final node that takes the collected documents from any researcher and synthesizes a concise, final answer.</li>
+                        <li><span class="highlight">Complex Graph Flow:</span> The entry point is the `ProjectManager`, which then routes to either the `PRD_RESEARCHER` or `TECH_RESEARCHER`. Both of those paths then converge on the `SYNTHESIZE` node, which then leads to `END`.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This advanced system mimics a real-world research workflow, including intelligent routing and specialist roles. It significantly improves the accuracy and efficiency of the RAG process by directing queries to the most relevant knowledge source, reducing unnecessary processing.
+                    </p>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Spark Your Creativity:</p>
+                        <p>How could you add a 'Fact Checker' agent to this team? After the Synthesizer generates an answer, a Fact Checker could use an external search tool (like Tavily) to verify key claims before the final answer is delivered. What if you wanted to add a 'Summarizer' agent that condenses the retrieved documents before they are passed to the Synthesizer?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content: Conversational Memory -->
+        <section id="conversational-memory" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: Conversational Memory</h3>
+            <p class="text-gray-300 mb-6">
+                For AI agents to truly feel intelligent and engage in natural interactions, they need to **remember**. A stateless agent treats every query as new, leading to repetitive questions and a disjointed user experience. Conversational memory allows agents to maintain context across multiple turns, building on previous knowledge and making interactions feel seamless and personalized.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Why Memory is Crucial for Agents</h4>
+                <p class="text-gray-300 mb-2">
+                    Without memory, an agent cannot:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Understand Follow-up Questions:</span> "Tell me more about that." or "What about the second point?" would be meaningless.</li>
+                    <li><span class="highlight">Maintain Personalization:</span> Forget user preferences, names, or past interactions.</li>
+                    <li><span class="highlight">Handle Complex Dialogues:</span> Multi-step problem-solving or negotiation requires remembering previous information.</li>
+                    <li><span class="highlight">Avoid Redundancy:</span> Constantly asking for information already provided.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Techniques for Implementing Conversational Memory</h4>
+                <p class="text-gray-300 mb-2">
+                    Various strategies exist, from simple to sophisticated:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Buffer Memory:</span> Simply storing a fixed number of recent messages. Simple but loses context over long conversations.</li>
+                    <li><span class="highlight">Summary Memory:</span> An LLM summarizes the conversation periodically, injecting the summary into the context. More efficient for long conversations.</li>
+                    <li><span class="highlight">Vector Database Memory:</span> Storing conversation turns as embeddings in a vector database. When a new query comes, retrieve relevant past turns. Best for long-term, selective recall.</li>
+                    <li><span class="highlight">Entity Memory:</span> Extracting and remembering specific entities (e.g., names, dates, project IDs) from the conversation.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> "Think of any modern chatbot or virtual assistant you use. Whether it's customer support remembering your order details or a coding assistant recalling previous code snippets and errors, memory is fundamental to their utility and user experience. It's what makes them feel 'smart' and helpful."
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Integrating Memory into Web Applications</h4>
+                <p class="text-gray-300 mb-2">
+                    When exposing your AI agent as a web API, managing memory requires a `session_id`.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">`session_id`:</span> A unique identifier for each user's conversation. This ID is passed with every request.</li>
+                    <li><span class="highlight">Backend Management:</span> The backend (e.g., FastAPI) receives the `session_id`, uses it to retrieve the correct conversation history from a memory store, passes this history to the agent, and then saves the updated history.</li>
+                    <li><span class="highlight">Frontend Management:</span> The UI (e.g., Streamlit, React) stores the `session_id` (e.g., in `st.session_state` or browser local storage) and includes it in subsequent API calls.</li>
+                </ul>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"Beyond just remembering conversation history, how could an AI agent use memory to proactively personalize user experiences or anticipate future needs in a software development context?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Imagine an agent remembering your preferred coding style, common error types you encounter, or frequently used libraries. It could then proactively suggest code snippets, offer tailored debugging advice, or even recommend relevant documentation based on your past interactions and preferences.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lab 2: Creating a Conversational Multi-Agent System -->
+        <section id="lab2" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Assisted Practice: Creating a Conversational Multi-Agent System</h3>
+            <p class="text-gray-300 mb-4">
+                <span class="font-semibold">Lab Overview:</span> In this lab, you will take the sophisticated multi-agent LangGraph system you built in the previous lab and transform it into a fully functional, conversational API endpoint. Your mission is to integrate this powerful AI application into your FastAPI backend and, crucially, implement a mechanism to handle conversational memory. This will allow for natural, multi-turn interactions, making your AI assistant truly intelligent and user-friendly.
+            </p>
+            <p class="text-gray-400 text-sm italic mb-6">
+                (Detailed instructions are in: `D6_Lab2_Creating_a_Conversational_Multi_Agent_System.ipynb`)
+            </p>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Python Libraries & Concepts for this Lab</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>uuid</code>:</span> Python's built-in library for generating Universally Unique Identifiers (UUIDs), perfect for creating unique `session_id`s.</li>
+                        <li><span class="highlight"><code>BaseModel</code> (from `pydantic`):</span> Used to define the structure of your API request and response bodies, ensuring data validation.</li>
+                        <li><span class="highlight"><code>requests</code>:</span> A popular Python library for making HTTP requests, which your Streamlit UI will use to communicate with your FastAPI backend.</li>
+                        <li><span class="highlight"><code>streamlit</code>:</span> An open-source Python framework for easily creating beautiful, interactive web applications for data science and machine learning. Ideal for quick UI prototyping.</li>
+                        <li><span class="highlight"><code>st.session_state</code> (from `streamlit`):</span> Streamlit's built-in mechanism for maintaining state across user interactions in a web application. Crucial for storing `session_id` and chat history.</li>
+                        <li><span class="highlight">Helper Functions (`utils.py`):</span> <code>save_artifact()</code>.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 1 (Foundational): Creating a Stateless Chat Endpoint</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Define a simple `/chat` endpoint in your FastAPI application that takes a user's question and returns the agent's response, initially without any memory.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">FastAPI Endpoint Structure:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">Define a Pydantic Model:</span> `ChatRequest` with a `question: str` field.</li>
+                        <li><span class="highlight">`@app.post("/chat")` decorator:</span> Maps the POST request to your function.</li>
+                        <li><span class="highlight">Call Agent's `invoke()`:</span> Pass the user's question to your (mock or real) LangGraph agent.</li>
+                        <li><span class="highlight">Return Response:</span> Return the agent's answer, typically as a JSON object.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This establishes the basic API contract for your chatbot. It's functional but lacks the ability to remember past interactions.
+                    </p>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Spark Your Creativity:</p>
+                        <p>How would you add basic input validation to the `ChatRequest` (e.g., ensuring the question is not empty or too long)? Can you add a simple logging statement to your FastAPI endpoint to track incoming questions?</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 2 (Intermediate): Building a Simple Streamlit UI</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Create a user-friendly web interface using Streamlit to interact with your new `/chat` endpoint.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Streamlit UI Components:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">`st.title()`:</span> Sets the title of your web application.</li>
+                        <li><span class="highlight">`st.text_input()`:</span> Creates a text input box for user questions.</li>
+                        <li><span class="highlight">`st.button()`:</span> Creates a clickable button to submit requests.</li>
+                        <li><span class="highlight">`requests.post()`:</span> Used to send HTTP POST requests from your Streamlit app to your FastAPI backend.</li>
+                        <li><span class="highlight">`st.write()` or `st.text()`:</span> Displays text or other content on the web page.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This provides a visible front-end for your AI agent, demonstrating a full-stack interaction from UI to API to AI logic.
+                    </p>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Spark Your Creativity:</p>
+                        <p>How would you add a simple loading spinner or message while the AI is processing the request? Can you display the chat history in a more visually appealing way, perhaps with different colors for user and agent messages?</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 3 (Advanced): Implementing Conversational Memory</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Refactor your backend and frontend to handle stateful, multi-turn conversations, allowing the agent to remember context from previous messages in the same session.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">`session_id` (UUID):</span> A unique identifier for each conversation session. If not provided by the client, the backend generates a new one using `uuid.uuid4()`.</li>
+                        <li><span class="highlight">LangGraph `config` dictionary:</span> When invoking your LangGraph agent, pass a `config` dictionary containing `{"configurable": {"session_id": session_id}}`. This tells LangGraph to manage memory for that specific session ID.</li>
+                        <li><span class="highlight">`st.session_state` (Streamlit):</span> Crucial for the frontend to store the `session_id` and the entire chat history. This state persists across reruns of the Streamlit script for the same user session.</li>
+                        <li><span class="highlight">Bidirectional `session_id` flow:</span> The backend sends the `session_id` back to the frontend, ensuring the client always uses the correct, current session identifier for follow-up requests.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This transforms your chatbot into a truly conversational agent. You can ask follow-up questions, and the AI will understand the context from previous turns, creating a seamless and intelligent user experience.
+                    </p>
+                    <div class="spark-creativity">
+                        <p class="font-semibold">💡 Spark Your Creativity:</p>
+                        <p>How could you implement a "start new chat" button in the Streamlit UI that clears the `session_id` and chat history? What if you wanted to store the chat history in a more persistent way (e.g., a database) rather than just in-memory for LangGraph or `st.session_state`? How would you modify the backend to support that?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daily Wrap-up & Q&A -->
+        <section id="wrap-up" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Daily Wrap-up & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Key Takeaways</h4>
+                <ul class="syntax-list">
+                    <li>**Retrieval-Augmented Generation (RAG)** is a powerful pattern for enabling LLMs to answer questions using private, up-to-date, and factual information from your internal documents.</li>
+                    <li>**LangGraph** provides a flexible framework for orchestrating complex, stateful multi-agent workflows, allowing for self-correcting RAG systems with graders and routers.</li>
+                    <li>Implementing **conversational memory** is crucial for building natural, multi-turn AI interactions, enabling agents to remember context across sessions.</li>
+                    <li>Integrating AI agents into web APIs requires careful management of `session_id`s and state across both backend (e.g., FastAPI) and frontend (e.g., Streamlit) components.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Daily Wrap-up & Project Planning (30 min)</h4>
+                <p class="text-gray-300 italic">
+                    We'll review today's deep dive into RAG architecture and LangGraph concepts. This session will also include time to refine your Capstone project proposals, ensuring achievable scope and alignment with the week's learning objectives.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Preview Day 7</h4>
+                <p class="text-gray-300">
+                    Tomorrow, we'll explore **Advanced Agent Workflows & External Tools**. We'll delve into sophisticated agent communication using protocols like MCP (Model Context Protocol) and A2A (Agent2Agent), and learn how to convert UI design screenshots into functional React components using multi-modal AI. Get ready for truly cutting-edge AI engineering!
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 p-4 text-center text-gray-400 text-sm">
+        <p>&copy; 2025 Booz Allen Hamilton Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const arrow = this.querySelector('.arrow');
+
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        arrow.innerHTML = '&#9660;'; // Down arrow
+                    } else {
+                        content.classList.add('open');
+                        arrow.innerHTML = '&#9650;'; // Up arrow
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
