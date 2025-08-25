@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 1: AI-Powered Planning & Requirements</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #63b3ed; /* Blue accent */
+            border-radius: 9999px;
+        }
+        .card {
+            background-color: #2d3748; /* Slightly lighter dark for cards */
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-weight: 600;
+            color: #90cdf4; /* Light blue for interactive headers */
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.open {
+            max-height: 2000px; /* Arbitrarily large value to allow content to expand */
+            transition: max-height 0.5s ease-in;
+        }
+        .code-block {
+            background-color: #232d3a; /* Even darker for code blocks */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Cascadia Code', monospace; /* Monospaced font for code */
+            font-size: 0.9em;
+            color: #a0aec0; /* Lighter gray for code */
+        }
+        .highlight {
+            color: #4fd1c5; /* Teal for highlights */
+        }
+        .accent-text {
+            color: #63b3ed; /* Blue accent */
+        }
+        .spark-creativity {
+            background-color: #3a4a5c; /* A slightly different shade for creativity boxes */
+            border-left: 4px solid #f6ad55; /* Orange accent */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #cbd5e0;
+        }
+        .syntax-list {
+            list-style-type: none; /* Remove default bullet */
+            padding-left: 0;
+        }
+        .syntax-list li {
+            position: relative;
+            padding-left: 1.5em; /* Space for custom bullet */
+            margin-bottom: 0.5em;
+        }
+        .syntax-list li::before {
+            content: '›'; /* Chevron bullet */
+            position: absolute;
+            left: 0;
+            color: #4fd1c5; /* Teal for bullet */
+            font-weight: bold;
+        }
+        .syntax-list.chevrons-only li::before {
+            content: '»'; /* Double chevron */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-gray-800 p-4 sticky top-0 z-50 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white"><span class="accent-text">AI-Driven</span> SWE Program</h1>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#welcome" class="text-gray-300 hover:text-white transition duration-300">Welcome</a></li>
+                    <li><a href="#coding-paradigms" class="text-gray-300 hover:text-white transition duration-300">Coding Paradigms</a></li>
+                    <li><a href="#setup" class="text-gray-300 hover:text-white transition duration-300">Setup</a></li>
+                    <li><a href="#requirements-lab" class="text-gray-300 hover:text-white transition duration-300">Lab 1</a></li>
+                    <li><a href="#documentation" class="text-gray-300 hover:text-white transition duration-300">Documentation</a></li>
+                    <li><a href="#prd-lab" class="text-gray-300 hover:text-white transition duration-300">Lab 2</a></li>
+                    <li><a href="#wrap-up" class="text-gray-300 hover:text-white transition duration-300">Wrap-up</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <section id="day1-intro" class="text-center my-10">
+            <h2 class="text-5xl font-extrabold text-white mb-4">Day 1: AI-Powered Planning & Requirements</h2>
+            <p class="text-xl text-gray-400">
+                <span class="accent-text">Theme:</span> Laying the groundwork for AI-assisted project initiation.
+            </p>
+            <p class="text-lg text-gray-400 mt-2">
+                <span class="accent-text">Core Question:</span> How can Generative AI help us start projects with more clarity, speed, and alignment?
+            </p>
+        </section>
+
+        <!-- Welcome & Setup -->
+        <section id="welcome" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Welcome: The New SDLC</h3>
+            <div class="mb-6">
+                <p class="text-gray-300 mb-4">
+                    Welcome to the **AI-Driven Software Engineering Program**! Over the next two weeks, we will embark on a journey to redefine the Software Development Lifecycle (SDLC) by integrating Generative AI into every phase. We’ll move from traditional, manual workflows to a new paradigm where AI is not just a tool, but a co-pilot and collaborator.
+                </p>
+                <p class="text-gray-300 mb-4">
+                    Today, we begin at the very start of a project: **planning and requirements**. We'll learn how AI can transform a vague idea into a concrete, actionable project plan, setting a foundation for the rest of our work.
+                </p>
+            </div>
+        </section>
+
+        <!-- Coding Paradigms -->
+        <section id="coding-paradigms" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Coding Paradigms: From Vibe to Custom Pipelines</h3>
+            <p class="text-gray-300 mb-6">
+                The world of AI in software development is evolving rapidly. To understand where we're headed, it's helpful to see where we've come from and the different philosophies at play today.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">1. Vibe Coding (e.g., Replit, Firebase Studio)</h4>
+                <p class="text-gray-300 mb-2">
+                    **Analogy:** The "all-in-one" workshop. Everything you need is in one place, perfectly configured to work together.
+                </p>
+                <p class="text-gray-300 mb-2">
+                    **Description:** A highly integrated, low-friction environment where a platform provides the IDE, runtime, deployment, and even a database in a single package. The goal is to remove all the boilerplate and setup so you can "vibe" and focus purely on the code.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Pros:</span> Incredibly fast setup, minimal friction, perfect for prototyping and small apps.</li>
+                    <li><span class="highlight">Cons:</span> Vendor lock-in, limited customization, less control over the underlying stack.</li>
+                    <li><span class="highlight">Use Case:</span> Quick demos, educational projects, or small-scale applications where you value speed over control.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">2. AI-Assisted Coding (e.g., VS Code Copilot, Cursor)</h4>
+                <p class="text-gray-300 mb-2">
+                    **Analogy:** A developer with a brilliant co-pilot.
+                </p>
+                <p class="text-gray-300 mb-2">
+                    **Description:** This is the most common paradigm today. You use your own local IDE and retain full control over your environment, but AI is integrated directly into your workflow to augment your skills. The AI provides powerful, context-aware suggestions, code completions, and debugging assistance.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Pros:</span> Augments developer skills, doesn't replace them. Full control over your IDE, tools, and codebase. Powerful for boilerplate, debugging, and learning new APIs.</li>
+                    <li><span class="highlight">Cons:</span> The AI is reactive, not proactive. You still need a solid understanding of the code to validate the AI's output.</li>
+                    <li><span class="highlight">Use Case:</span> Everyday coding, learning new frameworks, and improving code quality.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">3. Custom AI-Augmented Pipelines (Our Focus)</h4>
+                <p class="text-gray-300 mb-2">
+                    **Analogy:** A highly specialized, automated factory designed and built by engineers.
+                </p>
+                <p class="text-gray-300 mb-2">
+                    **Description:** This is the core philosophy of this program. It's about building custom, modular, and repeatable AI-driven workflows for the *entire* SDLC. This goes beyond a single AI assistant in an IDE. It's about using AI to orchestrate, validate, and automate across different tools and phases of development, creating a custom pipeline that is a competitive advantage.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Pros:</span> Maximum flexibility, full control, and a significant competitive advantage. Highly tailored to your specific project and organizational needs.</li>
+                    <li><span class="highlight">Cons:</span> Steeper learning curve, requires a deeper understanding of AI frameworks and DevOps principles.</li>
+                    <li><span class="highlight">Use Case:</span> Automating requirements, generating CI/CD pipelines, performing automated security red teaming, and building multi-agent research teams.</li>
+                </ul>
+            </div>
+            <p class="text-gray-300 italic">
+                Our program is focused on mastering this third paradigm, using AI-assisted coding as the foundational skill to build these powerful, custom pipelines.
+            </p>
+        </section>
+
+        <!-- Environment Setup -->
+        <section id="setup" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Environment Setup: Getting Ready to Code</h3>
+            <p class="text-gray-300 mb-4">
+                Before we dive into our first lab, it is crucial to set up a clean and consistent development environment. We will use a Python virtual environment to manage our project's dependencies, ensuring a reproducible environment and preventing conflicts with other projects on your machine.
+            </p>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Step 1: Create a Virtual Environment</h4>
+                <p class="text-gray-300 mb-2">
+                    Open your terminal and run the following command. This creates a new directory named `venv` that contains an isolated Python environment.
+                </p>
+                <div class="code-block">
+                    <pre><code>python -m venv venv</code></pre>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Step 2: Activate the Virtual Environment</h4>
+                <p class="text-gray-300 mb-2">
+                    Before you install any packages, you must activate the environment.
+                </p>
+                <p class="text-gray-300 italic mb-2">
+                    For macOS/Linux:
+                </p>
+                <div class="code-block">
+                    <pre><code>source venv/bin/activate</code></pre>
+                </div>
+                <p class="text-gray-300 italic mt-4 mb-2">
+                    For Windows:
+                </p>
+                <div class="code-block">
+                    <pre><code>.\venv\Scripts\activate</code></pre>
+                </div>
+                <p class="text-gray-300 mt-4">
+                    You'll know it's active when your terminal prompt is prefixed with `(venv)`.
+                </p>
+            </div>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Step 3: Install Dependencies from `requirements.txt`</h4>
+                <p class="text-gray-300 mb-2">
+                    The `requirements.txt` file is a manifest of all the Python libraries and their versions that our project needs. To install them in your new environment, run this command:
+                </p>
+                <div class="code-block">
+                    <pre><code>pip install -r requirements.txt</code></pre>
+                </div>
+                <p class="text-gray-300 mt-4">
+                    You can verify the installation by running `pip freeze`, which will show you a list of all the installed packages and their versions.
+                </p>
+            </div>
+        </section>
+
+        <!-- Lab 1: AI-Powered Requirements & User Stories -->
+        <section id="requirements-lab" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Assisted Practice: AI-Powered Requirements & User Stories</h3>
+            <p class="text-gray-300 mb-4">
+                <span class="font-semibold">Lab Overview:</span> In our first hands-on lab, you will act as a Product Manager. Your mission is to use an LLM as a co-pilot to take a vague, one-sentence problem statement and transform it into a structured, machine-readable requirements document. We will use AI to brainstorm features, identify user personas, and generate detailed Agile user stories with acceptance criteria.
+            </p>
+            <p class="text-gray-400 text-sm italic mb-6">
+                (Detailed instructions are in: `D1_Lab1_AI_Powered_Requirements_User_Stories.ipynb`)
+            </p>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Python Libraries & Concepts for this Lab</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>os</code>, <code>sys</code>:</span> Standard Python libraries for managing file paths.</li>
+                        <li><span class="highlight"><code>json</code>:</span> Python's built-in library for working with JSON data, which will be our target output format.</li>
+                        <li><span class="highlight">Helper Functions (`utils.py`):</span>
+                            <ul class="syntax-list chevrons-only">
+                                <li><code>setup_llm_client()</code>: Configures the API client for our chosen LLM.</li>
+                                <li><code>get_completion()</code>: Sends a text prompt to the LLM and retrieves its response.</li>
+                                <li><code>save_artifact()</code>: Saves generated outputs to our project's `artifacts` directory.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 1 (Foundational): Brainstorming Features & Personas</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Use a simple, open-ended prompt to brainstorm potential features and user personas for our new application.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">User Personas:</span> Fictional characters created to represent different user types.</li>
+                        <li><span class="highlight">Open-Ended Prompting:</span> Giving the LLM creative freedom to generate ideas.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This step shows how AI can act as an instant brainstorming partner, providing a broad set of ideas to build from.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 2 (Intermediate): Generating Formal User Stories</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Now, create a more structured prompt to convert the brainstormed ideas into formal Agile user stories with detailed acceptance criteria in Gherkin format (`Given/When/Then`).
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">User Story Format:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">"As a [user], I want [a goal], so that [a benefit]."</span></li>
+                        <li><span class="highlight">Gherkin (`Given/When/Then`):</span> Defines testable acceptance criteria for a user story.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This moves beyond brainstorming to structured output generation. The JSON output can be directly consumed by other tools (e.g., Jira).
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 3 (Advanced): Programmatic Validation & Artifacts</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Write a Python function to programmatically validate the AI's JSON output, ensuring it has the correct structure and is not empty, before saving it as a formal project artifact.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">JSON Parsing:</span> Converting a JSON string to a Python object using `json.loads()`.</li>
+                        <li><span class="highlight">Data Validation:</span> Using Python code to check for required keys, data types, and non-empty lists.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This is the crucial step of trusting AI output. You treat the AI as an external service whose output must be validated before use, a core principle in modern AI development.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content: AI for Formal Documentation -->
+        <section id="documentation" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: AI for Formal Documentation</h3>
+            <p class="text-gray-300 mb-6">
+                Now that we have our structured requirements, we can use them to generate higher-level project documentation. A well-written **Product Requirements Document (PRD)** serves as the central source of truth for the entire product team, outlining the project's purpose, features, and target users. AI can automate the creation of these documents by synthesizing our granular user stories into a cohesive, comprehensive narrative.
+            </p>
+            <p class="text-gray-300 italic mt-2">
+                This process transforms the task of documentation from a manual, time-consuming effort into an automated, AI-assisted workflow, allowing teams to stay aligned and focused on delivery.
+            </p>
+        </section>
+
+        <!-- Lab 2: Generating a Product Requirements Document (PRD) -->
+        <section id="prd-lab" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Assisted Practice: Generating a Product Requirements Document (PRD)</h3>
+            <p class="text-gray-300 mb-4">
+                <span class="font-semibold">Lab Overview:</span> Building on our previous lab, you will now use the structured `day1_user_stories.json` artifact to generate a formal, comprehensive Product Requirements Document (PRD). You will learn how to prompt AI to fill in a pre-defined template, ensuring consistent and complete documentation.
+            </p>
+            <p class="text-gray-400 text-sm italic mb-6">
+                (Detailed instructions are in: `D1_Lab2_Generating_a_Product_Requirements_Document_PRD.ipynb`)
+            </p>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Python Libraries & Concepts for this Lab</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>load_artifact()</code>:</span> Our helper function to read the user stories JSON file from the `artifacts` directory.</li>
+                        <li><span class="highlight">Markdown:</span> The target output format for our PRD, using headings, lists, and bold text for clarity.</li>
+                        <li><span class="highlight">Templates:</span> Providing the LLM with a structured template file to ensure the output adheres to a specific format.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 1 (Foundational): Generating a Simple PRD</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Use the loaded user stories to generate a simple PRD with an introduction, a summary of personas, and a list of key features/user stories.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">Data Synthesis:</span> The AI's ability to summarize and synthesize information from a large data source.</li>
+                        <li><span class="highlight">Markdown Output:</span> Generating a clean, human-readable document.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This shows how AI can efficiently create high-level documentation from detailed, low-level data.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 2 (Intermediate): Generating a PRD from a Template</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Provide the AI with a formal PRD template and have it populate the document using the user stories. The AI must also creatively fill in sections not present in the original data, like "Success Metrics."
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">Structured Content Generation:</span> Using a template to guide the AI's output, ensuring consistency.</li>
+                        <li><span class="highlight">Creative Inference:</span> The AI's ability to infer logical content based on project goals.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This demonstrates the power of combining AI's creative intelligence with your structured templates.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 3 (Advanced): Programmatic Validation with Pydantic</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Use an LLM to generate a Pydantic model that represents the structure of your PRD.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Key Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">Pydantic:</span> A data validation library that uses Python type hints.</li>
+                        <li><span class="highlight">Documentation as Code:</span> Using code to define and enforce the structure of your documents.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This is a critical, advanced step. It introduces automated governance, ensuring that all future documents adhere to a formal, code-based standard.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daily Wrap-up & Q&A -->
+        <section id="wrap-up" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Daily Wrap-up & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Key Takeaways</h4>
+                <ul class="syntax-list">
+                    <li>AI can transform unstructured ideas into structured, actionable requirements.</li>
+                    <li>The most powerful AI workflows involve treating AI as an external service whose output must be validated.</li>
+                    <li>Prompting for a specific, machine-readable format (e.g., JSON, markdown) is key to reliable automation.</li>
+                    <li>Documentation can be a code-based, AI-driven process that ensures consistency and saves time.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Daily Wrap-up & Capstone Project Kickoff (30 min)</h4>
+                <p class="text-gray-300 italic">
+                    We'll consolidate today's deep dive into AI-assisted requirements and documentation. We'll also briefly discuss what's ahead in Week 2.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Preview Day 2</h4>
+                <p class="text-gray-300">
+                    Tomorrow, we'll focus on **AI-Driven Design & Architecture**. We'll learn how AI can serve as an architectural co-pilot to generate database schemas, assist with trade-off analysis, and automatically create design diagrams. Get ready to build your project's blueprint!
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 p-4 text-center text-gray-400 text-sm">
+        <p>&copy; 2025 Booz Allen Hamilton Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const arrow = this.querySelector('.arrow');
+
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        arrow.innerHTML = '&#9660;'; // Down arrow
+                    } else {
+                        content.classList.add('open');
+                        arrow.innerHTML = '&#9650;'; // Up arrow
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
