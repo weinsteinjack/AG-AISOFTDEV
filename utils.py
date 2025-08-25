@@ -19,8 +19,36 @@ try:
     from IPython.display import display, Markdown, Code, Image as IPyImage
     from plantuml import PlantUML
 except ImportError:
-    print("Core dependencies not found. Please install them by running:")
-    print("pip install python-dotenv ipython plantuml anthropic")
+    # Provide safe fallbacks so the module can be imported even when optional deps are missing.
+    print("Warning: Optional core dependencies not found. Some features will be degraded.")
+    print("To enable full functionality run: pip install python-dotenv ipython plantuml")
+
+    # noop load_dotenv fallback
+    def load_dotenv(*args, **kwargs):
+        print("Warning: python-dotenv not installed; .env will not be loaded.")
+
+    # minimal IPython.display fallbacks
+    def display(*args, **kwargs):
+        # no-op in non-notebook environments
+        return None
+
+    def Markdown(text):
+        return text
+
+    def Code(text):
+        return text
+
+    class IPyImage:
+        def __init__(self, *args, **kwargs):
+            # placeholder for notebook image object
+            pass
+
+    # PlantUML fallback
+    class PlantUML:
+        def __init__(self, url=None):
+            print("Warning: plantuml not installed; rendering disabled.")
+        def processes(self, *args, **kwargs):
+            print("PlantUML rendering skipped (plantuml not installed).")
 
 # --- Model & Provider Configuration ---
 RECOMMENDED_MODELS = {

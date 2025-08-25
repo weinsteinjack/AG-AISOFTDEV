@@ -1,29 +1,24 @@
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from datetime import date
 
 class ProductRequirementsDocument(BaseModel):
-    product_name: str
     status: str
     author: str
     version: str
-    last_updated: date
-    
-    executive_summary_vision: str
-    
+    last_updated: str
+    executive_summary: str
+    vision: str
     problem_statement: str
-    user_personas_scenarios: List[str]
-    
-    goals_success_metrics: List[Dict[str, str]]
-    
-    functional_requirements_user_stories: str
-    
+    user_personas: List[str]
+    scenarios: Dict[str, str]
+    goals: List[str]
+    success_metrics: List[Dict[str, str]]
+    functional_requirements: List[str]
+    user_stories: List[Dict[str, List[Dict[str, List[str]]]]]
     non_functional_requirements: List[str]
-    
-    release_plan_milestones: List[Dict[str, str]]
-    
-    out_of_scope_v1: List[str]
-    future_work: List[str]
-    
-    open_questions: Optional[List[str]] = None
-    dependencies: Optional[List[str]] = None
+    release_plan: List[Dict[str, str]]
+    out_of_scope: List[str]
+    future_considerations: List[str]
+    appendix: Optional[List[str]]
+    open_questions: Optional[List[str]]
+    dependencies: Optional[List[str]]

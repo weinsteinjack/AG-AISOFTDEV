@@ -183,7 +183,7 @@
                     MCP solves these problems by providing a standard, XML-like structure for prompts. It clearly delineates different types of information, making it easier for the LLM to parse and act upon consistently. This is analogous to how well-defined APIs standardize communication between software services.
                 </p>
                 <ul class="syntax-list">
-                    <li><span class="highlight">Clear Delineation:</span> Uses explicit, semantic tags (e.g., `<request>`, `<context>`, `<code>`, `<instructions>`) to categorize information, providing strong structural cues to the LLM.</li>
+                    <li><span class="highlight">Clear Delineation:</span> Uses explicit, semantic tags (e.g., <code>&lt;request&gt;</code>, <code>&lt;context&gt;</code>, <code>&lt;code&gt;</code>, <code>&lt;instructions&gt;</code>) to categorize information, providing strong structural cues to the LLM.</li>
                     <li><span class="highlight">Improved Reliability:</span> Reduces misinterpretations and ambiguity, leading to more consistent, predictable, and accurate agent responses.</li>
                     <li><span class="highlight">Programmatic Construction:</span> Facilitates building complex prompts using SDKs, enabling automation, version control, and templating of prompts, just like code.</li>
                     <li><span class="highlight">Enhanced Security:</span> By clearly separating user input from system instructions and sensitive context, it significantly helps mitigate prompt injection attacks.</li>
@@ -199,13 +199,13 @@
                     At its core, an MCP prompt typically involves:
                 </p>
                 <ul class="syntax-list">
-                    <li><span class="highlight">`<request>`:</span> This tag encapsulates the user's primary goal, question, or command for the AI agent.</li>
-                    <li><span class="highlight">`<context>`:</span> This acts as a container for all supporting information the agent needs to fulfill the request. Within `<context>`, you can have:
+                    <li><span class="highlight"><code>&lt;request&gt;</code>:</span> This tag encapsulates the user's primary goal, question, or command for the AI agent.</li>
+                    <li><span class="highlight"><code>&lt;context&gt;</code>:</span> This acts as a container for all supporting information the agent needs to fulfill the request. Within <code>&lt;context&gt;</code>, you can have:
                         <ul class="syntax-list chevrons-only">
-                            <li>`<code>`: For providing specific code snippets relevant to the task (e.g., code to refactor, code to debug).</li>
-                            <li>`<instructions>`: For explicit directives, guidelines, or constraints on the agent's behavior or output format.</li>
-                            <li>`<data>`: For structured data, such as JSON or YAML objects, relevant to the request (e.g., customer details, configuration settings).</li>
-                            <li>`<history>`: For including previous conversation turns or relevant past interactions to maintain conversational memory.</li>
+                            <li><code>&lt;code&gt;</code>: For providing specific code snippets relevant to the task (e.g., code to refactor, code to debug).</li>
+                            <li><code>&lt;instructions&gt;</code>: For explicit directives, guidelines, or constraints on the agent's behavior or output format.</li>
+                            <li><code>&lt;data&gt;</code>: For structured data, such as JSON or YAML objects, relevant to the request (e.g., customer details, configuration settings).</li>
+                            <li><code>&lt;history&gt;</code>: For including previous conversation turns or relevant past interactions to maintain conversational memory.</li>
                         </ul>
                     </li>
                 </ul>
@@ -399,10 +399,10 @@ print("Custom MCP Server example structure defined.")</code></pre>
             <div class="mb-6">
                 <h4 class="text-xl font-semibold text-gray-200 mb-2">Resources for MCP:</h4>
                 <ul class="syntax-list">
-                    <li><span class="highlight">Official MCP Documentation:</span> <a href="https://docs.anthropic.com/en/docs/mcp" target="_blank" class="accent-text hover:underline">https://docs.anthropic.com/en/docs/mcp</a></li>
-                    <li><span class="highlight">Python SDK:</span> <a href="https://github.com/modelcontextprotocol/python-sdk" target="_blank" class="accent-text hover:underline">https://github.com/modelcontextprotocol/python-sdk</a></li>
-                    <li><span class="highlight">LangChain MCP Adapters:</span> <a href="https://github.com/langchain-ai/langchain-mcp-adapters" target="_blank" class="accent-text hover:underline">https://github.com/langchain-ai/langchain-mcp-adapters</a></li>
-                    <li><span class="highlight">Community Examples:</span> <a href="https://github.com/modelcontextprotocol/examples" target="_blank" class="accent-text hover:underline">https://github.com/modelcontextprotocol/examples</a></li>
+                    <li><span class="highlight">Official MCP Documentation:</span> <a href="https://docs.anthropic.com/en/docs/mcp" target="_blank" rel="noopener" class="accent-text hover:underline">https://docs.anthropic.com/en/docs/mcp</a></li>
+                    <li><span class="highlight">Python SDK:</span> <a href="https://github.com/modelcontextprotocol/python-sdk" target="_blank" rel="noopener" class="accent-text hover:underline">https://github.com/modelcontextprotocol/python-sdk</a></li>
+                    <li><span class="highlight">LangChain MCP Adapters:</span> <a href="https://github.com/langchain-ai/langchain-mcp-adapters" target="_blank" rel="noopener" class="accent-text hover:underline">https://github.com/langchain-ai/langchain-mcp-adapters</a></li>
+                    <li><span class="highlight">Community Examples:</span> <a href="https://github.com/modelcontextprotocol/examples" target="_blank" rel="noopener" class="accent-text hover:underline">https://github.com/modelcontextprotocol/examples</a></li>
                 </ul>
             </div>
         </section>
@@ -460,7 +460,7 @@ print("Custom MCP Server example structure defined.")</code></pre>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
                     <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
                     <p class="text-gray-300 italic">"How might A2A protocols fundamentally change the way traditional software systems are designed and integrated in a future where services are offered not just by fixed APIs, but by dynamic, autonomous AI agents? Could this lead to self-assembling software?"</p>
-                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: It could lead to highly dynamic, self-assembling systems where agents discover and compose workflows on the fly. Traditional API contracts might evolve into agent capability descriptions. It enables truly decentralized and adaptive automation, potentially creating 'living' software systems that reconfigure themselves.')">Reveal Instructor Thoughts</button>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: It could lead to highly dynamic, self-assembling systems where agents discover and compose workflows on the fly. Traditional API contracts might evolve into agent capability descriptions. It enables truly decentralized and adaptive automation, potentially creating living software systems that reconfigure themselves.')">Reveal Instructor Thoughts</button>
                 </div>
             </div>
 
@@ -955,11 +955,11 @@ class A2AAgentServer:
             <div class="mb-6">
                 <h4 class="text-xl font-semibold text-gray-200 mb-2">Resources for A2A:</h4>
                 <ul class="syntax-list">
-                    <li><span class="highlight">Official A2A Documentation:</span> <a href="https://a2a-protocol.org/latest/" target="_blank" class="accent-text hover:underline">https://a2a-protocol.org/latest/</a></li>
-                    <li><span class="highlight">Python SDK Reference:</span> <a href="https://a2a-protocol.org/latest/sdk/python/" target="_blank" class="accent-text hover:underline">https://a2a-protocol.org/latest/sdk/python/</a></li>
-                    <li><span class="highlight">Tutorial Series:</span> <a href="https://a2a-protocol.org/latest/tutorials/python/1-introduction/" target="_blank" class="accent-text hover:underline">https://a2a-protocol.org/latest/tutorials/python/1-introduction/</a></li>
-                    <li><span class="highlight">GitHub Repository:</span> <a href="https://github.com/a2a-protocol/python-sdk" target="_blank" class="accent-text hover:underline">https://github.com/a2a-protocol/python-sdk</a></li>
-                    <li><span class="highlight">Community Forum:</span> <a href="https://community.a2a-protocol.org" target="_blank" class="accent-text hover:underline">https://community.a2a-protocol.org</a></li>
+                    <li><span class="highlight">Official A2A Documentation:</span> <a href="https://a2a-protocol.org/latest/" target="_blank" rel="noopener" class="accent-text hover:underline">https://a2a-protocol.org/latest/</a></li>
+                    <li><span class="highlight">Python SDK Reference:</span> <a href="https://a2a-protocol.org/latest/sdk/python/" target="_blank" rel="noopener" class="accent-text hover:underline">https://a2a-protocol.org/latest/sdk/python/</a></li>
+                    <li><span class="highlight">Tutorial Series:</span> <a href="https://a2a-protocol.org/latest/tutorials/python/1-introduction/" target="_blank" rel="noopener" class="accent-text hover:underline">https://a2a-protocol.org/latest/tutorials/python/1-introduction/</a></li>
+                    <li><span class="highlight">GitHub Repository:</span> <a href="https://github.com/a2a-protocol/python-sdk" target="_blank" rel="noopener" class="accent-text hover:underline">https://github.com/a2a-protocol/python-sdk</a></li>
+                    <li><span class="highlight">Community Forum:</span> <a href="https://community.a2a-protocol.org" target="_blank" rel="noopener" class="accent-text hover:underline">https://community.a2a-protocol.org</a></li>
                 </ul>
             </div>
         </section>
@@ -1003,7 +1003,7 @@ class A2AAgentServer:
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
                     <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
                     <p class="text-gray-300 italic">"If AI can generate UI code directly from a design, how might this fundamentally alter the day-to-day role of a frontend developer, and what new, critical skills will become essential for them to master in this evolving landscape?"</p>
-                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Frontend developers might shift from pixel-pushing to prompt engineering for UI generation, reviewing and refining AI-generated code, integrating AI-generated components, and focusing on complex interactivity, performance optimization, and accessibility audits. Design system expertise will become even more critical.')">Reveal Instructor Thoughts</sbutton>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Frontend developers might shift from pixel-pushing to prompt engineering for UI generation, reviewing and refining AI-generated code, integrating AI-generated components, and focusing on complex interactivity, performance optimization, and accessibility audits. Design system expertise will become even more critical.')">Reveal Instructor Thoughts</button>
                 </div>
             </div>
         </section>
