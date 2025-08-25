@@ -1,6 +1,6 @@
 # --- Helper Script for AI-Driven Software Engineering Course ---
 # Description: This script provides a unified interface for interacting with
-#              multiple LLM providers (OpenAI, Hugging Face, Google Gemini)
+#              multiple LLM providers (OpenAI, Anthropic, Hugging Face, Google Gemini)
 #              and simplifies common tasks like artifact management.
 # -----------------------------------------------------------------
 
@@ -20,7 +20,7 @@ try:
     from plantuml import PlantUML
 except ImportError:
     print("Core dependencies not found. Please install them by running:")
-    print("pip install python-dotenv ipython plantuml")
+    print("pip install python-dotenv ipython plantuml anthropic")
 
 # --- Model & Provider Configuration ---
 RECOMMENDED_MODELS = {
@@ -32,6 +32,10 @@ RECOMMENDED_MODELS = {
     "o3":            {"provider": "openai", "vision": True, "image_generation": False},
     "o4-mini":       {"provider": "openai", "vision": True, "image_generation": False},
     "codex-mini":    {"provider": "openai", "vision": False, "image_generation": False},
+
+    "claude-3-opus-20240229":   {"provider": "anthropic", "vision": True, "image_generation": False},
+    "claude-3-sonnet-20240229": {"provider": "anthropic", "vision": True, "image_generation": False},
+    "claude-3-haiku-20240307":  {"provider": "anthropic", "vision": True, "image_generation": False},
     "gemini-2.5-pro":         {"provider": "gemini", "vision": True, "image_generation": False},
     "gemini-2.5-flash":       {"provider": "gemini", "vision": True, "image_generation": False},
     "gemini-2.5-flash-lite":  {"provider": "gemini", "vision": True, "image_generation": False},
@@ -72,7 +76,7 @@ def load_environment():
 def setup_llm_client(model_name="gpt-4o"):
     """
     Configures and returns an LLM client based on the specified model name.
-    Supports OpenAI, Hugging Face, and Google Gemini.
+    Supports OpenAI, Anthropic, Hugging Face, and Google Gemini.
     """
     load_environment()
     if model_name not in RECOMMENDED_MODELS:
@@ -87,6 +91,11 @@ def setup_llm_client(model_name="gpt-4o"):
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key: raise ValueError("OPENAI_API_KEY not found in .env file.")
             client = OpenAI(api_key=api_key)
+        elif api_provider == "anthropic":
+            from anthropic import Anthropic
+            api_key = os.getenv("ANTHROPIC_API_KEY")
+            if not api_key: raise ValueError("ANTHROPIC_API_KEY not found in .env file.")
+            client = Anthropic(api_key=api_key)
         elif api_provider == "huggingface":
             from huggingface_hub import InferenceClient
             api_key = os.getenv("HUGGINGFACE_API_KEY")
@@ -121,6 +130,14 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
         if api_provider == "openai":
             response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}], temperature=temperature)
             return response.choices[0].message.content
+        elif api_provider == "anthropic":
+            response = client.messages.create(
+                model=model_name,
+                max_tokens=4096,
+                temperature=temperature,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
         elif api_provider == "huggingface":
             response = client.chat_completion(messages=[{"role": "user", "content": prompt}], temperature=max(0.1, temperature), max_tokens=4096)
             return response.choices[0].message.content
@@ -140,6 +157,23 @@ def get_vision_completion(prompt, image_url, client, model_name, api_provider):
         if api_provider == "openai":
             response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": image_url}}]}], max_tokens=4096)
             return response.choices[0].message.content
+        elif api_provider == "anthropic":
+            response_img = requests.get(image_url)
+            response_img.raise_for_status()
+            img_data = base64.b64encode(response_img.content).decode('utf-8')
+            mime_type = response_img.headers['Content-Type']
+            response = client.messages.create(
+                model=model_name,
+                max_tokens=4096,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image", "source": {"type": "base64", "media_type": mime_type, "data": img_data}}
+                    ]
+                }]
+            )
+            return response.content[0].text
         elif api_provider == "gemini":
             # For Gemini, we need to convert the image URL to inlineData (base64)
             response_img = requests.get(image_url)
