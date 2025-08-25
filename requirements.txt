@@ -1,3 +1,53 @@
+fastapi==0.95.2
+uvicorn==0.22.0
+sqlalchemy==2.0.21
+pydantic==1.10.4
+pytest==7.4.2
+
+# Environment helpers
+python-dotenv
+
+# Agent frameworks / tooling
+langchain
+langchain_openai
+langchain_community
+langchain_core
+langgraph
+smolagents
+pyautogen
+autogen
+
+# RAG / Vector stores / Document loaders
+faiss-cpu
+pypdf
+sentence-transformers
+
+# Model infra & huggingface
+transformers
+huggingface_hub
+accelerate
+datasets
+torch
+torchvision
+torchaudio
+
+# OpenAI / tokenization
+openai
+tiktoken
+
+# Utilities
+requests
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+
+# Misc (community / integrations)
+tavily-python
+weaviate-client
+
+# If you prefer pinned versions, replace the above with specific versions used in your environment
 plaintext
 fastapi==0.95.2
 uvicorn==0.22.0
