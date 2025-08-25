@@ -1,21 +1,34 @@
+# Project dependencies for running all notebooks and Python scripts
+# Grouped by purpose; pin versions for core runtime libraries
+
+# Web frameworks and API
 fastapi==0.95.2
 uvicorn==0.22.0
 sqlalchemy==2.0.21
 pydantic==1.10.4
+flask
+
+# Testing
 pytest==7.4.2
 
 # Environment helpers
 python-dotenv
 
+# Web UI
+streamlit
+
 # Agent frameworks / tooling
-langchain
-langchain_openai
-langchain_community
-langchain_core
-langgraph
-smolagents
-pyautogen
 autogen
+pyautogen
+smolagents
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langgraph
+a2a-protocol
+mcp
+langchain-mcp
 
 # RAG / Vector stores / Document loaders
 faiss-cpu
@@ -31,26 +44,21 @@ torch
 torchvision
 torchaudio
 
-# OpenAI / tokenization
+# Model providers & tokenization
 openai
 tiktoken
+anthropic
+google-generativeai
 
-# Utilities
+# Utilities and data
 requests
 pandas
 numpy
 matplotlib
 seaborn
 scikit-learn
+plantuml
 
 # Misc (community / integrations)
 tavily-python
 weaviate-client
-
-# If you prefer pinned versions, replace the above with specific versions used in your environment
-plaintext
-fastapi==0.95.2
-uvicorn==0.22.0
-sqlalchemy==2.0.21
-pydantic==1.10.4
-pytest==7.4.2
