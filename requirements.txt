@@ -2,14 +2,14 @@
 # Grouped by purpose; pin versions for core runtime libraries
 
 # Web frameworks and API
-fastapi==0.95.2
-uvicorn==0.22.0
-sqlalchemy==2.0.21
-pydantic==1.10.4
+fastapi
+uvicorn
+sqlalchemy
+pydantic
 flask
 
 # Testing
-pytest==7.4.2
+pytest
 
 # Environment helpers
 python-dotenv

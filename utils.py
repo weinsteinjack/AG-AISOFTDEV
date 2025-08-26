@@ -51,7 +51,11 @@ except ImportError:
             print("PlantUML rendering skipped (plantuml not installed).")
 
 # --- Model & Provider Configuration ---
+# TODO: include context window and output tokens as informational snippets
+# TODO: create function to display available models
+
 RECOMMENDED_MODELS = {
+    "gpt-5-nano-2025-08-07": {"provider": "openai", "vision": True, "image_generation": False},
     "gpt-4o":        {"provider": "openai", "vision": True, "image_generation": False},
     "gpt-4.1":       {"provider": "openai", "vision": True, "image_generation": False},
     "gpt-4.1-mini":  {"provider": "openai", "vision": True, "image_generation": False},
@@ -186,7 +190,12 @@ def get_vision_completion(prompt, image_url, client, model_name, api_provider):
     try:
         # Fetch image from URL and convert to base64 for Gemini/HuggingFace if needed, or pass URL for OpenAI
         if api_provider == "openai":
-            response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": image_url}}]}], max_tokens=4096)
+            response = client.chat.completions.create(model=model_name, messages=[{"role": "user", 
+                                                                                   "content": [{"type": "text", 
+                                                                                                "text": prompt}, 
+                                                                                               {"type": "image_url", 
+                                                                                                "image_url": {"url": image_url}}]}], 
+                                                                                                max_tokens=4096)
             return response.choices[0].message.content
         elif api_provider == "anthropic":
             response_img = requests.get(image_url)
