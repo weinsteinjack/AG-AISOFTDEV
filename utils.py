@@ -85,6 +85,7 @@ RECOMMENDED_MODELS = {
     "dall-e-3":     {"provider": "openai", "vision": False, "image_generation": True,
                      "context_window": None, "max_output_tokens": None},  # text-to-image model
     "whisper-1":    {"provider": "openai", "vision": False, "image_generation": False,
+                     "audio_transcription": True,
                      "context_window": None, "max_output_tokens": None},  # speech-to-text model (audio input)
 
     # Anthropic Claude models
@@ -368,17 +369,21 @@ def setup_llm_client(model_name="gpt-4o"):
             api_key = os.getenv("HUGGINGFACE_API_KEY")
             if not api_key: raise ValueError("HUGGINGFACE_API_KEY not found in .env file.")
             client = InferenceClient(model=model_name, token=api_key)
-        elif api_provider == "gemini" or api_provider == "google": # Google for image generation
-            import google.generativeai as genai
-            api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for both Gemini text and Imagen
-            if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
-            genai.configure(api_key=api_key)
-            if config["image_generation"]:
-                # For image generation, the client is not directly a GenerativeModel instance
-                # but rather the genai module itself for the predict call.
-                client = genai
+        elif api_provider == "gemini" or api_provider == "google": # Google for image generation or STT
+            if config.get("audio_transcription"):
+                from google.cloud import speech
+                client = speech.SpeechClient()
             else:
-                client = genai.GenerativeModel(model_name)
+                import google.generativeai as genai
+                api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for both Gemini text and Imagen
+                if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
+                genai.configure(api_key=api_key)
+                if config["image_generation"]:
+                    # For image generation, the client is not directly a GenerativeModel instance
+                    # but rather the genai module itself for the predict call.
+                    client = genai
+                else:
+                    client = genai.GenerativeModel(model_name)
     except ImportError:
         print(f"ERROR: The required library for '{api_provider}' is not installed.")
         return None, None, None
@@ -496,25 +501,62 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     start_time = time.time()
 
     try:
-        # For imagen-3.0-generate-002, the client is the `genai` module itself.
-        payload = {"instances": {"prompt": prompt}, "parameters": {"sampleCount": 1}}
-        apiKey = "" # Canvas will automatically provide this.
-        apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:predict?key={apiKey}"
-
-        response = requests.post(apiUrl, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
-        response.raise_for_status() # Raise an exception for HTTP errors
-        result = response.json()
-
-        if result.get("predictions") and len(result["predictions"]) > 0 and result["predictions"][0].get("bytesBase64Encoded"):
-            image_b64 = result["predictions"][0]["bytesBase64Encoded"]
-            image_url = f"data:image/png;base64,{image_b64}"
-            end_time = time.time()
-            print(f"✅ Image generated in {end_time - start_time:.2f} seconds.")
-            return image_url
+        if api_provider == "openai":
+            response = client.images.generate(model=model_name, prompt=prompt)
+            image_b64 = response.data[0].b64_json
+        elif api_provider == "google":
+            if model_name.startswith("imagen"):
+                payload = {"instances": {"prompt": prompt}, "parameters": {"sampleCount": 1}}
+                apiKey = ""  # Canvas will automatically provide this.
+                apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:predict?key={apiKey}"
+                response = requests.post(apiUrl, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
+                response.raise_for_status()
+                result = response.json()
+                if result.get("predictions") and len(result["predictions"]) > 0 and result["predictions"][0].get("bytesBase64Encoded"):
+                    image_b64 = result["predictions"][0]["bytesBase64Encoded"]
+                else:
+                    return f"Error: Unexpected image generation response structure: {result}"
+            else:
+                model = client.GenerativeModel(model_name)
+                result = model.generate_images(prompt=prompt)
+                image_b64 = result.images[0].base64_data
         else:
-            return f"Error: Unexpected image generation response structure: {result}"
+            return f"Error: Image generation not implemented for provider '{api_provider}'"
+
+        image_url = f"data:image/png;base64,{image_b64}"
+        end_time = time.time()
+        print(f"✅ Image generated in {end_time - start_time:.2f} seconds.")
+        return image_url
     except Exception as e:
         return f"An API error occurred during image generation: {e}"
+
+
+def transcribe_audio(audio_path, client, model_name, api_provider, language_code="en-US"):
+    """Transcribes audio from a file using a speech-to-text model."""
+    if not client:
+        return "API client not initialized."
+    if not RECOMMENDED_MODELS.get(model_name, {}).get("audio_transcription"):
+        return f"Error: Model '{model_name}' does not support audio transcription."
+
+    try:
+        if api_provider == "openai":
+            with open(audio_path, "rb") as f:
+                response = client.audio.transcriptions.create(model=model_name, file=f)
+            return getattr(response, "text", response.get("text"))
+        elif api_provider == "google":
+            from google.cloud import speech
+            with open(audio_path, "rb") as f:
+                audio_bytes = f.read()
+            audio = speech.RecognitionAudio(content=audio_bytes)
+            config = speech.RecognitionConfig(language_code=language_code)
+            response = client.recognize(config=config, audio=audio)
+            if response.results and response.results[0].alternatives:
+                return response.results[0].alternatives[0].transcript
+            return "No transcription available."
+        else:
+            return f"Error: Audio transcription not implemented for provider '{api_provider}'"
+    except Exception as e:
+        return f"An API error occurred during audio transcription: {e}"
 
 
 def clean_llm_output(output_str: str, language: str = 'json') -> str:
