@@ -240,6 +240,86 @@ RECOMMENDED_MODELS.update({
     },
 })
 
+def recommended_models_table(task=None, provider=None, vision=None, image_generation=None,
+                             audio_transcription=None, min_context=None, min_output_tokens=None):
+    """
+    Return a markdown table of recommended models, optionally filtered by attributes.
+
+    Args:
+        task (str, optional): High level task to filter models. Accepts values like
+            'vision', 'image', 'audio', or 'text'. These set sensible defaults for
+            the corresponding capability flags unless explicitly provided.
+        provider (str, optional): Filter models by provider name (e.g. ``'openai'``).
+        vision (bool, optional): If set, include only models that match vision capability.
+        image_generation (bool, optional): If set, include only image generation models.
+        audio_transcription (bool, optional): If set, include only models supporting
+            audio transcription.
+        min_context (int, optional): Minimum context window size required.
+        min_output_tokens (int, optional): Minimum max output tokens required.
+
+    Returns:
+        str: Markdown formatted table.
+    """
+    # Interpret task shortcuts
+    if task:
+        t = task.lower()
+        if t in {"vision", "multimodal", "vl"} and vision is None:
+            vision = True
+        elif t in {"image", "image_generation", "image-generation"} and image_generation is None:
+            image_generation = True
+        elif t in {"audio", "speech", "audio_transcription", "stt"} and audio_transcription is None:
+            audio_transcription = True
+        elif t == "text":
+            vision = False if vision is None else vision
+            image_generation = False if image_generation is None else image_generation
+            audio_transcription = False if audio_transcription is None else audio_transcription
+
+    rows = []
+    for model_name in sorted(RECOMMENDED_MODELS):
+        cfg = RECOMMENDED_MODELS[model_name]
+        model_provider = cfg.get("provider")
+        model_vision = bool(cfg.get("vision"))
+        model_image = bool(cfg.get("image_generation"))
+        model_audio = bool(cfg.get("audio_transcription"))
+
+        context = cfg.get("context_window")
+        if context is None:
+            context = cfg.get("context_window_tokens", {}).get("max")
+
+        max_tokens = cfg.get("max_output_tokens")
+        if max_tokens is None:
+            max_tokens = cfg.get("output_tokens", {}).get("max")
+
+        if provider and model_provider != provider:
+            continue
+        if vision is not None and model_vision != vision:
+            continue
+        if image_generation is not None and model_image != image_generation:
+            continue
+        if audio_transcription is not None and model_audio != audio_transcription:
+            continue
+        if min_context and (context is None or context < min_context):
+            continue
+        if min_output_tokens and (max_tokens is None or max_tokens < min_output_tokens):
+            continue
+
+        rows.append(
+            f"| {model_name} | {model_provider} | {'✅' if model_vision else '❌'} | "
+            f"{'✅' if model_image else '❌'} | {'✅' if model_audio else '❌'} | "
+            f"{context if context is not None else '-'} | {max_tokens if max_tokens is not None else '-'} |"
+        )
+
+    if not rows:
+        return "No models match the specified criteria."
+
+    header = (
+        "| Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |\n"
+        "|---|---|---|---|---|---|---|\n"
+    )
+    table = header + "\n".join(rows)
+    display(Markdown(table))
+    return table
+
 # --- Environment and API Client Setup ---
 
 def load_environment():
