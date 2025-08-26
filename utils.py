@@ -286,38 +286,50 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
             audio_transcription = False if audio_transcription is None else audio_transcription
 
     rows = []
-    for model_name in sorted(RECOMMENDED_MODELS):
+    for model_name in sorted(RECOMMENDED_MODELS.keys()):
         cfg = RECOMMENDED_MODELS[model_name]
-        model_provider = cfg.get("provider")
-        model_vision = bool(cfg.get("vision"))
-        model_image = bool(cfg.get("image_generation"))
-        model_audio = bool(cfg.get("audio_transcription"))
+        model_provider = (cfg.get("provider") or "").lower()
+        model_vision = cfg.get("vision", False)
+        model_image = cfg.get("image_generation", False)
+        model_audio = cfg.get("audio_transcription", False)
 
-        context = cfg.get("context_window")
+        # Prefer canonical integer fields used in RECOMMENDED_MODELS
+        context = cfg.get("context_window_tokens")
         if context is None:
-            context = cfg.get("context_window_tokens", {}).get("max")
+            # Backwards-compat: allow older key name
+            context = cfg.get("context_window")
 
-        max_tokens = cfg.get("max_output_tokens")
+        max_tokens = cfg.get("output_tokens")
         if max_tokens is None:
-            max_tokens = cfg.get("output_tokens", {}).get("max")
+            max_tokens = cfg.get("max_output_tokens")
 
-        if provider and model_provider != provider:
+        # Normalize provider filter to be case-insensitive
+        if provider and model_provider != provider.lower():
             continue
-        if vision is not None and model_vision != vision:
+        if vision is not None and bool(model_vision) != bool(vision):
             continue
-        if image_generation is not None and model_image != image_generation:
+        if image_generation is not None and bool(model_image) != bool(image_generation):
             continue
-        if audio_transcription is not None and model_audio != audio_transcription:
+        if audio_transcription is not None and bool(model_audio) != bool(audio_transcription):
             continue
-        if min_context and (context is None or context < min_context):
+        if min_context and (context is None or (isinstance(context, int) and context < min_context)):
             continue
-        if min_output_tokens and (max_tokens is None or max_tokens < min_output_tokens):
+        if min_output_tokens and (max_tokens is None or (isinstance(max_tokens, int) and max_tokens < min_output_tokens)):
             continue
+
+        def _fmt_num(x):
+            if x is None:
+                return "-"
+            try:
+                # format large ints with commas
+                return f"{int(x):,}"
+            except Exception:
+                return str(x)
 
         rows.append(
-            f"| {model_name} | {model_provider} | {'✅' if model_vision else '❌'} | "
+            f"| {model_name} | {model_provider or '-'} | {'✅' if model_vision else '❌'} | "
             f"{'✅' if model_image else '❌'} | {'✅' if model_audio else '❌'} | "
-            f"{context if context is not None else '-'} | {max_tokens if max_tokens is not None else '-'} |"
+            f"{_fmt_num(context)} | {_fmt_num(max_tokens)} |"
         )
 
     if not rows:
