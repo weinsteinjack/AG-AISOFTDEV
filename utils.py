@@ -50,41 +50,195 @@ except ImportError:
         def processes(self, *args, **kwargs):
             print("PlantUML rendering skipped (plantuml not installed).")
 
+
 # --- Model & Provider Configuration ---
 
 RECOMMENDED_MODELS = {
-    "gpt-5-nano-2025-08-07": {"provider": "openai", "vision": True, "image_generation": False},
-    "gpt-4o":        {"provider": "openai", "vision": True, "image_generation": False},
-    "gpt-4.1":       {"provider": "openai", "vision": True, "image_generation": False},
-    "gpt-4.1-mini":  {"provider": "openai", "vision": True, "image_generation": False},
-    "gpt-4.1-nano":  {"provider": "openai", "vision": True, "image_generation": False},
-    "gpt-4.5":       {"provider": "openai", "vision": True, "image_generation": False},
-    "o3":            {"provider": "openai", "vision": True, "image_generation": False},
-    "o4-mini":       {"provider": "openai", "vision": True, "image_generation": False},
-    "codex-mini":    {"provider": "openai", "vision": False, "image_generation": False},
+    # OpenAI models
+    "gpt-5-nano-2025-08-07": {"provider": "openai", "vision": True, "image_generation": False,
+                              "context_window": 400_000, "max_output_tokens": 128_000},
+    "gpt-5-mini-2025-08-07": {"provider": "openai", "vision": True, "image_generation": False,
+                              "context_window": 400_000, "max_output_tokens": 128_000},  # example date
+    "gpt-5-2025-08-07":      {"provider": "openai", "vision": True, "image_generation": False,
+                              "context_window": 400_000, "max_output_tokens": 128_000},
+    "gpt-4o":       {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 128_000, "max_output_tokens": 16_384},  # 128k context, 16k output
+    "gpt-4o-mini":  {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 128_000, "max_output_tokens": 16_384},
+    "gpt-4.1":      {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 1_000_000, "max_output_tokens": 32_000},
+    "gpt-4.1-mini": {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 1_000_000, "max_output_tokens": 32_000},
+    "gpt-4.1-nano": {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 1_000_000, "max_output_tokens": 32_000},
+    "gpt-4.5":      {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 128_000, "max_output_tokens": 16_384},
+    "o3":           {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 200_000, "max_output_tokens": 100_000},
+    "o4-mini":      {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 200_000, "max_output_tokens": 100_000},
+    "codex-mini":   {"provider": "openai", "vision": True, "image_generation": False,
+                     "context_window": 200_000, "max_output_tokens": 100_000},
+    # OpenAI special models
+    "gpt-image-1":  {"provider": "openai", "vision": True, "image_generation": True,
+                     "context_window": None, "max_output_tokens": None},  # image input/output model
+    "dall-e-3":     {"provider": "openai", "vision": False, "image_generation": True,
+                     "context_window": None, "max_output_tokens": None},  # text-to-image model
+    "whisper-1":    {"provider": "openai", "vision": False, "image_generation": False,
+                     "context_window": None, "max_output_tokens": None},  # speech-to-text model (audio input)
 
-    "claude-opus-4-1-20250805":  {"provider": "anthropic", "vision": True, "image_generation": False},
-    "claude-opus-4-20250514":    {"provider": "anthropic", "vision": True, "image_generation": False},
-    "claude-sonnet-4-20250514":  {"provider": "anthropic", "vision": True, "image_generation": False},
-    "claude-3-7-sonnet-20250219": {"provider": "anthropic", "vision": True, "image_generation": False},
-    "claude-3-5-haiku-20241022": {"provider": "anthropic", "vision": True, "image_generation": False},
-    "claude-3-haiku-20240307":   {"provider": "anthropic", "vision": True, "image_generation": False},
-    "gemini-2.5-pro":         {"provider": "gemini", "vision": True, "image_generation": False},
-    "gemini-2.5-flash":       {"provider": "gemini", "vision": True, "image_generation": False},
-    "gemini-2.5-flash-lite":  {"provider": "gemini", "vision": True, "image_generation": False},
-    "gemini-veo-3":           {"provider": "gemini", "vision": True, "image_generation": False},
-    "gemini-deep-think":      {"provider": "gemini", "vision": True, "image_generation": False},
-    "meta-llama/Llama-3.3-70B-Instruct": {"provider": "huggingface", "vision": False, "image_generation": False},
-    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {"provider": "huggingface", "vision": False, "image_generation": False},
-    "tokyotech-llm/Llama-3.1-Swallow-70B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "image_generation": False},
-    "mistralai/Mistral-7B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "image_generation": False},
-    "deepseek-ai/DeepSeek-VL2":         {"provider": "huggingface", "vision": True, "image_generation": False},
-    "deepseek-ai/DeepSeek-VL2-Small":   {"provider": "huggingface", "vision": True, "image_generation": False},
-    "deepseek-ai/DeepSeek-VL2-Tiny":    {"provider": "huggingface", "vision": True, "image_generation": False},
-    "deepseek-ai/Janus-Pro-7B":         {"provider": "huggingface", "vision": True, "image_generation": False},
-    "imagen-3.0-generate-002": {"provider": "google", "vision": False, "image_generation": True}, # Added for image generation
+    # Anthropic Claude models
+    "claude-opus-4-1-20250805": {"provider": "anthropic", "vision": True, "image_generation": False,
+                                 "context_window": 200_000, "max_output_tokens": 100_000},
+    "claude-opus-4-20250514":   {"provider": "anthropic", "vision": True, "image_generation": False,
+                                 "context_window": 200_000, "max_output_tokens": 100_000},
+    "claude-sonnet-4-20250514": {"provider": "anthropic", "vision": True, "image_generation": False,
+                                 "context_window": 1_000_000, "max_output_tokens": 100_000},
+
+    # Google Gemini models
+    "gemini-2.5-pro":        {"provider": "google", "vision": True, "image_generation": False,
+                               "context_window": 1_000_000, "max_output_tokens": 200_000},
+    "gemini-2.5-flash":      {"provider": "google", "vision": True, "image_generation": False,
+                               "context_window": 1_000_000, "max_output_tokens": 100_000},
+    "gemini-2.5-flash-lite": {"provider": "google", "vision": True, "image_generation": False,
+                               "context_window": 1_000_000, "max_output_tokens": 100_000},
+    "gemini-deep-think":     {"provider": "google", "vision": True, "image_generation": False,
+                               "context_window": 1_000_000, "max_output_tokens": 100_000},
+    "gemini-veo-3":          {"provider": "google", "vision": True, "image_generation": False,
+                               "context_window": None, "max_output_tokens": None},  # video generation model
+    "imagen-3.0-generate-002": {"provider": "google", "vision": False, "image_generation": True,
+                                "context_window": None, "max_output_tokens": None},  # image generation (Imagen 3)
+
+    # Hugging Face / Open-Source models
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {"provider": "huggingface", "vision": True, "image_generation": False,
+                                                 "context_window": 10_000_000, "max_output_tokens": 100_000},
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {"provider": "huggingface", "vision": True, "image_generation": False,
+                                                     "context_window": 1_000_000, "max_output_tokens": 100_000},
+    "meta-llama/Llama-3.3-70B-Instruct": {"provider": "huggingface", "vision": False, "image_generation": False,
+                                         "context_window": 4_096, "max_output_tokens": 1024},  # example context for L3
+    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {"provider": "huggingface", "vision": False, "image_generation": False,
+                                                        "context_window": 4_096, "max_output_tokens": 1024},
+    "tokyotech-llm/Llama-3.1-Swallow-70B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "image_generation": False,
+                                                         "context_window": 4_096, "max_output_tokens": 1024},
+    "mistralai/Mistral-7B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "image_generation": False,
+                                          "context_window": 32_768, "max_output_tokens": 8192},
+    "deepseek-ai/DeepSeek-V3":        {"provider": "huggingface", "vision": False, "image_generation": False,
+                                       "context_window": 128_000, "max_output_tokens": 100_000},
+    "deepseek-ai/DeepSeek-V3-Small":  {"provider": "huggingface", "vision": False, "image_generation": False,
+                                       "context_window": 128_000, "max_output_tokens": 100_000},  # placeholder smaller variant
+    "deepseek-ai/DeepSeek-VL2":       {"provider": "huggingface", "vision": True, "image_generation": False,
+                                       "context_window": 32_000, "max_output_tokens": 8000},   # assuming VL2 context ~32k
+    "deepseek-ai/DeepSeek-VL2-Small": {"provider": "huggingface", "vision": True, "image_generation": False,
+                                       "context_window": 32_000, "max_output_tokens": 8000},
+    "deepseek-ai/DeepSeek-VL2-Tiny":  {"provider": "huggingface", "vision": True, "image_generation": False,
+                                       "context_window": 32_000, "max_output_tokens": 8000},
+    "deepseek-ai/Janus-Pro-7B":       {"provider": "huggingface", "vision": True, "image_generation": False,
+                                       "context_window": 8192, "max_output_tokens": 2048}
 }
 
+# --- GOOGLE (Gemini, Imagen, Speech-to-Text) ---
+
+RECOMMENDED_MODELS.update({
+    # Gemini 2.5 (stable)
+    "gemini-2.5-pro": {
+        "provider": "google",
+        "vision": True,                # multimodal: text+image+video+audio+PDF input
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},  # 1M
+        "output_tokens":         {"default": None, "max": 65_536}
+    },
+    "gemini-2.5-flash": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 65_536}
+    },
+    "gemini-2.5-flash-lite": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 65_536}
+    },
+
+    # Gemini 2.5 Live (preview; voice+video I/O). Kept for completeness.
+    "gemini-live-2.5-flash-preview": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,  # conversational audio I/O (not pure STT endpoint)
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+
+    # Gemini 2.5 image generation (preview; conversational image gen/edit)
+    "gemini-2.5-flash-image-preview": {
+        "provider": "google",
+        "vision": True,                # accepts image+text for editing
+        "image_generation": True,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 32_768},
+        "output_tokens":         {"default": None, "max": 32_768}
+    },
+
+    # Gemini 2.0 (still available & non-deprecated)
+    "gemini-2.0-flash": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+    "gemini-2.0-flash-lite": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+    "gemini-2.0-flash-live-001": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,  # live conversational audio I/O
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+
+    # Imagen (update to v4)
+    "imagen-4.0-generate-001": {
+        "provider": "google",
+        "vision": False,               # this is an image generator endpoint
+        "image_generation": True,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 480},  # Imagen prompt limit (tokens)
+        "output_tokens":         {"default": None, "max": None}  # outputs images, not text tokens
+    },
+
+    # Google Cloud Speech-to-Text (pure STT models)
+    "google-cloud/speech-to-text/latest_long": {
+        "provider": "google",
+        "vision": False,
+        "image_generation": False,
+        "audio_transcription": True,
+        "context_window_tokens": {"default": None, "max": None},  # audio-duration based
+        "output_tokens":         {"default": None, "max": None}
+    },
+    "google-cloud/speech-to-text/latest_short": {
+        "provider": "google",
+        "vision": False,
+        "image_generation": False,
+        "audio_transcription": True,
+        "context_window_tokens": {"default": None, "max": None},
+        "output_tokens":         {"default": None, "max": None}
+    },
+})
 
 # --- Environment and API Client Setup ---
 
