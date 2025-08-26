@@ -95,19 +95,123 @@ RECOMMENDED_MODELS = {
     "claude-sonnet-4-20250514": {"provider": "anthropic", "vision": True, "image_generation": False,
                                  "context_window": 1_000_000, "max_output_tokens": 100_000},
 
-    # Google Gemini models
-    "gemini-2.5-pro":        {"provider": "google", "vision": True, "image_generation": False,
-                               "context_window": 1_000_000, "max_output_tokens": 200_000},
-    "gemini-2.5-flash":      {"provider": "google", "vision": True, "image_generation": False,
-                               "context_window": 1_000_000, "max_output_tokens": 100_000},
-    "gemini-2.5-flash-lite": {"provider": "google", "vision": True, "image_generation": False,
-                               "context_window": 1_000_000, "max_output_tokens": 100_000},
-    "gemini-deep-think":     {"provider": "google", "vision": True, "image_generation": False,
-                               "context_window": 1_000_000, "max_output_tokens": 100_000},
-    "gemini-veo-3":          {"provider": "google", "vision": True, "image_generation": False,
-                               "context_window": None, "max_output_tokens": None},  # video generation model
-    "imagen-3.0-generate-002": {"provider": "google", "vision": False, "image_generation": True,
-                                "context_window": None, "max_output_tokens": None},  # image generation (Imagen 3)
+    # Google Gemini, Imagen, and Speech-to-Text models
+    "gemini-2.5-pro": {
+        "provider": "google",
+        "vision": True,                # multimodal: text+image+video+audio+PDF input
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},  # 1M
+        "output_tokens":         {"default": None, "max": 65_536}
+    },
+    "gemini-2.5-flash": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 65_536}
+    },
+    "gemini-2.5-flash-lite": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 65_536}
+    },
+    # Gemini 2.5 Live (preview; voice+video I/O)
+    "gemini-live-2.5-flash-preview": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,  # conversational audio I/O (not pure STT)
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+    # Gemini 2.5 image generation (preview; conversational image gen/edit)
+    "gemini-2.5-flash-image-preview": {
+        "provider": "google",
+        "vision": True,                # accepts image+text for editing
+        "image_generation": True,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 32_768},
+        "output_tokens":         {"default": None, "max": 32_768}
+    },
+    # Gemini 2.0 models
+    "gemini-2.0-flash": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+    "gemini-2.0-flash-lite": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+    "gemini-2.0-flash-live-001": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,  # live conversational audio I/O
+        "context_window_tokens": {"default": None, "max": 1_048_576},
+        "output_tokens":         {"default": None, "max": 8_192}
+    },
+    # Additional Google models
+    "gemini-deep-think": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 1_000_000},
+        "output_tokens":         {"default": None, "max": 100_000}
+    },
+    "gemini-veo-3": {
+        "provider": "google",
+        "vision": True,
+        "image_generation": False,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": None},
+        "output_tokens":         {"default": None, "max": None}
+    },  # video generation model
+    "imagen-3.0-generate-002": {
+        "provider": "google",
+        "vision": False,
+        "image_generation": True,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": None},
+        "output_tokens":         {"default": None, "max": None}
+    },  # image generation (Imagen 3)
+    "imagen-4.0-generate-001": {
+        "provider": "google",
+        "vision": False,               # image generator endpoint
+        "image_generation": True,
+        "audio_transcription": False,
+        "context_window_tokens": {"default": None, "max": 480},  # Imagen prompt limit
+        "output_tokens":         {"default": None, "max": None}  # outputs images, not text tokens
+    },
+    "google-cloud/speech-to-text/latest_long": {
+        "provider": "google",
+        "vision": False,
+        "image_generation": False,
+        "audio_transcription": True,
+        "context_window_tokens": {"default": None, "max": None},  # audio-duration based
+        "output_tokens":         {"default": None, "max": None}
+    },
+    "google-cloud/speech-to-text/latest_short": {
+        "provider": "google",
+        "vision": False,
+        "image_generation": False,
+        "audio_transcription": True,
+        "context_window_tokens": {"default": None, "max": None},
+        "output_tokens":         {"default": None, "max": None}
+    },
 
     # Hugging Face / Open-Source models
     "meta-llama/Llama-4-Scout-17B-16E-Instruct": {"provider": "huggingface", "vision": True, "image_generation": False,
@@ -135,110 +239,6 @@ RECOMMENDED_MODELS = {
     "deepseek-ai/Janus-Pro-7B":       {"provider": "huggingface", "vision": True, "image_generation": False,
                                        "context_window": 8192, "max_output_tokens": 2048}
 }
-
-# --- GOOGLE (Gemini, Imagen, Speech-to-Text) ---
-
-RECOMMENDED_MODELS.update({
-    # Gemini 2.5 (stable)
-    "gemini-2.5-pro": {
-        "provider": "google",
-        "vision": True,                # multimodal: text+image+video+audio+PDF input
-        "image_generation": False,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 1_048_576},  # 1M
-        "output_tokens":         {"default": None, "max": 65_536}
-    },
-    "gemini-2.5-flash": {
-        "provider": "google",
-        "vision": True,
-        "image_generation": False,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 1_048_576},
-        "output_tokens":         {"default": None, "max": 65_536}
-    },
-    "gemini-2.5-flash-lite": {
-        "provider": "google",
-        "vision": True,
-        "image_generation": False,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 1_048_576},
-        "output_tokens":         {"default": None, "max": 65_536}
-    },
-
-    # Gemini 2.5 Live (preview; voice+video I/O). Kept for completeness.
-    "gemini-live-2.5-flash-preview": {
-        "provider": "google",
-        "vision": True,
-        "image_generation": False,
-        "audio_transcription": False,  # conversational audio I/O (not pure STT endpoint)
-        "context_window_tokens": {"default": None, "max": 1_048_576},
-        "output_tokens":         {"default": None, "max": 8_192}
-    },
-
-    # Gemini 2.5 image generation (preview; conversational image gen/edit)
-    "gemini-2.5-flash-image-preview": {
-        "provider": "google",
-        "vision": True,                # accepts image+text for editing
-        "image_generation": True,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 32_768},
-        "output_tokens":         {"default": None, "max": 32_768}
-    },
-
-    # Gemini 2.0 (still available & non-deprecated)
-    "gemini-2.0-flash": {
-        "provider": "google",
-        "vision": True,
-        "image_generation": False,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 1_048_576},
-        "output_tokens":         {"default": None, "max": 8_192}
-    },
-    "gemini-2.0-flash-lite": {
-        "provider": "google",
-        "vision": True,
-        "image_generation": False,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 1_048_576},
-        "output_tokens":         {"default": None, "max": 8_192}
-    },
-    "gemini-2.0-flash-live-001": {
-        "provider": "google",
-        "vision": True,
-        "image_generation": False,
-        "audio_transcription": False,  # live conversational audio I/O
-        "context_window_tokens": {"default": None, "max": 1_048_576},
-        "output_tokens":         {"default": None, "max": 8_192}
-    },
-
-    # Imagen (update to v4)
-    "imagen-4.0-generate-001": {
-        "provider": "google",
-        "vision": False,               # this is an image generator endpoint
-        "image_generation": True,
-        "audio_transcription": False,
-        "context_window_tokens": {"default": None, "max": 480},  # Imagen prompt limit (tokens)
-        "output_tokens":         {"default": None, "max": None}  # outputs images, not text tokens
-    },
-
-    # Google Cloud Speech-to-Text (pure STT models)
-    "google-cloud/speech-to-text/latest_long": {
-        "provider": "google",
-        "vision": False,
-        "image_generation": False,
-        "audio_transcription": True,
-        "context_window_tokens": {"default": None, "max": None},  # audio-duration based
-        "output_tokens":         {"default": None, "max": None}
-    },
-    "google-cloud/speech-to-text/latest_short": {
-        "provider": "google",
-        "vision": False,
-        "image_generation": False,
-        "audio_transcription": True,
-        "context_window_tokens": {"default": None, "max": None},
-        "output_tokens":         {"default": None, "max": None}
-    },
-})
 
 def recommended_models_table(task=None, provider=None, vision=None, image_generation=None,
                              audio_transcription=None, min_context=None, min_output_tokens=None):
