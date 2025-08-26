@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 2: AI-Driven Design & Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #63b3ed; /* Blue accent */
+            border-radius: 9999px;
+        }
+        .card {
+            background-color: #2d3748; /* Slightly lighter dark for cards */
+            border-radius: 0.75rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            font-weight: 600;
+            color: #90cdf4; /* Light blue for interactive headers */
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .collapsible-content.open {
+            max-height: 2000px; /* Arbitrarily large value to allow content to expand */
+            transition: max-height 0.5s ease-in;
+        }
+        .code-block {
+            background-color: #232d3a; /* Even darker for code blocks */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Cascadia Code', monospace; /* Monospaced font for code */
+            font-size: 0.9em;
+            color: #a0aec0; /* Lighter gray for code */
+        }
+        .highlight {
+            color: #4fd1c5; /* Teal for highlights */
+        }
+        .accent-text {
+            color: #63b3ed; /* Blue accent */
+        }
+        .spark-creativity {
+            background-color: #3a4a5c; /* A slightly different shade for creativity boxes */
+            border-left: 4px solid #f6ad55; /* Orange accent */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #cbd5e0;
+        }
+        .syntax-list {
+            list-style-type: none; /* Remove default bullet */
+            padding-left: 0;
+        }
+        .syntax-list li {
+            position: relative;
+            padding-left: 1.5em; /* Space for custom bullet */
+            margin-bottom: 0.5em;
+        }
+        .syntax-list li::before {
+            content: '›'; /* Chevron bullet */
+            position: absolute;
+            left: 0;
+            color: #4fd1c5; /* Teal for bullet */
+            font-weight: bold;
+        }
+        .syntax-list.chevrons-only li::before {
+            content: '»'; /* Double chevron */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-gray-800 p-4 sticky top-0 z-50 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white"><span class="accent-text">AI-Driven</span> SWE Program</h1>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#day1-recap" class="text-gray-300 hover:text-white transition duration-300">Day 1 Recap</a></li>
+                    <li><a href="#data-modeling" class="text-gray-300 hover:text-white transition duration-300">Data Modeling</a></li>
+                    <li><a href="#lab1" class="text-gray-300 hover:text-white transition duration-300">Lab 1</a></li>
+                    <li><a href="#decision-making" class="text-gray-300 hover:text-white transition duration-300">Decision-Making</a></li>
+                    <li><a href="#lab2" class="text-gray-300 hover:text-white transition duration-300">Lab 2</a></li>
+                    <li><a href="#wrap-up" class="text-gray-300 hover:text-white transition duration-300">Wrap-up</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <section id="day2-intro" class="text-center my-10">
+            <h2 class="text-5xl font-extrabold text-white mb-4">Day 2: AI-Driven Design & Architecture</h2>
+            <p class="text-xl text-gray-400">
+                <span class="accent-text">Theme:</span> From requirements to a robust, AI-assisted technical blueprint.
+            </p>
+            <p class="text-lg text-gray-400 mt-2">
+                <span class="accent-text">Core Question:</span> How can GenAI serve as an architectural co-pilot for data modeling, system design, and informed decision-making?
+            </p>
+        </section>
+
+        <!-- Day 1 Recap & Q&A -->
+        <section id="day1-recap" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Day 1 Recap & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Review of Key Concepts (15 min)</h4>
+                <p class="text-gray-300 mb-4">
+                    Yesterday, we laid the groundwork for AI-assisted software development by transforming a vague idea into actionable requirements. Here are the key skills we focused on:
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Requirements Elicitation:</span> Using LLMs to brainstorm features, identify user personas, and decompose a problem statement.</li>
+                    <li><span class="highlight">Structured User Stories:</span> Converting ideas into the standard 'As a... I want... So that...' format with Gherkin acceptance criteria.</li>
+                    <li><span class="highlight">Machine-Readable Artifacts:</span> Generating JSON outputs that can be consumed by other automated tools.</li>
+                    <li><span class="highlight">AI-Powered Documentation:</span> Creating a comprehensive Product Requirements Document (PRD) from a template and generating a Pydantic model for validation.</li>
+                </ul>
+                <p class="text-gray-300 mt-4">
+                    This practice of turning unstructured ideas into structured, machine-readable data is a foundational skill for building AI-driven workflows.
+                </p>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                    <p class="text-lg font-medium text-white mb-2">Thought-provoking question:</p>
+                    <p class="text-gray-300 italic">"What was the most surprising capability of AI you encountered yesterday in shaping your project's initial vision?"</p>
+                    <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300" onclick="alert('Instructor Thoughts: Consider how AI helped in breaking down complex ideas, structuring unstructured data, or even validating requirements programmatically. It might be the sheer speed, the consistency, or the ability to generate formal artifacts from natural language.')">Reveal Instructor Thoughts</button>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Q&A (15 min)</h4>
+                <p class="text-gray-300">
+                    This segment is dedicated to addressing any questions regarding Day 1's concepts or labs. We encourage sharing successful prompts or interesting AI outputs observed. Your practical experiences are invaluable learning opportunities for everyone.
+                </p>
+            </div>
+        </section>
+
+        <!-- Content: AI for Data Modeling & System Design -->
+        <section id="data-modeling" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: AI for Data Modeling & System Design</h3>
+            <p class="text-gray-300 mb-6">
+                Today, we move from the **'what'** (the requirements) to the **'how'** (the architecture). Data modeling is the critical process of transforming abstract requirements into a logical database schema, laying the foundation for a robust and scalable application. Generative AI can serve as a co-architect in this process, significantly accelerating design, ensuring consistency, and reducing the time spent on manual schema definition.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">AI-Assisted Data Modeling: The Backbone of Your Application</h4>
+                <p class="text-gray-300 mb-2">
+                    Historically, translating user stories into a coherent database schema has been a painstaking, manual task. AI can now automate this, saving countless hours and ensuring the schema adheres to best practices like normalization.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">The Source of Truth:</span> We feed the AI our PRD and structured user stories. This provides all the necessary context about the entities and relationships in our application.</li>
+                    <li><span class="highlight">Persona-Driven Prompts:</span> We instruct the LLM to "Act as a senior Database Architect" and to adhere to specific principles, such as "Generate a normalized SQL schema." This guides the AI to produce a professional-grade output.</li>
+                    <li><span class="highlight">From Text to Schema:</span> The AI synthesizes the textual requirements into a set of precise `CREATE TABLE` statements with appropriate data types, foreign keys, and constraints.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> A new team is tasked with building a complex inventory management system. Instead of spending weeks on manual data modeling and ERD diagrams, they use an LLM to generate the initial SQL schema from their project's user stories in a single day, dramatically accelerating the project kickoff.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Generating Realistic Seed Data: Fueling Your Development</h4>
+                <p class="text-gray-300 mb-2">
+                    An empty database is of little use. For testing and demonstration purposes, we need to populate it with realistic, diverse data. This is another area where AI excels, generating large amounts of contextually relevant data that conforms to our newly created schema.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Context is Key:</span> We provide the AI with both the PRD and the SQL schema. This dual context allows it to generate data that is both thematically relevant (e.g., "Complete HR Paperwork" tasks) and structurally correct (e.g., a `user_id` that exists in the `users` table).</li>
+                    <li><span class="highlight">From Schema to Inserts:</span> The AI generates precise `INSERT` statements, saving days of manual data entry or scripting.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Analogy:</span> Think of AI here as a highly efficient data entry clerk who understands the rules of your database perfectly.
+                </p>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">AI in Conceptual System Design: Your Strategic Co-Pilot</h4>
+                <p class="text-gray-300 mb-2">
+                    AI can assist with high-level architectural decisions by acting as an impartial consultant. You can ask it to propose different architectural patterns or identify potential trade-offs, helping you make more informed strategic choices.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Architectural Options:</span> Prompting AI to propose different patterns (e.g., monolith vs. microservices) for a given set of requirements.</li>
+                    <li><span class="highlight">Component Decomposition:</span> Using AI to identify logical service boundaries, define API endpoints, and map internal data flows.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> A company is building a new IoT data platform. They use an LLM to brainstorm and compare event-driven architectures (e.g., Kafka vs. RabbitMQ) and identify the pros and cons of each in terms of latency, cost, and operational complexity, accelerating their initial design phase.
+                </p>
+            </div>
+        </section>
+
+        <!-- Assisted Practice: AI-Generated System Design & Database Seeding (Lab 1) -->
+        <section id="lab1" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Assisted Practice: AI-Generated System Design & Database Seeding</h3>
+            <p class="text-gray-300 mb-4">
+                <span class="font-semibold">Lab Overview:</span> In this lab, you will act as a lead architect. Building on our 'New Hire Onboarding Tool' from yesterday, you will leverage AI to define its data structure, generate realistic seed data, and create a tangible, seeded database file.
+            </p>
+            <p class="text-gray-400 text-sm italic mb-6">
+                (Detailed instructions are in: `D2_Lab1_AI_Generated_System_Design_Database_Seeding.ipynb`)
+            </p>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Python Libraries & Concepts for this Lab</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>sqlite3</code>:</span> Python's built-in library for interacting with SQLite databases. It's lightweight and perfect for our local development environment.</li>
+                        <li><span class="highlight"><code>os</code>, <code>sys</code>:</span> Standard Python libraries for managing file paths and ensuring our helper scripts are discoverable.</li>
+                        <li><span class="highlight">Helper Functions (`utils.py`):</span>
+                            <ul class="syntax-list chevrons-only">
+                                <li><code>setup_llm_client()</code>: Configures the LLM API client.</li>
+                                <li><code>get_completion()</code>: Sends prompts to the LLM.</li>
+                                <li><code>load_artifact()</code>: Reads our PRD from Day 1.</li>
+                                <li><code>save_artifact()</code>: Saves our generated SQL files.</li>
+                                <li><code>clean_llm_output()</code>: Removes markdown formatting from AI output.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 1 (Foundational): Generating the SQL Schema</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Prompt the LLM, acting as a seasoned Database Administrator, to generate a normalized SQL schema for our application based on the PRD.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">SQL Syntax Essentials:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">`CREATE TABLE table_name (...)`</span>: Defines a new table.</li>
+                        <li><span class="highlight">`PRIMARY KEY`</span>: Uniquely identifies each row.</li>
+                        <li><span class="highlight">`FOREIGN KEY (column) REFERENCES other_table(other_column)`</span>: Links data between tables.</li>
+                        <li><span class="highlight">Data Types:</span> `INTEGER`, `TEXT`, `DATE`.</li>
+                        <li><span class="highlight">Constraints:</span> `UNIQUE`, `NOT NULL`.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This step automates the creation of a critical design artifact from unstructured text.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 2 (Intermediate): Generating Realistic Seed Data</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Prompt the LLM to generate 5-10 realistic `INSERT` statements that conform to your created SQL schema.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">SQL Syntax Essentials:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">`INSERT INTO table_name (columns) VALUES (values);`</span>: Adds new data rows.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> You're creating a development environment that's ready for testing, saving time on manual data entry.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 3 (Advanced): Creating and Seeding a Live Database</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Write a Python script to execute the generated SQL files, creating and populating a live `onboarding.db` file.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Python Code & Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>sqlite3.connect(db_path)</code></span>: Creates/connects to the database file.</li>
+                        <li><span class="highlight"><code>cursor.executescript(sql_string)</code></span>: **CRUCIAL!** Executes a multi-statement SQL string.</li>
+                        <li><span class="highlight"><code>conn.commit()</code></span>: Saves changes permanently.</li>
+                        <li><span class="highlight"><code>try...finally</code> block</span>: Ensures the database connection is always closed, even if an error occurs.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This is where AI-generated text becomes a tangible, functional component of your application, proving that the design is valid.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content: LLM-Driven Architectural Decision-Making -->
+        <section id="decision-making" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Content: LLM-Driven Architectural Decision-Making</h3>
+            <p class="text-gray-300 mb-6">
+                Making strategic architectural decisions is a core responsibility of any senior engineer. Every choice, from technology stack to design pattern, involves trade-offs. The process of researching these options and documenting the rationale is often as critical as the decision itself. AI can serve as a powerful research and documentation assistant in this phase, enabling more transparent and data-driven choices.
+            </p>
+            <p class="text-gray-300 italic mt-2">
+                This is about moving from making a good decision to making a good **documented** decision.
+            </p>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">AI as a Research Assistant: Navigating Complexity</h4>
+                <p class="text-gray-300 mb-2">
+                    Instead of sifting through countless articles and forums, you can delegate the initial research to an LLM. By providing a precise prompt, you can get a balanced overview of technical options, complete with pros, cons, and potential risks.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Prompt for Balance:</span> Instruct the AI to "Act as an unbiased research analyst" and to provide "a comprehensive comparison, including trade-offs."</li>
+                    <li><span class="highlight">Custom Context:</span> You can provide the AI with your specific project's constraints (e.g., "We have a small team," "Cost is a primary concern") to get a more relevant analysis.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Real-world Use Case:</span> A team needs to choose between using a dedicated vector database or a traditional relational database with a vector extension. They use an LLM to generate a comprehensive comparison, highlighting key differences in operational complexity and query flexibility.
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Architectural Decision Records (ADRs): The 'Why' of Your System</h4>
+                <p class="text-gray-300 mb-2">
+                    ADRs are concise, version-controlled documents that capture the rationale behind an architectural decision. They are invaluable for preventing "why did we do this?" questions months or years down the line. AI excels at turning raw research into this structured format.
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Standardized Templates:</span> You can have the AI generate and populate a template with sections like `Context`, `Decision`, and `Consequences`, ensuring consistency across all your architectural documentation.</li>
+                    <li><span class="highlight">Documentation as Code:</span> Since ADRs are text files, they can be stored in Git alongside your code, making them version-controlled and part of the codebase.</li>
+                </ul>
+            </div>
+            
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">AI-Generated Diagrams-as-Code</h4>
+                <p class="text-gray-300 mb-2">
+                    Communicating system design visually is crucial. Tools like PlantUML allow you to define diagrams using simple text, and AI is exceptionally good at generating this "diagrams-as-code."
+                </p>
+                <ul class="syntax-list">
+                    <li><span class="highlight">Text to Visuals:</span> A prompt describing system components and their relationships can be converted into a shareable image file.</li>
+                    <li><span class="highlight">Version Control:</span> Since the diagram is a text file, you can version-control it in Git, just like your source code.</li>
+                </ul>
+                <p class="text-gray-300 italic mt-2">
+                    <span class="font-semibold highlight">Analogy:</span> This is like using a word processor to create a document versus using a language to generate a web page. The text-based approach is more flexible, automatable, and version-controllable.
+                </p>
+            </div>
+        </section>
+
+        <!-- Assisted Practice: Documenting Decisions with ADRs & Diagramming (Lab 2) -->
+        <section id="lab2" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Assisted Practice: Documenting Decisions with ADRs & Diagramming</h3>
+            <p class="text-gray-300 mb-4">
+                <span class="font-semibold">Lab Overview:</span> In this lab, you will make a critical architectural decision for our onboarding tool. You will leverage AI to research technical options, document the decision in a formal ADR, and even visualize the system using AI-generated diagrams-as-code.
+            </p>
+            <p class="text-gray-400 text-sm italic mb-6">
+                (Detailed instructions are in: `D2_Lab2_Documenting_Key_Decisions_with_ADRs.ipynb`)
+            </p>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Python Libraries & Concepts for this Lab</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <ul class="syntax-list">
+                        <li><span class="highlight"><code>plantuml</code>:</span> The Python library that renders our text-based diagram code into visual images.</li>
+                        <li><span class="highlight">Helper Functions (`utils.py`):</span>
+                            <ul class="syntax-list chevrons-only">
+                                <li><code>render_plantuml_diagram()</code>: Our custom helper that automates the diagram generation process.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 1 (Foundational): The ADR Template</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Prompt the LLM to generate a clean, reusable markdown template for an Architectural Decision Record, including sections for `Title`, `Status`, `Context`, `Decision`, and `Consequences`.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">Markdown Syntax Essentials:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">`# Heading 1`</span>, `## Heading 2`: Hierarchical section titles.</li>
+                        <li><span class="highlight">`*italic*`</span>, `**bold**`: For emphasis.</li>
+                        <li><span class="highlight">`- List item`</span>: For bullet points.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> You're creating a standardized document format that the AI can reliably fill.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 2 (Intermediate): AI-Assisted Research</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Use the LLM to compare "PostgreSQL with `pgvector` extension" versus "a dedicated vector database" for a semantic search feature.
+                    </p>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> You're using AI for unbiased, comprehensive research, allowing you to focus on the strategic analysis rather than the information gathering.
+                    </p>
+                </div>
+            </div>
+
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Challenge 3 (Advanced): Synthesizing the ADR</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Provide the LLM with the research from the previous step and the ADR template, and have it synthesize the information into a formal, completed ADR.
+                    </p>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> This demonstrates a powerful pattern: combining unstructured information (research) with a structured format (a template) to generate a high-quality final document.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="collapsible-container">
+                <div class="collapsible-header">
+                    <span>Bonus Challenge: AI-Generated Diagrams-as-Code</span>
+                    <span class="arrow">&#9660;</span>
+                </div>
+                <div class="collapsible-content">
+                    <p class="text-gray-300 mb-2">
+                        <span class="font-semibold">Task:</span> Prompt the LLM to generate PlantUML code for a high-level component diagram or a sequence diagram of our application.
+                    </p>
+                    <h5 class="text-lg font-semibold text-gray-200 mt-4 mb-2">PlantUML Concepts:</h5>
+                    <ul class="syntax-list">
+                        <li><span class="highlight">`@startuml` / `@enduml`</span>: Delimit a diagram.</li>
+                        <li><span class="highlight">`component [Name]`</span>: Defines a system component.</li>
+                        <li><span class="highlight">`[A] --> [B] : Message`</span>: Defines a relationship.</li>
+                    </ul>
+                    <p class="text-gray-300 italic mt-2">
+                        <span class="font-semibold">Key Learning:</span> You're creating visual documentation that can be version-controlled in Git and automatically regenerated on demand.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daily Wrap-up & Q&A -->
+        <section id="wrap-up" class="my-12 card">
+            <h3 class="text-3xl font-bold section-title">Daily Wrap-up & Q&A</h3>
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Key Takeaways</h4>
+                <ul class="syntax-list">
+                    <li>AI transforms requirements into actionable data models and formal documentation.</li>
+                    <li>LLMs are powerful research assistants for architectural trade-off analysis.</li>
+                    <li>Documenting architectural decisions (ADRs) with AI ensures consistency and transparency.</li>
+                    <li>Diagrams-as-code provide version-controllable, automatable blueprints for your system.</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Daily Wrap-up & Project Planning (30 min)</h4>
+                <p class="text-gray-300 italic">
+                    We'll review the database schema and ADRs generated today. We'll also discuss AI limitations and biases in architectural design and briefly preview what's ahead.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="text-xl font-semibold text-gray-200 mb-2">Preview Day 3</h4>
+                <p class="text-gray-300">
+                    Tomorrow, we'll focus on **AI-Assisted Development & Documentation**. We'll learn how to use AI for code generation, refactoring, and automated documentation, supercharging your developer productivity.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 p-4 text-center text-gray-400 text-sm">
+        <p>&copy; 2025 Booz Allen Hamilton Inc. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const arrow = this.querySelector('.arrow');
+
+                    if (content.classList.contains('open')) {
+                        content.classList.remove('open');
+                        arrow.innerHTML = '&#9660;'; // Down arrow
+                    } else {
+                        content.classList.add('open');
+                        arrow.innerHTML = '&#9650;'; // Up arrow
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
