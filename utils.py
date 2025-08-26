@@ -51,8 +51,6 @@ except ImportError:
             print("PlantUML rendering skipped (plantuml not installed).")
 
 # --- Model & Provider Configuration ---
-# TODO: include context window and output tokens as informational snippets
-# TODO: create function to display available models
 
 RECOMMENDED_MODELS = {
     "gpt-5-nano-2025-08-07": {"provider": "openai", "vision": True, "image_generation": False},
