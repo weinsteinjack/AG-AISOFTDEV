@@ -1,0 +1,346 @@
+{
+    "gpt-5-nano-2025-08-07": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 400000,
+        "output_tokens": 128000
+    },
+    "gpt-5-mini-2025-08-07": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 400000,
+        "output_tokens": 128000
+    },
+    "gpt-5-2025-08-07": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 400000,
+        "output_tokens": 128000
+    },
+    "gpt-4o": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 128000,
+        "output_tokens": 16384
+    },
+    "gpt-4o-mini": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 128000,
+        "output_tokens": 16384
+    },
+    "gpt-4.1": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1000000,
+        "output_tokens": 32000
+    },
+    "gpt-4.1-mini": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1000000,
+        "output_tokens": 32000
+    },
+    "gpt-4.1-nano": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1000000,
+        "output_tokens": 32000
+    },
+    "gpt-4.5": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 128000,
+        "output_tokens": 16384
+    },
+    "o3": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 200000,
+        "output_tokens": 100000
+    },
+    "o4-mini": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 200000,
+        "output_tokens": 100000
+    },
+    "codex-mini-latest": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 200000,
+        "output_tokens": 100000
+    },
+    "gpt-image-1": {
+        "provider": "openai",
+        "vision": true,
+        "image_generation": true,
+        "audio_transcription": false,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "dall-e-3": {
+        "provider": "openai",
+        "vision": false,
+        "image_generation": true,
+        "audio_transcription": false,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "whisper-1": {
+        "provider": "openai",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": true,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "claude-opus-4-1-20250805": {
+        "provider": "anthropic",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 200000,
+        "output_tokens": 100000
+    },
+    "claude-opus-4-20250514": {
+        "provider": "anthropic",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 200000,
+        "output_tokens": 100000
+    },
+    "claude-sonnet-4-20250514": {
+        "provider": "anthropic",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1000000,
+        "output_tokens": 100000
+    },
+    "gemini-2.5-pro": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 65536
+    },
+    "gemini-2.5-flash": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 65536
+    },
+    "gemini-2.5-flash-lite": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 65536
+    },
+    "gemini-live-2.5-flash-preview": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 8192
+    },
+    "gemini-2.5-flash-image-preview": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": true,
+        "audio_transcription": false,
+        "context_window_tokens": 32768,
+        "output_tokens": 32768
+    },
+    "gemini-2.0-flash": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 8192
+    },
+    "gemini-2.0-flash-lite": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 8192
+    },
+    "gemini-2.0-flash-live-001": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1048576,
+        "output_tokens": 8192
+    },
+    "gemini-veo-3": {
+        "provider": "google",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "imagen-3.0-generate-002": {
+        "provider": "google",
+        "vision": false,
+        "image_generation": true,
+        "audio_transcription": false,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "imagen-4.0-generate-001": {
+        "provider": "google",
+        "vision": false,
+        "image_generation": true,
+        "audio_transcription": false,
+        "context_window_tokens": 480,
+        "output_tokens": null
+    },
+    "google-cloud/speech-to-text/latest_long": {
+        "provider": "google",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": true,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "google-cloud/speech-to-text/latest_short": {
+        "provider": "google",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": true,
+        "context_window_tokens": null,
+        "output_tokens": null
+    },
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+        "provider": "huggingface",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 10000000,
+        "output_tokens": 100000
+    },
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {
+        "provider": "huggingface",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 1000000,
+        "output_tokens": 100000
+    },
+    "meta-llama/Llama-3.3-70B-Instruct": {
+        "provider": "huggingface",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 4096,
+        "output_tokens": 1024
+    },
+    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {
+        "provider": "huggingface",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 4096,
+        "output_tokens": 1024
+    },
+    "tokyotech-llm/Llama-3.1-Swallow-70B-Instruct-v0.3": {
+        "provider": "huggingface",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 4096,
+        "output_tokens": 1024
+    },
+    "mistralai/Mistral-7B-Instruct-v0.3": {
+        "provider": "huggingface",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 32768,
+        "output_tokens": 8192
+    },
+    "deepseek-ai/DeepSeek-V3": {
+        "provider": "huggingface",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 128000,
+        "output_tokens": 100000
+    },
+    "deepseek-ai/DeepSeek-V3-Small": {
+        "provider": "huggingface",
+        "vision": false,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 128000,
+        "output_tokens": 100000
+    },
+    "deepseek-ai/DeepSeek-VL2": {
+        "provider": "huggingface",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 32000,
+        "output_tokens": 8000
+    },
+    "deepseek-ai/DeepSeek-VL2-Small": {
+        "provider": "huggingface",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 32000,
+        "output_tokens": 8000
+    },
+    "deepseek-ai/DeepSeek-VL2-Tiny": {
+        "provider": "huggingface",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 32000,
+        "output_tokens": 8000
+    },
+    "deepseek-ai/Janus-Pro-7B": {
+        "provider": "huggingface",
+        "vision": true,
+        "image_generation": false,
+        "audio_transcription": false,
+        "context_window_tokens": 0,
+        "output_tokens": 0
+    }
+}
