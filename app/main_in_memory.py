@@ -1,50 +1,43 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import List
 
 app = FastAPI()
 
-# Pydantic models
-class UserCreate(BaseModel):
+class UserBase(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     role: str
 
-class UserRead(BaseModel):
+class UserCreate(UserBase):
+    pass
+
+class User(UserBase):
     id: int
-    name: str
-    email: EmailStr
-    role: str
 
-# In-memory database
-fake_user_db = []
-user_id_counter = 1
+# Fake in-memory database
+users_db = [
+    User(id=1, name="John Doe", email="john.doe@example.com", role="New Hire"),
+    User(id=2, name="Jane Smith", email="jane.smith@example.com", role="Manager"),
+]
 
-# Helper function to find a user by ID
-def get_user_by_id(user_id: int) -> Optional[UserRead]:
-    for user in fake_user_db:
+# Get all users
+@app.get("/users/", response_model=List[User])
+async def read_users():
+    return users_db
+
+# Get user by ID
+@app.get("/users/{user_id}", response_model=User)
+async def read_user(user_id: int):
+    for user in users_db:
         if user.id == user_id:
             return user
-    return None
+    raise HTTPException(status_code=404, detail="User not found")
 
-# POST /users
-@app.post("/users", response_model=UserRead)
-def create_user(user: UserCreate):
-    global user_id_counter
-    new_user = UserRead(id=user_id_counter, **user.dict())
-    fake_user_db.append(new_user)
-    user_id_counter += 1
+# Create new user
+@app.post("/users/", response_model=User)
+async def create_user(user: UserCreate):
+    new_user_id = len(users_db) + 1
+    new_user = User(id=new_user_id, **user.dict())
+    users_db.append(new_user)
     return new_user
-
-# GET /users
-@app.get("/users", response_model=List[UserRead])
-def get_users():
-    return fake_user_db
-
-# GET /users/{user_id}
-@app.get("/users/{user_id}", response_model=UserRead)
-def get_user(user_id: int):
-    user = get_user_by_id(user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user

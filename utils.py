@@ -101,7 +101,7 @@ RECOMMENDED_MODELS = {
         "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 200_000, "output_tokens": 100_000
     },
-    "codex-mini": {
+    "codex-mini-latest": {
         "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 200_000, "output_tokens": 100_000
     },
@@ -172,10 +172,6 @@ RECOMMENDED_MODELS = {
     "gemini-2.0-flash-live-001": {
         "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },
-    "gemini-deep-think": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 100_000
     },
     "gemini-veo-3": {
         "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
@@ -422,8 +418,37 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
     if not client: return "API client not initialized."
     try:
         if api_provider == "openai":
-            response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}], temperature=temperature)
-            return response.choices[0].message.content
+            # Some newer models use different endpoints
+            try:
+                # Try chat completions first (standard endpoint)
+                response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}], temperature=temperature)
+                return response.choices[0].message.content
+            except Exception as api_error:
+                error_message = str(api_error).lower()
+                
+                if "temperature" in error_message and "unsupported" in error_message:
+                    # Retry without temperature parameter
+                    try:
+                        response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}])
+                        return response.choices[0].message.content
+                    except Exception as retry_error:
+                        if "v1/responses" in str(retry_error):
+                            # Use the responses endpoint for certain models
+                            response = client.responses.create(model=model_name, input=prompt)
+                            return response.choices[0].text
+                        else:
+                            raise retry_error
+                elif "v1/responses" in str(api_error):
+                    # Use the responses endpoint for certain models
+                    try:
+                        response = client.responses.create(model=model_name, input=prompt, temperature=temperature)
+                        return response.text
+                    except Exception as resp_error:
+                        # Try responses endpoint without temperature
+                        response = client.responses.create(model=model_name, input=prompt)
+                        return response.text
+                else:
+                    raise api_error
         elif api_provider == "anthropic":
             response = client.messages.create(
                 model=model_name,
@@ -435,7 +460,7 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
         elif api_provider == "huggingface":
             response = client.chat_completion(messages=[{"role": "user", "content": prompt}], temperature=max(0.1, temperature), max_tokens=4096)
             return response.choices[0].message.content
-        elif api_provider == "gemini":
+        elif api_provider == "gemini" or api_provider == "google":
             response = client.generate_content(prompt)
             return response.text
     except Exception as e:
@@ -473,35 +498,15 @@ def get_vision_completion(prompt, image_url, client, model_name, api_provider):
                 }]
             )
             return response.content[0].text
-        elif api_provider == "gemini":
-            # For Gemini, we need to convert the image URL to inlineData (base64)
+        elif api_provider == "gemini" or api_provider == "google":
+            # For Gemini, the client is the GenerativeModel instance
             response_img = requests.get(image_url)
             response_img.raise_for_status()
-            img_data = base64.b64encode(response_img.content).decode('utf-8')
-            mime_type = response_img.headers['Content-Type']
-
-            payload = {
-                "contents": [
-                    {
-                        "role": "user",
-                        "parts": [
-                            {"text": prompt},
-                            {"inlineData": {"mimeType": mime_type, "data": img_data}}
-                        ]
-                    }
-                ]
-            }
-            # Use the raw genai client for direct API call
-            # The client here is actually `genai` module from setup_llm_client
-            api_key = "" # Canvas will provide this.
-            api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-            response = requests.post(api_url, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
-            response.raise_for_status()
-            result = response.json()
-            if result.get("candidates") and result["candidates"][0].get("content") and result["candidates"][0]["content"].get("parts"):
-                return result["candidates"][0]["content"]["parts"][0]["text"]
-            else:
-                return f"Unexpected Gemini vision response structure: {result}"
+            img = Image.open(BytesIO(response_img.content))
+            
+            # The client is a GenerativeModel, which can take a list of content parts
+            response = client.generate_content([prompt, img])
+            return response.text
         elif api_provider == "huggingface":
             response_img = requests.get(image_url)
             response_img.raise_for_status()
