@@ -19,6 +19,7 @@ streamlit
 
 # Agent frameworks / tooling
 autogen
+crewai
 pyautogen
 smolagents
 langchain
@@ -58,6 +59,7 @@ matplotlib
 seaborn
 scikit-learn
 plantuml
+colorama
 
 # Misc (community / integrations)
 tavily-python

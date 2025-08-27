@@ -652,7 +652,56 @@ def load_artifact(file_path):
         return None
 
 def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
-    """Renders PlantUML code and saves it as a PNG image."""
+    """
+    Renders PlantUML code into a PNG image and displays it in Jupyter environments.
+    
+    This function takes PlantUML markup code and converts it into a visual diagram
+    using the PlantUML web service. The generated image is saved to the specified
+    path within the project and automatically displayed in Jupyter notebooks.
+    
+    Args:
+        puml_code (str): The PlantUML markup code to render. Should be valid PlantUML
+            syntax (e.g., "@startuml\\nclass Example\\n@enduml").
+        output_path (str, optional): Relative path from project root where the PNG
+            image will be saved. Defaults to "artifacts/diagram.png". Directory
+            structure will be created automatically if it doesn't exist.
+    
+    Returns:
+        None: This function doesn't return a value but produces side effects:
+            - Saves PNG image to the specified file path
+            - Prints status messages to console
+            - Displays the image in Jupyter environments
+    
+    Raises:
+        Exception: Catches and reports any errors during the rendering process,
+            including network errors, file system errors, or PlantUML syntax errors.
+    
+    Notes:
+        - Uses the public PlantUML web service (http://www.plantuml.com/plantuml/img/)
+        - Handles different versions of the plantuml library automatically
+        - Creates output directories as needed using os.makedirs
+        - Falls back gracefully if image display fails in non-Jupyter environments
+        - Supports both direct file writing and URL-based image fetching
+    
+    Example:
+        >>> puml_code = '''
+        ... @startuml
+        ... class User {
+        ...     +name: string
+        ...     +email: string
+        ...     +login()
+        ... }
+        ... @enduml
+        ... '''
+        >>> render_plantuml_diagram(puml_code, "diagrams/user_class.png")
+        ✅ Diagram rendered and saved to: diagrams/user_class.png
+    
+    Dependencies:
+        - plantuml: Python library for PlantUML integration
+        - requests: For HTTP requests when fetching images from URLs
+        - PIL (Pillow): Used internally by plantuml library
+        - IPython.display: For displaying images in Jupyter notebooks (optional)
+    """
     try:
         # FIX: Corrected the PlantUML URL
         pl = PlantUML(url='http://www.plantuml.com/plantuml/img/')
