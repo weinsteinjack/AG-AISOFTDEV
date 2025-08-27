@@ -243,7 +243,7 @@ RECOMMENDED_MODELS = {
     },
     "deepseek-ai/Janus-Pro-7B": {
         "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 8_192, "output_tokens": 2_048
+        "context_window_tokens": 0, "output_tokens": 0
     },
 }
 
@@ -660,9 +660,43 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
         
         full_path = os.path.join(project_root, output_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        pl.processes(puml_code, outfile=full_path)
-        print(f"✅ Diagram rendered and saved to: {output_path}")
-        display(IPyImage(url=full_path))
+        # plantuml library versions differ in their `processes` signature.
+        # Some accept an `outfile` kwarg, others return the image data or a URL.
+        result = None
+        try:
+            # Preferred: try calling with outfile (some versions support this)
+            result = pl.processes(puml_code, outfile=full_path)
+        except TypeError:
+            # Fallback: call without outfile and handle returned data/result.
+            result = pl.processes(puml_code)
+
+        # If the library returned raw bytes, save them to the file.
+        if isinstance(result, (bytes, bytearray)):
+            with open(full_path, 'wb') as f:
+                f.write(result)
+        # If the library returned a URL string, fetch it and save the image bytes.
+        elif isinstance(result, str) and result.startswith('http'):
+            try:
+                resp = requests.get(result)
+                resp.raise_for_status()
+                with open(full_path, 'wb') as f:
+                    f.write(resp.content)
+            except Exception:
+                # If fetching the URL fails, still continue to let callers know result.
+                pass
+
+        # At this point, the plantuml lib may have already written the file
+        # or we wrote it above. Check for file existence before displaying.
+        if os.path.exists(full_path):
+            print(f"✅ Diagram rendered and saved to: {output_path}")
+            try:
+                # IPython Image accepts filename= or url=. Use filename for local file.
+                display(IPyImage(filename=full_path))
+            except Exception:
+                # Best-effort fallback to markdown link if display fails.
+                display(Markdown(f"![diagram]({full_path})"))
+        else:
+            print(f"⚠️ Diagram rendering returned no file. Result: {result}")
     except Exception as e:
         print(f"❌ Error rendering PlantUML diagram: {e}")
 
