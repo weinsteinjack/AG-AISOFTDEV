@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Text, Date
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -44,8 +43,8 @@ class UserCreate(UserBase):
 
 class UserSchema(UserBase):
     id: int
-    class Config:
-        orm_mode = True
+    # Pydantic v2: use `model_config` with `from_attributes` instead of `orm_mode`
+    model_config = {"from_attributes": True}
 
 # --- FastAPI App ---
 app = FastAPI()
@@ -290,5 +289,19 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 if __name__ == "__main__":
     import uvicorn
+    import importlib
 
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    # Uvicorn's auto-reload requires the application to be importable by
+    # module path (e.g. "app.main:app"). When running `python app/main.py`,
+    # the interpreter's sys.path[0] is set to the `app/` directory and the
+    # top-level package `app` is not importable which causes a
+    # ModuleNotFoundError inside the reloader subprocess. We try to import
+    # the package first and only enable reload when possible. Otherwise we
+    # start the server without reload to avoid the error.
+    try:
+        importlib.import_module("app")
+        uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+    except Exception:
+        # Fallback: start without reload (safe when launching as a script)
+        print("Note: 'app' package not importable — starting server without reload.")
+        uvicorn.run(app, host="127.0.0.1", port=8000, reload=False)
