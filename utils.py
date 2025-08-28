@@ -12,6 +12,7 @@ from io import BytesIO
 import re
 import base64
 import mimetypes
+import subprocess
 import time # For loading indicator
 
 # --- Dynamic Library Installation ---
@@ -493,11 +494,12 @@ def setup_llm_client(model_name="gpt-4o"):
                 api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for both Gemini text and Imagen
                 if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
                 genai.configure(api_key=api_key)
-                if config.get("image_generation") and "imagen" in model_name:
-                    # For Imagen models, we use the REST API, so the 'client' can be the genai module.
+                # For image generation, we'll pass the genai module itself
+                # and instantiate the model within the generation function.
+                if config.get("image_generation"):
                     client = genai
                 else:
-                    # For all Gemini models (text, vision, and image generation), we instantiate a GenerativeModel.
+                    # For other Gemini models (text, vision), we instantiate a GenerativeModel.
                     client = genai.GenerativeModel(model_name)
     except ImportError:
         print(f"ERROR: The required library for '{api_provider}' is not installed.")
@@ -864,68 +866,32 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             )
             image_data_base64 = response.data[0].b64_json
         elif api_provider == "google":
-            if "gemini" in model_name:
-                # For Gemini image generation models
-                try:
-                    response = client.generate_content(prompt)
-                    
-                    if response and hasattr(response, 'parts') and response.parts:
-                        part = response.parts[0]
-                        
-                        # Check for inline_data with actual content
-                        if hasattr(part, 'inline_data') and part.inline_data and hasattr(part.inline_data, 'data') and part.inline_data.data:
+            try:
+                # The client is the genai module itself.
+                response = client.generate_content(
+                    model_name=model_name,
+                    content=prompt
+                )
+                
+                if response and hasattr(response, 'candidates') and response.candidates:
+                    for part in response.candidates[0].content.parts:
+                        if part.inline_data and part.inline_data.data:
                             img_bytes = part.inline_data.data
                             image_data_base64 = base64.b64encode(img_bytes).decode('utf-8')
-                        else:
-                            # For models like gemini-2.5-flash-image-preview that return text descriptions
-                            if hasattr(part, 'text'):
+                            break # Found the image, exit loop
+                
+                if not image_data_base64:
+                    # Check for text response as a fallback
+                    text_response = ""
+                    if response and hasattr(response, 'candidates') and response.candidates:
+                        for part in response.candidates[0].content.parts:
+                            if part.text:
                                 text_response = part.text
-                                # This model generates text descriptions rather than actual images
-                                return None, f"The model '{model_name}' generated a text description instead of image data. Consider using 'dall-e-3' or 'imagen-3.0-generate-002' for actual image generation. Description: {text_response[:200]}..."
-                            else:
-                                return None, "Gemini response contained no usable image data or text."
-                    else:
-                        return None, "Invalid or empty response from Gemini."
-                        
-                except Exception as model_error:
-                    return None, f"Gemini image generation failed: {model_error}"
+                                break
+                    return None, f"The model '{model_name}' generated a text description instead of image data. Description: {text_response[:200]}..."
 
-            elif "imagen" in model_name:
-                # This is the REST API method for older Imagen models
-                project_id = os.getenv("GOOGLE_PROJECT_ID")
-                if not project_id:
-                    return None, "GOOGLE_PROJECT_ID not found in .env for Imagen model."
-                
-                # The client is the genai module, so we need to get the credentials
-                # This is a bit of a workaround. A better solution would be to have
-                # the setup_llm_client return credentials or a configured session.
-                # For now, we assume the user is authenticated in their environment.
-                # We'll use requests to make the REST call.
-                
-                # Get the access token from the gcloud command line tool.
-                # This is not ideal but works for a local development environment.
-                try:
-                    import subprocess
-                    token = subprocess.check_output(['gcloud', 'auth', 'print-access-token']).decode('utf-8').strip()
-                except Exception as e:
-                    return None, f"Could not get gcloud access token: {e}"
-
-                endpoint = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/{model_name}:predict"
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json; charset=utf-8"
-                }
-                payload = {
-                    "instances": [{"prompt": prompt}],
-                    "parameters": {"sampleCount": 1}
-                }
-                
-                api_response = requests.post(endpoint, headers=headers, json=payload)
-                if api_response.status_code != 200:
-                    return None, f"Google Imagen API error: {api_response.text}"
-                
-                response_data = api_response.json()
-                image_data_base64 = response_data['predictions'][0]['bytesBase64Encoded']
+            except Exception as model_error:
+                return None, f"Google image generation failed: {model_error}"
 
         if not image_data_base64:
             return None, "Image generation failed or returned no data."

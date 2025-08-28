@@ -1,5 +1,3 @@
-import React from 'react';
-
 // Sidebar Component
 const Sidebar = () => (
   <div className="w-20 bg-white border-r p-4 flex flex-col items-center">
@@ -108,4 +106,7 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
+root.render(<Dashboard />);
