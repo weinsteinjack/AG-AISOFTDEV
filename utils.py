@@ -12,130 +12,195 @@ from io import BytesIO
 import re
 import base64
 import mimetypes
-import subprocess
-import time # For loading indicator
+import time
+from typing import Any, Callable
 
 # --- Dynamic Library Installation ---
+# Provide a broad-typed `display` name so static type checkers won't complain
+display: Callable[..., Any] = lambda *a, **k: None
+# Optional helpers; we import inside a try to avoid hard dependency on IPython/dotenv
+_load_dotenv = None
+_have_ipython_display = False
 try:
-    from dotenv import load_dotenv
-    from IPython.display import display, Markdown, Code, Image as IPyImage
-                elif is_imagen_model:
-                    # Handle Imagen models
-                    print(f"🖼️ Imagen model '{model_name}' detected")
-                    print("ℹ️  Note: We'll try API-key/client methods first, then fall back to Vertex AI if needed.")
+    from dotenv import load_dotenv as _ld
+    _load_dotenv = _ld
+except Exception:
+    # dotenv is optional; functions that rely on it will handle absence gracefully
+    _load_dotenv = None
 
-                    # Helper: try a variety of client shapes that historically worked with API keys
-                    def _try_client_methods(c):
-                        nonlocal image_data_base64
-                        if not c:
-                            return False
+try:
+    import IPython.display as _IPython_display
+    Markdown = _IPython_display.Markdown
+    Code = _IPython_display.Code
+    IPyImage = _IPython_display.Image
+    display = _IPython_display.display
+    _have_ipython_display = True
+except Exception:
+    # Minimal fallbacks when IPython.display isn't available
+    def display(*args, **kwargs):
+        for a in args:
+            print(a)
 
-                        # 1) New google-genai client: c.models.generate_images
-                        try:
-                            if hasattr(c, 'models') and hasattr(c.models, 'generate_images'):
-                                resp = c.models.generate_images(model=model_name, prompt=prompt, max_output_tokens=512)
-                                imgs = getattr(resp, 'images', None) or (resp if isinstance(resp, (list, tuple)) else None)
-                                if imgs:
-                                    img_obj = imgs[0]
-                                    try:
-                                        buf = BytesIO()
-                                        if hasattr(img_obj, 'save'):
-                                            img_obj.save(buf, format='PNG')
-                                            image_data_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-                                            return True
-                                    except Exception:
-                                        pass
-                        except Exception as e:
-                            print(f"⚠️ google-genai.generate_images error: {e}")
+    def Markdown(x):
+        return x
 
-                        # 2) convenience generate_images
-                        try:
-                            if hasattr(c, 'generate_images'):
-                                resp = c.generate_images(model=model_name, prompt=prompt, number_of_images=1)
-                                imgs = getattr(resp, 'images', None) or (resp if isinstance(resp, (list, tuple)) else None)
-                                if imgs:
-                                    img_obj = imgs[0]
-                                    try:
-                                        buf = BytesIO()
-                                        if hasattr(img_obj, 'save'):
-                                            img_obj.save(buf, format='PNG')
-                                            image_data_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
-                                            return True
-                                    except Exception:
-                                        pass
-                        except Exception as e:
-                            print(f"⚠️ client.generate_images error: {e}")
+    def Code(x, language=None):
+        return x
 
-                        # 3) legacy generate_content with inline_data
-                        try:
-                            if hasattr(c, 'generate_content'):
-                                resp = c.generate_content(model=model_name, prompt=prompt)
-                                if resp and hasattr(resp, 'candidates') and resp.candidates:
-                                    for candidate in resp.candidates:
-                                        if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                                            for part in candidate.content.parts:
-                                                if hasattr(part, 'inline_data') and part.inline_data:
-                                                    image_data_base64 = part.inline_data.data
-                                                    return True
-                        except Exception as e:
-                            print(f"⚠️ client.generate_content error: {e}")
+    def IPyImage(data=None, url=None, filename=None):
+        if data:
+            return "[Image from data]"
+        if url:
+            return f"[Image from {url}]"
+        if filename:
+            return f"[Image from {filename}]"
+        return "[Image]"
 
-                        # 4) OpenAI-like images.generate
-                        try:
-                            if hasattr(c, 'images') and hasattr(c.images, 'generate'):
-                                resp = c.images.generate(model=model_name, prompt=prompt, n=1, response_format='b64_json')
-                                try:
-                                    b64 = resp.data[0].b64_json
-                                    image_data_base64 = b64
-                                    return True
-                                except Exception:
-                                    pass
-                        except Exception as e:
-                            print(f"⚠️ client.images.generate error: {e}")
+# --- Global Variables & Configuration ---
+# Load environment variables from .env file if python-dotenv was available
+if _load_dotenv:
+    try:
+        _load_dotenv()
+    except Exception:
+        # best-effort; don't fail the module import if .env can't be loaded
+        pass
 
-                        return False
+# Centralized dictionary to store model metadata
+MODELS_JSON_PATH = os.path.join(os.path.dirname(__file__), 'models.json')
+if os.path.exists(MODELS_JSON_PATH):
+    with open(MODELS_JSON_PATH, 'r') as f:
+        ALL_MODELS = json.load(f)
+else:
+    print(f"Warning: '{MODELS_JSON_PATH}' not found. Using an empty model list.")
+    ALL_MODELS = {}
 
-                    tried_client = _try_client_methods(client)
-                    if tried_client and image_data_base64:
-                        print("✅ Imagen generated via API-key/client method")
+# Backwards-compatible alias used across the module
+RECOMMENDED_MODELS = ALL_MODELS
+
+# --- Core Functions ---
+
+def get_model_info(model_name):
+    """
+    Retrieves metadata for a specific model from the global ALL_MODELS dictionary.
+
+    Args:
+        model_name (str): The name of the model to look up.
+
+    Returns:
+        dict: A dictionary containing the model's metadata, or an empty dictionary if not found.
+    """
+    return ALL_MODELS.get(model_name, {})
+
+def get_provider_for_model(model_name):
+    """
+    Determines the provider for a given model name.
+
+    Args:
+        model_name (str): The name of the model.
+
+    Returns:
+        str: The name of the provider (e.g., 'openai', 'anthropic', 'huggingface', 'google'),
+             or 'unknown' if the provider cannot be determined.
+    """
+    model_info = get_model_info(model_name)
+    return model_info.get("provider", "unknown")
+
+def get_client_for_model(model_name):
+    """
+    Initializes and returns the appropriate API client based on the model provider.
+
+    This function reads the necessary API keys from environment variables.
+    - OPENAI_API_KEY for OpenAI
+    - ANTHROPIC_API_KEY for Anthropic
+    - HUGGINGFACE_API_KEY for Hugging Face
+    - GOOGLE_API_KEY or GEMINI_API_KEY for Google
+
+    Args:
+        model_name (str): The name of the model for which to get the client.
+
+    Returns:
+        An instance of the appropriate client (e.g., OpenAI, Anthropic, etc.),
+        or None if the provider is unknown or the client fails to initialize.
+    """
+    provider = get_provider_for_model(model_name)
+    client = None
+
+    try:
+        if provider == "openai":
+            from openai import OpenAI
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        elif provider == "anthropic":
+            from anthropic import Anthropic
+            client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        elif provider == "huggingface":
+            # For Hugging Face, we often use the requests library directly
+            # but a dedicated client could be used if preferred.
+            # We will return a "pseudo-client" dictionary for consistency.
+            client = {
+                "provider": "huggingface",
+                "api_key": os.getenv("HUGGINGFACE_API_KEY"),
+                "api_url": f"https://api-inference.huggingface.co/models/{model_name}"
+            }
+        elif provider == "google":
+            # Try multiple Google client libraries
+            try:
+                # New `google-genai` library
+                import google.generativeai as genai
+                api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+                if api_key:
+                    genai.configure(api_key=api_key)
+                    # The "client" is the library module itself, configured globally
+                    client = genai
+                else:
+                    print("⚠️ Google API key not found. Set GOOGLE_API_KEY or GEMINI_API_KEY.")
+            except ImportError:
+                try:
+                    # Older `google.generativeai` library structure
+                    from google.generativeai import GenerativeModel
+                    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+                    if api_key:
+                        # This path might require a different initialization
+                        # For simplicity, we'll assume the newer library is preferred.
+                        # If you need the old one, adjust the client creation here.
+                        print("ℹ️ Found older google.generativeai library. The new `google-genai` is recommended.")
+                        # Create a model instance as the "client"
+                        client = GenerativeModel(model_name)
                     else:
-                        # Only attempt Vertex AI if client-based approaches failed
-                        print("🔄 Client-based methods did not produce an image; attempting Vertex AI as fallback...")
-                        try:
-                            from google.cloud import aiplatform  # noqa
-                            from vertexai.preview.vision_models import ImageGenerationModel  # noqa
-                            aiplatform.init(
-                                project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-                                location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-                            )
-                            imagen_model = ImageGenerationModel.from_pretrained(model_name)
-                            response = imagen_model.generate_images(prompt=prompt, number_of_images=1)
-                            if response and len(response) > 0:
-                                buffer = BytesIO()
-                                response[0].save(buffer, format='PNG')
-                                image_data_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                                print("✅ Successfully generated image with Vertex AI Imagen")
-                            else:
-                                print("⚠️ Vertex AI returned empty response")
-                        except ImportError as e:
-                            print(f"⚠️ Vertex AI not installed: {e}")
-                            print("💡 Install with: pip install google-cloud-aiplatform")
-                            image_data_base64 = None
-                        except Exception as vertex_error:
-                            print(f"⚠️ Vertex AI failed: {vertex_error}")
-                            if "project" in str(vertex_error).lower() or "location" in str(vertex_error).lower():
-                                print("🔧 Please set GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION environment variables")
-                            elif "credentials" in str(vertex_error).lower() or "auth" in str(vertex_error).lower():
-                                print("🔐 Please authenticate with Google Cloud:")
-                                print("   Run: gcloud auth application-default login")
-                            image_data_base64 = None
+                        print("⚠️ Google API key not found. Set GOOGLE_API_KEY or GEMINI_API_KEY.")
+                except ImportError:
+                    print("⚠️ Neither `google-genai` nor `google.generativeai` library found.")
+                    print("💡 Install with: pip install google-genai")
+        else:
+            print(f"Provider '{provider}' for model '{model_name}' is not supported.")
 
-                    if not image_data_base64:
-                        print("❌ Imagen model setup incomplete")
-                        print("To use Imagen models: ")
-                        print("   1. Ensure you have a compatible Google SDK (google-genai or google.generativeai) installed and that it supports image generation.")
-                        print("   2. If using API key flow: set GOOGLE_API_KEY (or GEMINI_API_KEY) and install google-genai or google-generativeai that supports images.")
-                        print("   3. If using Vertex AI: install google-cloud-aiplatform and set GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION, and authenticate with gcloud.")
+    except Exception as e:
+        print(f"❌ Failed to initialize client for {provider}: {e}")
+        return None
+
+    return client
+
+def recommended_models_table(
+    provider=None,
+    vision=None,
+    image_gen=None,
+    audio_transcription=None,
+    min_context=None,
+    min_output_tokens=None,
+    task=None
+):
+    """
+    Generates a Markdown table of recommended models, filtered by specified criteria.
+
+    This function dynamically filters the `ALL_MODELS` dictionary based on capabilities
+    and returns a formatted string suitable for display in notebooks or terminals.
+
+    Args:
+        provider (str or list, optional): A provider name or list of provider names to filter by.
+            Example: "openai" or ["openai", "anthropic"]
+        vision (bool, optional): Filter models by vision (image-to-text) capability.
+            - True: Only models that can process images.
+            - False: Only models that cannot process images.
+        image_gen (bool, optional): Filter models by image generation capability.
             - True: Only image generation models
             - False: Only non-image generation models
         audio_transcription (bool, optional): Filter models by audio transcription capability.
@@ -158,126 +223,633 @@ try:
     Examples:
         >>> # Show all available models
         >>> table = recommended_models_table()
+        >>> display(Markdown(table))
+
+        >>> # Show only OpenAI models with vision
+        >>> table = recommended_models_table(provider="openai", vision=True)
         >>> print(table)
-        | Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |
-        |---|---|---|---|---|---|---|
-        | gpt-4o | openai | ✅ | ❌ | ❌ | 128,000 | 16,384 |
-        ...
 
-        >>> # Show only vision-capable models
-        >>> vision_table = recommended_models_table(vision=True)
-        >>> print(vision_table)
-        | Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |
-        |---|---|---|---|---|---|---|
-        | gpt-4o | openai | ✅ | ❌ | ❌ | 128,000 | 16,384 |
-        | claude-3-opus-20240229 | anthropic | ✅ | ❌ | ❌ | 200,000 | 4,096 |
-        ...
-
-        >>> # Show only OpenAI models with high context
-        >>> openai_table = recommended_models_table(provider='openai', min_context=100000)
-        >>> print(openai_table)
-        | Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |
-        |---|---|---|---|---|---|---|
-        | gpt-4o | openai | ✅ | ❌ | ❌ | 128,000 | 16,384 |
-        ...
-
-        >>> # Show image generation models
-        >>> image_table = recommended_models_table(task='image')
-        >>> print(image_table)
-        | Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |
-        |---|---|---|---|---|---|---|
-        | dall-e-3 | openai | ❌ | ✅ | ❌ | - | - |
-        | imagen-3.0-generate-002 | google | ❌ | ✅ | ❌ | - | - |
-        ...
-
-        >>> # Show models suitable for long documents (high context)
-        >>> long_context_table = recommended_models_table(min_context=100000)
-        >>> print(long_context_table)
-        | Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |
-        |---|---|---|---|---|---|---|
-        | gpt-4o | openai | ✅ | ❌ | ❌ | 128,000 | 16,384 |
-        | claude-3-opus-20240229 | anthropic | ✅ | ❌ | ❌ | 200,000 | 4,096 |
-        ...
-
-    Notes:
-        - The table is automatically displayed in Jupyter notebooks using IPython.display
-        - Model capabilities are indicated with ✅ (supported) or ❌ (not supported)
-        - Context window and output token values are formatted with commas for readability
-        - Use task shortcuts for common filtering scenarios (vision, image, audio, text)
-        - Provider names are case-insensitive for filtering
-        - Multiple filters can be combined (e.g., provider + vision + min_context)
+        >>> # Show models from any provider with at least 128K context
+        >>> table = recommended_models_table(min_context=128000)
+        >>> display(Markdown(table))
     """
     # Interpret task shortcuts
     if task:
         t = task.lower()
         if t in {"vision", "multimodal", "vl"} and vision is None:
             vision = True
-        elif t in {"image", "image_generation", "image-generation"} and image_generation is None:
-            image_generation = True
+        elif t in {"image", "image_generation", "image-generation"} and image_gen is None:
+            image_gen = True
         elif t in {"audio", "speech", "audio_transcription", "stt"} and audio_transcription is None:
             audio_transcription = True
         elif t == "text":
             vision = False if vision is None else vision
-            image_generation = False if image_generation is None else image_generation
+            image_gen = False if image_gen is None else image_gen
             audio_transcription = False if audio_transcription is None else audio_transcription
 
-    rows = []
-    for model_name in sorted(RECOMMENDED_MODELS.keys()):
-        cfg = RECOMMENDED_MODELS[model_name]
-        model_provider = (cfg.get("provider") or "").lower()
-        model_vision = cfg.get("vision", False)
-        model_image = cfg.get("image_generation", False)
-        model_audio = cfg.get("audio_transcription", False)
+    filtered_models = []
+    provider_list = [provider] if isinstance(provider, str) else provider
 
-        # Prefer canonical integer fields used in RECOMMENDED_MODELS
-        context = cfg.get("context_window_tokens")
-        if context is None:
-            # Backwards-compat: allow older key name
-            context = cfg.get("context_window")
-
-        max_tokens = cfg.get("output_tokens")
-        if max_tokens is None:
-            max_tokens = cfg.get("max_output_tokens")
-
-        # Normalize provider filter to be case-insensitive
-        if provider and model_provider != provider.lower():
+    for name, meta in ALL_MODELS.items():
+        # Provider filter
+        if provider_list and meta.get("provider") not in provider_list:
             continue
-        if vision is not None and bool(model_vision) != bool(vision):
+        # Vision filter
+        if vision is not None and meta.get("vision", False) != vision:
             continue
-        if image_generation is not None and bool(model_image) != bool(image_generation):
+        # Image generation filter
+        if image_gen is not None and meta.get("image_gen", False) != image_gen:
             continue
-        if audio_transcription is not None and bool(model_audio) != bool(audio_transcription):
+        # Audio transcription filter
+        if audio_transcription is not None and meta.get("audio_transcription", False) != audio_transcription:
             continue
-        if min_context and (context is None or (isinstance(context, int) and context < min_context)):
+        # Context window filter
+        if min_context is not None and meta.get("context_window", 0) < min_context:
             continue
-        if min_output_tokens and (max_tokens is None or (isinstance(max_tokens, int) and max_tokens < min_output_tokens)):
+        # Max output tokens filter
+        if min_output_tokens is not None and meta.get("max_output_tokens", 0) < min_output_tokens:
             continue
 
-        def _fmt_num(x):
-            if x is None:
-                return "-"
-            try:
-                # format large ints with commas
-                return f"{int(x):,}"
-            except Exception:
-                return str(x)
+        filtered_models.append((name, meta))
 
-        rows.append(
-            f"| {model_name} | {model_provider or '-'} | {'✅' if model_vision else '❌'} | "
-            f"{'✅' if model_image else '❌'} | {'✅' if model_audio else '❌'} | "
-            f"{_fmt_num(context)} | {_fmt_num(max_tokens)} |"
-        )
-
-    if not rows:
+    if not filtered_models:
         return "No models match the specified criteria."
 
-    header = (
-        "| Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |\n"
-        "|---|---|---|---|---|---|---|\n"
+    # Sort by provider, then by a default rank or name
+    filtered_models.sort(key=lambda x: (x[1].get("provider", ""), x[1].get("rank", 999), x[0]))
+
+    # Create Markdown table
+    headers = [
+        "Model Name", "Provider", "Vision", "Image Gen", "Audio",
+        "Context (Tokens)", "Max Output (Tokens)"
+    ]
+    table = ["| " + " | ".join(headers) + " |", "|-" + "-|-".join(["-" * len(h) for h in headers]) + "-|"]
+
+    for name, meta in filtered_models:
+        row = [
+            f"`{name}`",
+            meta.get("provider", "n/a").title(),
+            "✅" if meta.get("vision") else "❌",
+            "✅" if meta.get("image_gen") else "❌",
+            "✅" if meta.get("audio_transcription") else "❌",
+            f'{meta.get("context_window", 0):,}' if meta.get("context_window") else "n/a",
+            f'{meta.get("max_output_tokens", 0):,}' if meta.get("max_output_tokens") else "n/a"
+        ]
+        table.append("| " + " | ".join(row) + " |")
+
+    return "\n".join(table)
+
+
+def show_recommended_models(
+    provider=None,
+    vision=None,
+    image_gen=None,
+    audio_transcription=None,
+    min_context=None,
+    min_output_tokens=None
+):
+    """
+    Displays a filtered list of recommended models as a Markdown table in a notebook.
+
+    This is a convenience wrapper around `recommended_models_table` that directly
+    calls `display` and `Markdown` for a richer output in IPython environments.
+
+    Args:
+        provider (str or list, optional): Filter by one or more providers.
+        vision (bool, optional): Filter by vision capability.
+        image_gen (bool, optional): Filter by image generation capability.
+        audio_transcription (bool, optional): Filter by audio transcription capability.
+        min_context (int, optional): Filter by minimum context window size.
+        min_output_tokens (int, optional): Filter by minimum maximum output tokens.
+    """
+    table_md = recommended_models_table(
+        provider=provider,
+        vision=vision,
+        image_gen=image_gen,
+        audio_transcription=audio_transcription,
+        min_context=min_context,
+        min_output_tokens=min_output_tokens
     )
-    table = header + "\n".join(rows)
-    display(Markdown(table))
-    return table
+    display(Markdown(table_md))
+
+# --- Artifact Management ---
+
+def _get_artifact_path(artifact_name):
+    """Constructs the full path for a given artifact name."""
+    return os.path.join('artifacts', artifact_name)
+
+def save_artifact_local(artifact_name, content):
+    """
+    Saves content to a file in the 'artifacts' directory (legacy/simple helper).
+
+    Args:
+        artifact_name (str): The name of the file to save.
+        content (str): The content to write to the file.
+    """
+    # Keep legacy API but delegate to the unified save_artifact
+    save_artifact(content, os.path.join('artifacts', artifact_name))
+
+def load_artifact_local(artifact_name):
+    """
+    Loads content from a file in the 'artifacts' directory (legacy/simple helper).
+
+    Args:
+        artifact_name (str): The name of the file to load.
+
+    Returns:
+        str: The content of the file, or None if the file doesn't exist.
+    """
+    # Legacy wrapper for compatibility
+    return load_artifact(os.path.join('artifacts', artifact_name))
+
+def display_artifact_local(artifact_name, language=None):
+    """
+    Displays an artifact in a notebook, formatted as code or markdown.
+
+    Args:
+        artifact_name (str): The name of the artifact to display.
+        language (str, optional): The language for syntax highlighting.
+                                  If not provided, defaults to markdown.
+    """
+    content = load_artifact_local(artifact_name)
+    if content:
+        if language:
+            display(Code(content, language=language))
+        else:
+            # Default to Markdown for .md files, otherwise plain text
+            if artifact_name.endswith('.md'):
+                display(Markdown(content))
+            else:
+                display(Code(content))
+
+
+# --- Unified Model Interaction ---
+
+def _start_loading_indicator(message="Thinking..."):
+    """Lightweight, non-blocking loading helper.
+
+    The previous implementation spawned a subprocess spinner which is fragile in
+    many environments. Keep a minimal, safe behaviour: print a single message
+    and return a token (None) that callers can pass to _stop_loading_indicator.
+    """
+    print(message)
+    return None
+
+
+def _stop_loading_indicator(token):
+    """Stop the loading helper. Currently a no-op kept for API compatibility."""
+    return None
+
+
+def generate_content(
+    model_name,
+    prompt=None,
+    system_prompt=None,
+    image_path=None,
+    audio_path=None,
+    max_output_tokens=None,
+    temperature=0.7,
+    show_loading=True
+):
+    """
+    A unified function to generate content from various multimodal models.
+
+    This function abstracts the differences between providers (OpenAI, Anthropic,
+    Hugging Face, Google) and handles text, image, and audio inputs.
+
+    Args:
+        model_name (str): The name of the model to use (e.g., "gpt-4o", "claude-3-opus-20240229").
+        prompt (str, optional): The primary text prompt.
+        system_prompt (str, optional): A system-level instruction for the model.
+        image_path (str, optional): The file path to an image for vision models.
+        audio_path (str, optional): The file path to an audio file for transcription models.
+        max_output_tokens (int, optional): The maximum number of tokens to generate.
+                                           If not provided, a model-specific default is used.
+        temperature (float, optional): The sampling temperature (0.0 to 1.0). Defaults to 0.7.
+        show_loading (bool, optional): Whether to display a loading indicator. Defaults to True.
+
+    Returns:
+        str: The generated text content from the model, or a base64 encoded image string
+             if an image generation model is used. Returns None on failure.
+    """
+    provider = get_provider_for_model(model_name)
+    client = get_client_for_model(model_name)
+    model_info = get_model_info(model_name)
+
+    if not client:
+        print(f"❌ Could not get client for model '{model_name}'.")
+        return None
+
+    # Get default max_output_tokens from model info if not provided
+    if max_output_tokens is None:
+        max_output_tokens = model_info.get("max_output_tokens", 2048) # Default to 2048 if not in JSON
+
+    is_vision_model = model_info.get("vision", False)
+    is_imagen_model = model_info.get("image_gen", False)
+    is_audio_model = model_info.get("audio_transcription", False)
+
+    # --- Input Validation ---
+    if image_path and not is_vision_model:
+        print(f"⚠️ Warning: Model '{model_name}' does not support vision. The provided image will be ignored.")
+        image_path = None
+    if audio_path and not is_audio_model:
+        print(f"⚠️ Warning: Model '{model_name}' does not support audio transcription. The audio file will be ignored.")
+        audio_path = None
+    if is_imagen_model and not prompt:
+        print("❌ Error: Image generation models require a text prompt.")
+        return None
+
+    loading_indicator = None
+    if show_loading:
+        loading_indicator = _start_loading_indicator()
+
+    try:
+        response_text = None
+        image_data_base64 = None
+
+        # --- Provider-Specific Logic ---
+        if provider == "openai":
+            if is_audio_model and audio_path:
+                # --- OpenAI Audio Transcription ---
+                with open(audio_path, "rb") as audio_file:
+                    try:
+                        # Try the most common SDK shape first (client.audio.transcriptions.create)
+                        audio_api = getattr(client, "audio", None)
+                        # Safely retrieve transcriptions from either audio_api or client without direct attribute access
+                        transcriptions_api = None
+                        if audio_api is not None:
+                            transcriptions_api = getattr(audio_api, "transcriptions", None)
+                        if transcriptions_api is None:
+                            transcriptions_api = getattr(client, "transcriptions", None)
+
+                        if transcriptions_api is not None and hasattr(transcriptions_api, "create"):
+                            # Call create via the local variable to avoid direct attribute access on client objects
+                            transcription = transcriptions_api.create(model=model_name, file=audio_file)
+                        # Fallback: client.audio.transcribe or client.transcribe
+                        elif audio_api is not None and hasattr(audio_api, "transcribe"):
+                            transcription = audio_api.transcribe(model=model_name, file=audio_file)
+                        elif hasattr(client, "transcribe"):
+                            transcription = client.transcribe(model=model_name, file=audio_file)
+                        else:
+                            print("❌ OpenAI client does not expose a recognized audio transcription interface.")
+                            return None
+
+                        # Normalize response_text for dict or object responses
+                        if isinstance(transcription, dict):
+                            response_text = transcription.get("text") or transcription.get("transcript") or transcription.get("result") or None
+                        else:
+                            response_text = getattr(transcription, "text", None) or getattr(transcription, "transcript", None)
+                    except Exception as e:
+                        print(f"❌ OpenAI audio transcription failed: {e}")
+                        return None
+            elif is_imagen_model:
+                # --- OpenAI Image Generation (DALL-E) ---
+                response = client.images.generate(
+                    model=model_name,
+                    prompt=prompt,
+                    n=1,
+                    size="1024x1024", # Or other supported sizes
+                    response_format="b64_json"
+                )
+                image_data_base64 = response.data[0].b64_json
+            else:
+                # --- OpenAI Text/Vision ---
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+
+                content_parts = []
+                if prompt:
+                    content_parts.append({"type": "text", "text": prompt})
+
+                if image_path and is_vision_model:
+                    try:
+                        with open(image_path, "rb") as image_file:
+                            b64_image = base64.b64encode(image_file.read()).decode('utf-8')
+                        mime_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
+                        content_parts.append({
+                            "type": "image_url",
+                            "image_url": f"data:{mime_type};base64,{b64_image}"
+                        })
+                    except Exception as e:
+                        print(f"❌ Error processing image file: {e}")
+                        return None
+
+                if content_parts:
+                    messages.append({"role": "user", "content": content_parts})
+
+                if messages:
+                    completion = client.chat.completions.create(
+                        model=model_name,
+                        messages=messages,
+                        max_tokens=max_output_tokens,
+                        temperature=temperature,
+                    )
+                    response_text = completion.choices[0].message.content
+                else:
+                    print("❌ No valid content (prompt or image) provided for OpenAI model.")
+                    return None
+
+        elif provider == "anthropic":
+            # --- Anthropic Text/Vision ---
+            messages = []
+            content_parts = []
+            if prompt:
+                content_parts.append({"type": "text", "text": prompt})
+
+            if image_path and is_vision_model:
+                try:
+                    with open(image_path, "rb") as image_file:
+                        b64_image = base64.b64encode(image_file.read()).decode('utf-8')
+                    mime_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
+                    content_parts.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": mime_type,
+                            "data": b64_image,
+                        },
+                    })
+                except Exception as e:
+                    print(f"❌ Error processing image file: {e}")
+                    return None
+
+            if content_parts:
+                messages.append({"role": "user", "content": content_parts})
+
+            if messages:
+                message = client.messages.create(
+                    model=model_name,
+                    system=system_prompt if system_prompt else None,
+                    messages=messages,
+                    max_tokens=max_output_tokens,
+                    temperature=temperature,
+                )
+                response_text = message.content[0].text
+            else:
+                print("❌ No valid content (prompt or image) provided for Anthropic model.")
+                return None
+
+        elif provider == "huggingface":
+            # --- Hugging Face Inference API ---
+            headers = {"Authorization": f"Bearer {client['api_key']}"}
+            payload = {"inputs": prompt}
+            if is_imagen_model:
+                # Image generation models on HF
+                response = requests.post(client['api_url'], headers=headers, json=payload)
+                if response.status_code == 200:
+                    # Assuming the API returns the image bytes directly
+                    image_data_base64 = base64.b64encode(response.content).decode('utf-8')
+                else:
+                    print(f"❌ Hugging Face API Error: {response.status_code} - {response.text}")
+            else:
+                # Text generation models
+                response = requests.post(client['api_url'], headers=headers, json=payload)
+                if response.status_code == 200:
+                    # The response format can vary, common one is a list with a dict
+                    # containing 'generated_text'
+                    result = response.json()
+                    if isinstance(result, list) and result:
+                        response_text = result[0].get('generated_text')
+                    elif isinstance(result, dict):
+                         response_text = result.get('generated_text')
+                    else:
+                        response_text = str(result) # Fallback
+                else:
+                    print(f"❌ Hugging Face API Error: {response.status_code} - {response.text}")
+
+        elif provider == "google":
+            # --- Google Gemini / Imagen ---
+            if is_audio_model and audio_path:
+                # Google does not have a simple transcription API in the same vein as OpenAI
+                # in the Gemini client. This would typically involve Google Cloud Speech-to-Text.
+                # For simplicity, we'll note this limitation.
+                print("ℹ️ Direct audio transcription with the Gemini client is not supported in this script.")
+                print("💡 Use the Google Cloud Speech-to-Text API for this functionality.")
+                return None
+            elif is_imagen_model:
+                # Handle Imagen models
+                print(f"🖼️ Imagen model '{model_name}' detected")
+                print("ℹ️  Note: We'll try API-key/client methods first, then fall back to Vertex AI if needed.")
+
+                # Helper: try a variety of client shapes that historically worked with API keys
+                def _try_client_methods(c):
+                    nonlocal image_data_base64
+                    if not c:
+                        return False
+
+                    # 1) New google-genai client: c.models.generate_images
+                    try:
+                        if hasattr(c, 'models') and hasattr(c.models, 'generate_images'):
+                            resp = c.models.generate_images(model=model_name, prompt=prompt, max_output_tokens=512)
+                            imgs = getattr(resp, 'images', None) or (resp if isinstance(resp, (list, tuple)) else None)
+                            if imgs:
+                                img_obj = imgs[0]
+                                try:
+                                    buf = BytesIO()
+                                    if hasattr(img_obj, 'save'):
+                                        img_obj.save(buf, format='PNG')
+                                        image_data_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+                                        return True
+                                except Exception:
+                                    pass
+                    except Exception as e:
+                        print(f"⚠️ google-genai.generate_images error: {e}")
+
+                    # 2) convenience generate_images
+                    try:
+                        if hasattr(c, 'generate_images'):
+                            resp = c.generate_images(model=model_name, prompt=prompt, number_of_images=1)
+                            imgs = getattr(resp, 'images', None) or (resp if isinstance(resp, (list, tuple)) else None)
+                            if imgs:
+                                img_obj = imgs[0]
+                                try:
+                                    buf = BytesIO()
+                                    if hasattr(img_obj, 'save'):
+                                        img_obj.save(buf, format='PNG')
+                                        image_data_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+                                        return True
+                                except Exception:
+                                    pass
+                    except Exception as e:
+                        print(f"⚠️ client.generate_images error: {e}")
+
+                    # 3) legacy generate_content with inline_data
+                    try:
+                        if hasattr(c, 'generate_content'):
+                            resp = c.generate_content(model=model_name, prompt=prompt)
+                            if resp and hasattr(resp, 'candidates') and resp.candidates:
+                                for candidate in resp.candidates:
+                                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                                        for part in candidate.content.parts:
+                                            if hasattr(part, 'inline_data') and part.inline_data:
+                                                image_data_base64 = part.inline_data.data
+                                                return True
+                    except Exception as e:
+                        print(f"⚠️ client.generate_content error: {e}")
+
+                    # 4) OpenAI-like images.generate
+                    try:
+                        if hasattr(c, 'images') and hasattr(c.images, 'generate'):
+                            resp = c.images.generate(model=model_name, prompt=prompt, n=1, response_format='b64_json')
+                            try:
+                                b64 = resp.data[0].b64_json
+                                image_data_base64 = b64
+                                return True
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        print(f"⚠️ client.images.generate error: {e}")
+
+                    return False
+
+                tried_client = _try_client_methods(client)
+                if tried_client and image_data_base64:
+                    print("✅ Imagen generated via API-key/client method")
+                else:
+                    # Only attempt Vertex AI if client-based approaches failed
+                    print("🔄 Client-based methods did not produce an image; attempting Vertex AI as fallback...")
+                    try:
+                        from google.cloud import aiplatform  # noqa
+                        from vertexai.preview.vision_models import ImageGenerationModel  # noqa
+                        aiplatform.init(
+                            project=os.getenv("GOOGLE_CLOUD_PROJECT"),
+                            location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+                        )
+                        imagen_model = ImageGenerationModel.from_pretrained(model_name)
+                        response = imagen_model.generate_images(prompt=prompt, number_of_images=1)
+                        if response and len(response) > 0:
+                            buffer = BytesIO()
+                            response[0].save(buffer, format='PNG')
+                            image_data_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                            print("✅ Successfully generated image with Vertex AI Imagen")
+                        else:
+                            print("⚠️ Vertex AI returned empty response")
+                    except ImportError as e:
+                        print(f"⚠️ Vertex AI not installed: {e}")
+                        print("💡 Install with: pip install google-cloud-aiplatform")
+                        image_data_base64 = None
+                    except Exception as vertex_error:
+                        print(f"⚠️ Vertex AI failed: {vertex_error}")
+                        if "project" in str(vertex_error).lower() or "location" in str(vertex_error).lower():
+                            print("🔧 Please set GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION environment variables")
+                        elif "credentials" in str(vertex_error).lower() or "auth" in str(vertex_error).lower():
+                            print("🔐 Please authenticate with Google Cloud:")
+                            print("   Run: gcloud auth application-default login")
+                        image_data_base64 = None
+
+                if not image_data_base64:
+                    print("❌ Imagen model setup incomplete")
+                    print("To use Imagen models: ")
+                    print("   1. Ensure you have a compatible Google SDK (google-genai or google.generativeai) installed and that it supports image generation.")
+                    print("   2. If using API key flow: set GOOGLE_API_KEY (or GEMINI_API_KEY) and install google-genai or google-generativeai that supports images.")
+                    print("   3. If using Vertex AI: install google-cloud-aiplatform and set GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION, and authenticate with gcloud.")
+            else:
+                # --- Google Gemini Text/Vision ---
+                # The `client` is the `genai` module or a `GenerativeModel` instance
+                try:
+                    # Using the newer `google-genai` library structure
+                    model = client.GenerativeModel(model_name)
+                    content_parts = []
+                    if prompt:
+                        content_parts.append(prompt)
+                    if image_path and is_vision_model:
+                        try:
+                            img = Image.open(image_path)
+                            content_parts.append(img)
+                        except Exception as e:
+                            print(f"❌ Error opening image file: {e}")
+                            return None
+
+                    if content_parts:
+                        # The generate_content method takes a list of parts
+                        response = model.generate_content(content_parts)
+                        response_text = response.text
+                    else:
+                        print("❌ No valid content (prompt or image) provided for Gemini model.")
+                        return None
+
+                except Exception as e:
+                    print(f"❌ Google Gemini API Error: {e}")
+                    return None
+
+        # --- Final Result ---
+        if is_imagen_model:
+            return image_data_base64
+        else:
+            return response_text
+
+    except Exception as e:
+        import traceback
+        print(f"\n❌ An unexpected error occurred in generate_content: {e}")
+        print(f"   Provider: {provider}, Model: {model_name}")
+        # traceback.print_exc()
+        return None
+    finally:
+        if show_loading and loading_indicator:
+            _stop_loading_indicator(loading_indicator)
+
+
+def display_generated_content(content, prompt=None):
+    """
+    Intelligently displays the output of the `generate_content` function.
+
+    - If the content is a base64 image string, it displays the image.
+    - If the content is a JSON string, it displays it as formatted code.
+    - If the content is a Python code block, it's displayed with syntax highlighting.
+    - Otherwise, it's displayed as Markdown.
+
+    Args:
+        content (str): The content string to display.
+        prompt (str, optional): The original prompt, used for context in image captions.
+    """
+    if not content:
+        print("🤷 No content to display.")
+        return
+
+    # Check if it's a base64 image
+    if re.match(r'^[A-Za-z0-9+/=]+$', content.strip()):
+        try:
+            # Attempt to decode to see if it's valid base64
+            img_data = base64.b64decode(content)
+            # A simple heuristic: if it decodes and the first few bytes look like a PNG/JPEG,
+            # it's probably an image.
+            if img_data.startswith(b'\x89PNG') or img_data.startswith(b'\xff\xd8'):
+                if prompt:
+                    display(Markdown(f"**Image generated from prompt:** *'{prompt}'*"))
+                display(IPyImage(data=img_data))
+                return
+        except Exception:
+            # Not a valid base64 string, so treat as text
+            pass
+
+    # Check if it's a JSON string
+    stripped_content = content.strip()
+    if (stripped_content.startswith('{') and stripped_content.endswith('}')) or \
+       (stripped_content.startswith('[') and stripped_content.endswith(']')):
+        try:
+            # Try to parse it as JSON
+            json.loads(stripped_content)
+            display(Markdown("**Generated JSON:**"))
+            display(Code(stripped_content, language='json'))
+            return
+        except json.JSONDecodeError:
+            # Not valid JSON, fall through to treat as text/code
+            pass
+
+    # Check if it's a Python code block
+    if "```python" in content:
+        display(Markdown("**Generated Python Code:**"))
+        # Extract content within the python block for proper rendering
+        match = re.search(r'```python\n(.*)\n```', content, re.DOTALL)
+        if match:
+            display(Code(match.group(1).strip(), language='python'))
+        else: # Fallback for malformed blocks
+            display(Markdown(content))
+        return
+
+    # Default to Markdown
+    display(Markdown(content))
 
 # --- Environment and API Client Setup ---
 
@@ -351,7 +923,14 @@ def load_environment():
 
     dotenv_path = os.path.join(project_root, '.env')
     if os.path.exists(dotenv_path):
-        load_dotenv(dotenv_path=dotenv_path)
+        if _load_dotenv:
+            try:
+                _load_dotenv(dotenv_path=dotenv_path)
+            except Exception:
+                print("Warning: Failed to load .env file with python-dotenv.")
+        else:
+            # dotenv not installed, nothing to do
+            pass
     else:
         print("Warning: .env file not found. API keys may not be loaded.")
 
@@ -975,203 +1554,179 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         - RECOMMENDED_MODELS: For image generation capability validation
         - setup_llm_client(): For initializing the API client
     """
-    if not client: 
+    # Unified, robust image generation helper.
+    if not client:
         return None, "API client not initialized."
-        
-    if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
+
+    model_meta = RECOMMENDED_MODELS.get(model_name, {})
+    if not (model_meta.get("image_generation") or model_meta.get("image_gen") or model_meta.get("image_generation", False)):
         return None, f"Error: Model '{model_name}' does not support image generation."
 
-    # Display a loading indicator
     print("Generating image... This may take a moment.")
-    display(Markdown("⏳ Generating image..."))
-    start_time = time.time()
-
     try:
-        image_data_base64 = None
-        
-        if api_provider == "openai":
-            response = client.images.generate(
-                model=model_name,
-                prompt=prompt,
-                n=1,
-                size="1024x1024",
-                response_format="b64_json"
-            )
-            image_data_base64 = response.data[0].b64_json
-        
-        elif api_provider == "google":
+        start_time = time.time()
+
+        def _save_image_bytes(image_bytes: bytes):
+            timestamp = int(time.time() * 1000)
+            os.makedirs('artifacts/screens', exist_ok=True)
+            file_path = f"artifacts/screens/image_{timestamp}.png"
+            with open(file_path, 'wb') as f:
+                f.write(image_bytes)
+            return file_path, f"data:image/png;base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+
+        image_bytes = None
+
+        # --- OpenAI ---
+        if api_provider == 'openai':
             try:
-                # Determine if this is a Gemini model or Imagen model
-                is_gemini_model = model_name.startswith("gemini")
-                is_imagen_model = model_name.startswith("imagen")
-
-                print(f"🔍 Detected model type: {'Gemini' if is_gemini_model else 'Imagen' if is_imagen_model else 'Unknown'}")
-
-                if is_gemini_model:
-                    # Handle Gemini models with image generation capability
-                    print("🎨 Using Gemini image generation API...")
-
-                    # For legacy SDK, client is the google.generativeai module
+                # Common modern client shape
+                if hasattr(client, 'images') and hasattr(client.images, 'generate'):
+                    resp = client.images.generate(model=model_name, prompt=prompt, n=1, size='1024x1024', response_format='b64_json')
+                    # resp may be object or dict
                     try:
-                        gemini_model = client.GenerativeModel(model_name)
-                        response = gemini_model.generate_content(prompt)
+                        b64 = getattr(resp.data[0], 'b64_json', None) or (resp['data'][0].get('b64_json') if isinstance(resp, dict) else None)
+                    except Exception:
+                        b64 = None
+                    if not b64:
+                        # Try alternative shapes
+                        if isinstance(resp, dict) and 'data' in resp and resp['data']:
+                            b64 = resp['data'][0].get('b64_json')
+                    if b64:
+                        image_bytes = base64.b64decode(b64)
+                # Fallbacks: some SDKs expose images.create
+                if image_bytes is None and hasattr(client, 'images') and hasattr(client.images, 'create'):
+                    resp = client.images.create(prompt=prompt, n=1, size='1024x1024')
+                    # try to extract b64
+                    if isinstance(resp, dict) and resp.get('data'):
+                        b64 = resp['data'][0].get('b64_json')
+                        if b64:
+                            image_bytes = base64.b64decode(b64)
+            except Exception as e:
+                print(f"OpenAI image generation error: {e}")
 
-                        # Extract image data from response
-                        if response and hasattr(response, 'candidates') and response.candidates:
-                            for candidate in response.candidates:
-                                if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                                    for part in candidate.content.parts:
-                                        if hasattr(part, 'inline_data') and part.inline_data:
-                                            image_data_base64 = part.inline_data.data
-                                            print("✅ Found image data in Gemini response")
-                                            break
-                                if image_data_base64:
-                                    break
-
-                        if not image_data_base64:
-                            # Check if response contains text that might indicate an error or status
-                            text_response = ""
-                            if response and hasattr(response, 'candidates') and response.candidates:
-                                for candidate in response.candidates:
-                                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                                        for part in candidate.content.parts:
-                                            if hasattr(part, 'text') and part.text:
-                                                text_response += part.text + " "
-                            if text_response.strip():
-                                print(f"📝 Gemini response (no image): {text_response.strip()[:200]}...")
-
-                    except Exception as gemini_error:
-                        print(f"⚠️ Gemini model failed: {gemini_error}")
-                        if "API_KEY" in str(gemini_error).upper() or "invalid" in str(gemini_error).lower():
-                            print("🔑 Please check your GOOGLE_API_KEY environment variable")
-                            print("   Get your API key from: https://makersuite.google.com/app/apikey")
-                        # Don't try direct API call as it doesn't exist on the module
-
-                elif is_imagen_model:
-                    # Handle Imagen models
-                    print(f"🖼️ Imagen model '{model_name}' detected")
-                    print("ℹ️  Note: Imagen models may require Vertex AI setup")
-
-                    # Try Vertex AI approach (if available)
-                    try:
-                        print("🔄 Attempting Vertex AI Imagen...")
-                        # Import Vertex AI modules (will fail gracefully if not installed)
-                        from google.cloud import aiplatform  # noqa
-                        from vertexai.preview.vision_models import ImageGenerationModel  # noqa
-
-                        # This will only work if Vertex AI is properly configured
-                        aiplatform.init(
-                            project=os.getenv("GOOGLE_CLOUD_PROJECT"),
-                            location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-                        )
-
-                        imagen_model = ImageGenerationModel.from_pretrained(model_name)
-                        response = imagen_model.generate_images(
-                            prompt=prompt,
-                            number_of_images=1
-                        )
-
-                        if response and len(response) > 0:
-                            from io import BytesIO
-                            buffer = BytesIO()
-                            response[0].save(buffer, format='PNG')
-                            image_data_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                            print("✅ Successfully generated image with Vertex AI Imagen")
+        # --- Hugging Face ---
+        if image_bytes is None and api_provider == 'huggingface':
+            try:
+                # Client might be a dict from get_client_for_model or an InferenceClient
+                if isinstance(client, dict) and client.get('api_url'):
+                    headers = {}
+                    if client.get('api_key'):
+                        headers['Authorization'] = f"Bearer {client['api_key']}"
+                    payload = {"inputs": prompt}
+                    resp = requests.post(client['api_url'], headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        # If returns image bytes directly
+                        ctype = resp.headers.get('Content-Type', '')
+                        if ctype.startswith('image/'):
+                            image_bytes = resp.content
                         else:
-                            print("⚠️ Vertex AI returned empty response")
+                            try:
+                                j = resp.json()
+                                # Common keys
+                                if isinstance(j, list) and j:
+                                    first = j[0]
+                                    if isinstance(first, dict):
+                                        for key in ('generated_image', 'image_base64', 'b64_json', 'image'):
+                                            if key in first and first[key]:
+                                                image_bytes = base64.b64decode(first[key])
+                                                break
+                                elif isinstance(j, dict):
+                                    for key in ('generated_image', 'image_base64', 'b64_json', 'image'):
+                                        if j.get(key):
+                                            image_bytes = base64.b64decode(j.get(key))
+                                            break
+                            except Exception:
+                                pass
+                else:
+                    # Try common InferenceClient method names
+                    if hasattr(client, 'image_generation'):
+                        resp = client.image_generation(prompt)
+                        # try to decode
+                        if isinstance(resp, bytes):
+                            image_bytes = resp
+                        elif isinstance(resp, dict) and resp.get('image'):
+                            image_bytes = base64.b64decode(resp.get('image'))
+            except Exception as e:
+                print(f"Hugging Face image generation error: {e}")
 
-                    except ImportError as e:
-                        print(f"⚠️ Vertex AI not installed: {e}")
-                        print("💡 Install with: pip install google-cloud-aiplatform")
-                        print("🔧 Also set: GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION")
-                        image_data_base64 = None
-                    except Exception as vertex_error:
-                        print(f"⚠️ Vertex AI failed: {vertex_error}")
-                        if "project" in str(vertex_error).lower() or "location" in str(vertex_error).lower():
-                            print("🔧 Please set GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION environment variables")
-                            print("   See: https://cloud.google.com/vertex-ai/docs/start/setup")
-                        elif "credentials" in str(vertex_error).lower() or "auth" in str(vertex_error).lower():
-                            print("🔐 Please authenticate with Google Cloud:")
-                            print("   Run: gcloud auth application-default login")
-                        image_data_base64 = None
+        # --- Google (Gemini / Imagen / Vertex) ---
+        if image_bytes is None and api_provider in ('google', 'gemini'):
+            try:
+                # Try new google-genai client shapes
+                # 1) client.models.generate_images
+                try:
+                    if hasattr(client, 'models') and hasattr(client.models, 'generate_images'):
+                        resp = client.models.generate_images(model=model_name, prompt=prompt, max_output_tokens=512)
+                        imgs = getattr(resp, 'images', None) or (resp if isinstance(resp, (list, tuple)) else None)
+                        if imgs:
+                            img_obj = imgs[0]
+                            # if it's a PIL Image
+                            if hasattr(img_obj, 'save'):
+                                buf = BytesIO()
+                                img_obj.save(buf, format='PNG')
+                                image_bytes = buf.getvalue()
+                            else:
+                                # maybe bytes
+                                if isinstance(img_obj, (bytes, bytearray)):
+                                    image_bytes = bytes(img_obj)
+                except Exception:
+                    pass
 
-                    # If Vertex AI didn't work, try legacy approach
-                    if not image_data_base64:
-                        print("🔄 Trying alternative approaches...")
+                # 2) client.generate_images or client.generate_content (legacy)
+                if image_bytes is None:
+                    if hasattr(client, 'generate_images'):
+                        resp = client.generate_images(model=model_name, prompt=prompt, number_of_images=1)
+                        imgs = getattr(resp, 'images', None) or (resp if isinstance(resp, (list, tuple)) else None)
+                        if imgs:
+                            img_obj = imgs[0]
+                            if hasattr(img_obj, 'save'):
+                                buf = BytesIO()
+                                img_obj.save(buf, format='PNG')
+                                image_bytes = buf.getvalue()
+                    elif hasattr(client, 'generate_content'):
+                        resp = client.generate_content(model=model_name, prompt=prompt)
+                        # scan resp for inline_data
                         try:
-                            # Some Imagen models might work through the regular API
-                            response = client.generate_content(model=model_name, prompt=prompt)
-                            if response and hasattr(response, 'candidates') and response.candidates:
-                                for candidate in response.candidates:
+                            if resp and hasattr(resp, 'candidates') and resp.candidates:
+                                for candidate in resp.candidates:
                                     if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
                                         for part in candidate.content.parts:
-                                            if hasattr(part, 'inline_data') and part.inline_data:
-                                                image_data_base64 = part.inline_data.data
-                                                print("✅ Found image data in alternative API response")
+                                            if hasattr(part, 'inline_data') and getattr(part.inline_data, 'data', None):
+                                                image_b64 = getattr(part.inline_data, 'data')
+                                                image_bytes = base64.b64decode(image_b64)
                                                 break
-                                    if image_data_base64:
-                                        break
-                        except Exception as alt_error:
-                            print(f"⚠️ Alternative approach failed: {alt_error}")
-
-                    # Provide helpful guidance if Imagen fails
-                    if not image_data_base64:
-                        print("❌ Imagen model setup incomplete")
-                        print("� To use Imagen models:")
-                        print("   1. Install: pip install google-cloud-aiplatform")
-                        print("   2. Set GOOGLE_CLOUD_PROJECT environment variable")
-                        print("   3. Set up Google Cloud credentials (gcloud auth)")
-                        print("   4. Consider using Gemini models with image generation instead")
-
-                else:
-                    return None, f"Unknown Google model type: {model_name}"
-
-                if not image_data_base64:
-                    # Check for text response as a fallback for error reporting
-                    text_response = ""
-                    try:
-                        if 'response' in locals() and response and hasattr(response, 'candidates') and response.candidates:
-                            for candidate in response.candidates:
-                                if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                                    for part in candidate.content.parts:
-                                        if hasattr(part, 'text') and part.text:
-                                            text_response = part.text
+                                        if image_bytes:
                                             break
-                                if text_response:
-                                    break
+                        except Exception:
+                            pass
+
+                # 3) Vertex AI fallback via python SDK (best-effort)
+                if image_bytes is None:
+                    try:
+                        from vertexai.preview.vision_models import ImageGenerationModel  # type: ignore
+                        from google.cloud import aiplatform  # type: ignore
+                        aiplatform.init(project=os.getenv('GOOGLE_CLOUD_PROJECT'), location=os.getenv('GOOGLE_CLOUD_LOCATION', 'us-central1'))
+                        imagen_model = ImageGenerationModel.from_pretrained(model_name)
+                        resp = imagen_model.generate_images(prompt=prompt, number_of_images=1)
+                        if resp and len(resp) > 0:
+                            buf = BytesIO()
+                            resp[0].save(buf, format='PNG')
+                            image_bytes = buf.getvalue()
                     except Exception:
                         pass
+            except Exception as e:
+                print(f"Google image generation error: {e}")
 
-                    error_msg = f"The model '{model_name}' returned no image data."
-                    if text_response:
-                        error_msg += f" Response: {text_response[:200]}..."
-                    return None, error_msg
-
-            except Exception as model_error:
-                return None, f"Google image generation failed for {model_name}: {str(model_error)}"
-
-        if not image_data_base64:
+        # Final check
+        if not image_bytes:
             return None, "Image generation failed or returned no data."
 
-        # Save and display the image
+        # Save and return
+        file_path, data_url = _save_image_bytes(image_bytes)
         duration = time.time() - start_time
         print(f"✅ Image generated in {duration:.2f} seconds.")
-        
-        image_bytes = base64.b64decode(image_data_base64)
-        
-        # Create a unique filename
-        timestamp = int(time.time() * 1000)
-        file_path = f"artifacts/screens/image_{timestamp}.png"
-        
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        with open(file_path, "wb") as f:
-            f.write(image_bytes)
         print(f"✅ Image saved to: {file_path}")
-        
-        # Return the data URL
-        return file_path, f"data:image/png;base64,{image_data_base64}"
+        return file_path, data_url
 
     except Exception as e:
         return None, f"An API error occurred during image generation: {e}"
@@ -1734,49 +2289,51 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
         - _find_project_root(): For locating the project root directory
     """
     try:
-        # FIX: Corrected the PlantUML URL
-        pl = PlantUML(url='http://www.plantuml.com/plantuml/img/')
         project_root = _find_project_root()
-        
         full_path = os.path.join(project_root, output_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        # plantuml library versions differ in their `processes` signature.
-        # Some accept an `outfile` kwarg, others return the image data or a URL.
-        result = None
-        try:
-            # Preferred: try calling with outfile (some versions support this)
-            result = pl.processes(puml_code, outfile=full_path)
-        except TypeError:
-            # Fallback: call without outfile and handle returned data/result.
-            result = pl.processes(puml_code)
 
-        # If the library returned raw bytes, save them to the file.
-        if isinstance(result, (bytes, bytearray)):
-            with open(full_path, 'wb') as f:
-                f.write(result)
-        # If the library returned a URL string, fetch it and save the image bytes.
-        elif isinstance(result, str) and result.startswith('http'):
+        result_saved = False
+        # Try using the plantuml Python library if available
+        try:
+            from plantuml import PlantUML  # type: ignore
+            pl = PlantUML(url='http://www.plantuml.com/plantuml/img/')
             try:
-                resp = requests.get(result)
+                # Some PlantUML versions support generating directly to a file
+                pl.processes(puml_code, outfile=full_path)
+                result_saved = os.path.exists(full_path)
+            except TypeError:
+                # Fallback: processes may return bytes or a URL
+                result = pl.processes(puml_code)
+                if isinstance(result, (bytes, bytearray)):
+                    with open(full_path, 'wb') as f:
+                        f.write(result)
+                    result_saved = True
+                elif isinstance(result, str) and result.startswith('http'):
+                    resp = requests.get(result)
+                    resp.raise_for_status()
+                    with open(full_path, 'wb') as f:
+                        f.write(resp.content)
+                    result_saved = True
+        except Exception:
+            # PlantUML library not available or failed; fall back to PlantUML server
+            try:
+                resp = requests.post('http://www.plantuml.com/plantuml/png', data=puml_code.encode('utf-8'), headers={'Content-Type': 'text/plain'})
                 resp.raise_for_status()
                 with open(full_path, 'wb') as f:
                     f.write(resp.content)
-            except Exception:
-                # If fetching the URL fails, still continue to let callers know result.
-                pass
+                result_saved = True
+            except Exception as server_err:
+                print(f"❌ Error fetching PlantUML image from server: {server_err}")
 
-        # At this point, the plantuml lib may have already written the file
-        # or we wrote it above. Check for file existence before displaying.
-        if os.path.exists(full_path):
+        if result_saved and os.path.exists(full_path):
             print(f"✅ Diagram rendered and saved to: {output_path}")
             try:
-                # IPython Image accepts filename= or url=. Use filename for local file.
                 display(IPyImage(filename=full_path))
             except Exception:
-                # Best-effort fallback to markdown link if display fails.
                 display(Markdown(f"![diagram]({full_path})"))
         else:
-            print(f"⚠️ Diagram rendering returned no file. Result: {result}")
+            print("⚠️ Diagram rendering returned no file.")
     except Exception as e:
         print(f"❌ Error rendering PlantUML diagram: {e}")
 
