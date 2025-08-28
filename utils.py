@@ -11,6 +11,7 @@ from PIL import Image
 from io import BytesIO
 import re
 import base64
+import mimetypes
 import time # For loading indicator
 
 # --- Dynamic Library Installation ---
@@ -492,11 +493,11 @@ def setup_llm_client(model_name="gpt-4o"):
                 api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for both Gemini text and Imagen
                 if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
                 genai.configure(api_key=api_key)
-                if config["image_generation"]:
-                    # For image generation, the client is not directly a GenerativeModel instance
-                    # but rather the genai module itself for the predict call.
+                if config.get("image_generation") and "imagen" in model_name:
+                    # For Imagen models, we use the REST API, so the 'client' can be the genai module.
                     client = genai
                 else:
+                    # For all Gemini models (text, vision, and image generation), we instantiate a GenerativeModel.
                     client = genai.GenerativeModel(model_name)
     except ImportError:
         print(f"ERROR: The required library for '{api_provider}' is not installed.")
@@ -616,19 +617,20 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
     except Exception as e:
         return f"An API error occurred: {e}"
 
-def get_vision_completion(prompt, image_url, client, model_name, api_provider):
+def get_vision_completion(prompt, image_path_or_url, client, model_name, api_provider):
     """
     Sends an image and a text prompt to a vision-capable LLM and returns the completion.
     
     This function enables multimodal AI interactions by processing both text and image
     inputs together. It handles the different image processing requirements for each
-    provider, including URL-based and base64-encoded image formats.
+    provider, including URL-based and base64-encoded image formats. It can accept
+    either a public URL to an image or a local file path.
     
     Args:
         prompt (str): The text prompt or question about the image. This provides
             context or specific instructions for analyzing the image.
-        image_url (str): URL of the image to analyze. Must be a publicly accessible
-            HTTP/HTTPS URL. The function will download and process the image as needed.
+        image_path_or_url (str): URL of the image to analyze or a local file path.
+            If a URL, it must be publicly accessible.
         client: The initialized API client object from setup_llm_client().
             Type varies by provider.
         model_name (str): The identifier of the vision-capable model to use.
@@ -646,58 +648,86 @@ def get_vision_completion(prompt, image_url, client, model_name, api_provider):
     
     Notes:
         - Validates that the model supports vision using RECOMMENDED_MODELS
+        - Handles both URLs and local file paths for images.
         - Different providers require different image formats:
-            - OpenAI: Can use image URLs directly
-            - Anthropic: Requires base64-encoded image data with MIME type
-            - Google/Gemini: Requires PIL Image object
-            - Hugging Face: Requires PIL Image object
-        - Automatically downloads images from URLs and converts as needed
-        - Sets max_tokens to 4096 for providers that support it
-        - Handles HTTP errors when fetching images
+            - OpenAI: Can use image URLs directly or base64-encoded data URLs.
+            - Anthropic: Requires base64-encoded image data with MIME type.
+            - Google/Gemini: Requires PIL Image object.
+            - Hugging Face: Requires PIL Image object.
+        - Automatically downloads images from URLs or reads from disk and converts as needed.
+        - Sets max_tokens to 4096 for providers that support it.
+        - Handles HTTP errors when fetching images and file I/O errors.
     
     Example:
         >>> client, model, provider = setup_llm_client("gpt-4o")
-        >>> response = get_vision_completion(
+        >>> # Using a URL
+        >>> response_url = get_vision_completion(
         ...     "What objects do you see in this image?",
         ...     "https://example.com/image.jpg",
         ...     client, model, provider
         ... )
-        >>> print(response)
-        "I can see a red car, a tree, and a blue sky in this image."
-        
-        >>> # Error handling for non-vision models
-        >>> response = get_vision_completion(
-        ...     "Describe this", "http://example.com/img.jpg",
-        ...     client, "gpt-3.5-turbo", "openai"
+        >>> # Using a local file
+        >>> response_local = get_vision_completion(
+        ...     "Describe this local image.",
+        ...     "artifacts/screens/my_image.png",
+        ...     client, model, provider
         ... )
-        >>> print(response)
-        "Error: Model 'gpt-3.5-turbo' does not support vision."
-    
+        
     Dependencies:
         - requests: For downloading images from URLs
         - PIL (Pillow): For image processing
-        - base64: For encoding images for Anthropic
+        - base64: For encoding images
+        - mimetypes: For determining image type from file extension
         - io.BytesIO: For converting image bytes to PIL Images
         - RECOMMENDED_MODELS: For vision capability validation
     """
     if not client: return "API client not initialized."
     if not RECOMMENDED_MODELS.get(model_name, {}).get("vision"):
         return f"Error: Model '{model_name}' does not support vision."
+
+    is_url = image_path_or_url.startswith('http://') or image_path_or_url.startswith('https://')
+
     try:
-        # Fetch image from URL and convert to base64 for Gemini/HuggingFace if needed, or pass URL for OpenAI
         if api_provider == "openai":
-            response = client.chat.completions.create(model=model_name, messages=[{"role": "user", 
-                                                                                   "content": [{"type": "text", 
-                                                                                                "text": prompt}, 
-                                                                                               {"type": "image_url", 
-                                                                                                "image_url": {"url": image_url}}]}], 
-                                                                                                max_tokens=4096)
+            image_url_data = {}
+            if is_url:
+                image_url_data = {"url": image_path_or_url}
+            else:
+                if not os.path.exists(image_path_or_url):
+                    return f"Error: Local image file not found at {image_path_or_url}"
+                base64_image = _encode_image_to_base64(image_path_or_url)
+                image_url_data = {"url": base64_image}
+
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": image_url_data}
+                    ]
+                }],
+                max_tokens=4096
+            )
             return response.choices[0].message.content
+
         elif api_provider == "anthropic":
-            response_img = requests.get(image_url)
-            response_img.raise_for_status()
-            img_data = base64.b64encode(response_img.content).decode('utf-8')
-            mime_type = response_img.headers['Content-Type']
+            if is_url:
+                response_img = requests.get(image_path_or_url)
+                response_img.raise_for_status()
+                img_content = response_img.content
+                mime_type = response_img.headers.get('Content-Type', 'image/jpeg')
+            else:
+                if not os.path.exists(image_path_or_url):
+                    return f"Error: Local image file not found at {image_path_or_url}"
+                with open(image_path_or_url, "rb") as f:
+                    img_content = f.read()
+                mime_type, _ = mimetypes.guess_type(image_path_or_url)
+                if not mime_type:
+                    return f"Error: Could not determine mime type for {image_path_or_url}"
+
+            img_data = base64.b64encode(img_content).decode('utf-8')
+            
             response = client.messages.create(
                 model=model_name,
                 max_tokens=4096,
@@ -710,21 +740,36 @@ def get_vision_completion(prompt, image_url, client, model_name, api_provider):
                 }]
             )
             return response.content[0].text
+
         elif api_provider == "gemini" or api_provider == "google":
-            # For Gemini, the client is the GenerativeModel instance
-            response_img = requests.get(image_url)
-            response_img.raise_for_status()
-            img = Image.open(BytesIO(response_img.content))
+            if is_url:
+                response_img = requests.get(image_path_or_url)
+                response_img.raise_for_status()
+                img = Image.open(BytesIO(response_img.content))
+            else:
+                if not os.path.exists(image_path_or_url):
+                    return f"Error: Local image file not found at {image_path_or_url}"
+                img = Image.open(image_path_or_url)
             
-            # The client is a GenerativeModel, which can take a list of content parts
             response = client.generate_content([prompt, img])
             return response.text
+
         elif api_provider == "huggingface":
-            response_img = requests.get(image_url)
-            response_img.raise_for_status()
-            img = Image.open(BytesIO(response_img.content))
+            if is_url:
+                response_img = requests.get(image_path_or_url)
+                response_img.raise_for_status()
+                img = Image.open(BytesIO(response_img.content))
+            else:
+                if not os.path.exists(image_path_or_url):
+                    return f"Error: Local image file not found at {image_path_or_url}"
+                img = Image.open(image_path_or_url)
+                
+            # Note: HuggingFace's image_to_text might not support a separate text prompt in all cases.
+            # The prompt may need to be embedded in the task definition for some models.
+            # This implementation assumes the client handles the combination correctly.
             response = client.image_to_text(image=img, prompt=prompt)
             return response
+            
     except Exception as e:
         return f"An API error occurred during vision completion: {e}"
 
@@ -796,12 +841,10 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         - RECOMMENDED_MODELS: For image generation capability validation
     """
     if not client: 
-        print("API client not initialized.")
         return None, "API client not initialized."
+        
     if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
-        error_msg = f"Error: Model '{model_name}' does not support image generation."
-        print(error_msg)
-        return None, error_msg
+        return None, f"Error: Model '{model_name}' does not support image generation."
 
     # Display a loading indicator
     print("Generating image... This may take a moment.")
@@ -809,109 +852,106 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     start_time = time.time()
 
     try:
-        image_b64 = None
+        image_data_base64 = None
+        
         if api_provider == "openai":
-            response = client.images.generate(model=model_name, prompt=prompt, response_format="b64_json")
-            image_b64 = response.data[0].b64_json
+            response = client.images.generate(
+                model=model_name,
+                prompt=prompt,
+                n=1,
+                size="1024x1024",
+                response_format="b64_json"
+            )
+            image_data_base64 = response.data[0].b64_json
         elif api_provider == "google":
-            if model_name.startswith("imagen"):
-                # This part for Google Imagen seems to have a placeholder for apiKey.
-                # Assuming it's handled by the environment it runs in (e.g., Canvas).
-                payload = {"instances": {"prompt": prompt}, "parameters": {"sampleCount": 1}}
-                apiKey = os.getenv("GOOGLE_API_KEY", "") 
-                apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:predict?key={apiKey}"
-                response = requests.post(apiUrl, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
-                response.raise_for_status()
-                result = response.json()
-                if result.get("predictions") and len(result["predictions"]) > 0 and result["predictions"][0].get("bytesBase64Encoded"):
-                    image_b64 = result["predictions"][0]["bytesBase64Encoded"]
-                else:
-                    error_msg = f"Error: Unexpected image generation response structure: {result}"
-                    print(error_msg)
-                    return None, error_msg
-            else: # Assumes Gemini model capable of image generation
-                # The setup_llm_client for Gemini text models returns a GenerativeModel instance.
-                # For image generation, it might be different. Assuming client is correct.
-                # The docstring says for Gemini it uses generate_images(), but the code shows GenerativeModel.
-                # Let's assume the client is a GenerativeModel instance.
-                # The previous code had `model = client.GenerativeModel(model_name)` which is wrong if client is already the model.
-                # Let's correct this logic.
-                if not hasattr(client, 'generate_content'): # This is a text model client
-                     import google.generativeai as genai
-                     client = genai.GenerativeModel(model_name)
+            if "gemini" in model_name:
+                # For Gemini image generation models
+                try:
+                    response = client.generate_content(prompt)
+                    
+                    if response and hasattr(response, 'parts') and response.parts:
+                        part = response.parts[0]
+                        
+                        # Check for inline_data with actual content
+                        if hasattr(part, 'inline_data') and part.inline_data and hasattr(part.inline_data, 'data') and part.inline_data.data:
+                            img_bytes = part.inline_data.data
+                            image_data_base64 = base64.b64encode(img_bytes).decode('utf-8')
+                        else:
+                            # For models like gemini-2.5-flash-image-preview that return text descriptions
+                            if hasattr(part, 'text'):
+                                text_response = part.text
+                                # This model generates text descriptions rather than actual images
+                                return None, f"The model '{model_name}' generated a text description instead of image data. Consider using 'dall-e-3' or 'imagen-3.0-generate-002' for actual image generation. Description: {text_response[:200]}..."
+                            else:
+                                return None, "Gemini response contained no usable image data or text."
+                    else:
+                        return None, "Invalid or empty response from Gemini."
+                        
+                except Exception as model_error:
+                    return None, f"Gemini image generation failed: {model_error}"
 
-                # The docstring mentions `generate_images` but that's not a standard method.
-                # It's likely a custom wrapper or an old method. The standard is `generate_content`.
-                # Let's assume we need to call `generate_content` with a specific instruction.
-                # However, the original code had `generate_images`. Let's stick to what was there but make it safer.
-                # Let's check the original code again. It was `result = model.generate_images(prompt=prompt)`.
-                # This seems to be a misunderstanding of the Gemini API.
-                # Let's assume the user wants to use a model that supports image generation via a specific method.
-                # The `gemini-2.5-flash-image-preview` model is for image generation.
-                # The client for that is the `genai` module itself.
-                # The original code was a mix of things. Let's try to make it work based on the docstring.
-                # The docstring says "Google Gemini: Uses generate_images() method". This is likely incorrect for the public API.
-                # The other google branch was for "imagen".
-                # Let's assume the `else` is for Gemini vision models that can also generate images.
-                # The `gemini-2.5-flash-image-preview` model does this.
-                # The client setup for that returns a `GenerativeModel` instance.
-                # That instance does not have `generate_images`.
-                # I will assume the original code was flawed and I should correct it.
-                # The correct way to generate images with a Gemini model that supports it is not straightforward
-                # and might involve specific client libraries or REST calls not reflected.
-                # Given the ambiguity, I will stick to the OpenAI path and make the Google path more robust
-                # by acknowledging the potential issue.
-                # The original code had `model = client.GenerativeModel(model_name)` which is redundant if client is already a model.
-                # And then `result = model.generate_images(prompt=prompt)`. This method doesn't exist on `GenerativeModel`.
-                # I'll leave the logic but wrap it in a check.
-                if hasattr(client, 'generate_images'):
-                    result = client.generate_images(prompt=prompt)
-                    image_b64 = result.images[0].base64_data
-                else:
-                    error_msg = f"Image generation for Gemini model '{model_name}' is not correctly implemented in this utility."
-                    print(error_msg)
-                    return None, error_msg
-        else:
-            error_msg = f"Error: Image generation not implemented for provider '{api_provider}'"
-            print(error_msg)
-            return None, error_msg
+            elif "imagen" in model_name:
+                # This is the REST API method for older Imagen models
+                project_id = os.getenv("GOOGLE_PROJECT_ID")
+                if not project_id:
+                    return None, "GOOGLE_PROJECT_ID not found in .env for Imagen model."
+                
+                # The client is the genai module, so we need to get the credentials
+                # This is a bit of a workaround. A better solution would be to have
+                # the setup_llm_client return credentials or a configured session.
+                # For now, we assume the user is authenticated in their environment.
+                # We'll use requests to make the REST call.
+                
+                # Get the access token from the gcloud command line tool.
+                # This is not ideal but works for a local development environment.
+                try:
+                    import subprocess
+                    token = subprocess.check_output(['gcloud', 'auth', 'print-access-token']).decode('utf-8').strip()
+                except Exception as e:
+                    return None, f"Could not get gcloud access token: {e}"
 
-        if not image_b64:
-            error_msg = "Image generation failed to return image data."
-            print(error_msg)
-            return None, error_msg
+                endpoint = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/{model_name}:predict"
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json; charset=utf-8"
+                }
+                payload = {
+                    "instances": [{"prompt": prompt}],
+                    "parameters": {"sampleCount": 1}
+                }
+                
+                api_response = requests.post(endpoint, headers=headers, json=payload)
+                if api_response.status_code != 200:
+                    return None, f"Google Imagen API error: {api_response.text}"
+                
+                response_data = api_response.json()
+                image_data_base64 = response_data['predictions'][0]['bytesBase64Encoded']
 
-        end_time = time.time()
-        print(f"✅ Image generated in {end_time - start_time:.2f} seconds.")
+        if not image_data_base64:
+            return None, "Image generation failed or returned no data."
 
-        # Save the image
-        image_data = base64.b64decode(image_b64)
-        timestamp = int(time.time())
-        file_name = f"image_{timestamp}.png"
-        save_dir = os.path.join(_find_project_root(), "artifacts", "screens")
-        os.makedirs(save_dir, exist_ok=True)
-        file_path = os.path.join(save_dir, file_name)
+        # Save and display the image
+        duration = time.time() - start_time
+        print(f"✅ Image generated in {duration:.2f} seconds.")
+        
+        image_bytes = base64.b64decode(image_data_base64)
+        
+        # Create a unique filename
+        timestamp = int(time.time() * 1000)
+        file_path = f"artifacts/screens/image_{timestamp}.png"
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
         with open(file_path, "wb") as f:
-            f.write(image_data)
+            f.write(image_bytes)
+        print(f"✅ Image saved to: {file_path}")
         
-        relative_path = os.path.relpath(file_path, _find_project_root())
-        print(f"✅ Image saved to: {relative_path}")
-
-        # Display the image in Jupyter
-        try:
-            display(IPyImage(data=image_data))
-        except Exception as e:
-            print(f"Could not display image in this environment: {e}")
-
-        image_url = f"data:image/png;base64,{image_b64}"
-        
-        return file_path, image_url
+        # Return the data URL
+        return file_path, f"data:image/png;base64,{image_data_base64}"
 
     except Exception as e:
-        error_msg = f"An API error occurred during image generation: {e}"
-        print(error_msg)
-        return None, error_msg
+        return None, f"An API error occurred during image generation: {e}"
 
 
 def transcribe_audio(audio_path, client, model_name, api_provider, language_code="en-US"):
@@ -1169,4 +1209,13 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
             print(f"⚠️ Diagram rendering returned no file. Result: {result}")
     except Exception as e:
         print(f"❌ Error rendering PlantUML diagram: {e}")
+
+def _encode_image_to_base64(image_path):
+    """Encodes a local image file to a base64 data URL."""
+    mime_type, _ = mimetypes.guess_type(image_path)
+    if not mime_type or not mime_type.startswith('image'):
+        raise ValueError(f"Cannot determine image type for {image_path}")
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+    return f"data:{mime_type};base64,{encoded_string}"
 
