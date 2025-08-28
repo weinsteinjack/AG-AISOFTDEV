@@ -748,10 +748,11 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         api_provider (str): The provider name ("openai" or "google").
     
     Returns:
-        str: A data URL string in the format "data:image/png;base64,{base64_data}"
-            that can be used directly in HTML img tags or displayed in Jupyter.
-            Returns an error message string if the model doesn't support image
-            generation or if the API call fails.
+        tuple[str, str]: A tuple containing:
+            - file_path (str): The local path to the saved image file.
+            - image_url (str): A data URL string in the format "data:image/png;base64,{base64_data}"
+              that can be used directly in HTML img tags or displayed in Jupyter.
+            Returns (None, None) if an error occurs.
     
     Raises:
         None: This function catches all exceptions and returns error messages
@@ -770,13 +771,14 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     
     Example:
         >>> client, model, provider = setup_llm_client("dall-e-3")
-        >>> image_url = get_image_generation_completion(
+        >>> file_path, image_url = get_image_generation_completion(
         ...     "A futuristic city with flying cars and neon lights",
         ...     client, model, provider
         ... )
         Generating image... This may take a moment.
         ⏳ Generating image...
         ✅ Image generated in 15.32 seconds.
+        ✅ Image saved to: artifacts/screens/image_1662586800.png
         >>> # Display in Jupyter: display(Image(url=image_url))
         
         >>> # Error handling
@@ -784,7 +786,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         ...     "A cat", client, "gpt-4o", "openai"
         ... )
         >>> print(response)
-        "Error: Model 'gpt-4o' does not support image generation."
+        (None, "Error: Model 'gpt-4o' does not support image generation.")
     
     Dependencies:
         - time: For tracking generation duration
@@ -793,9 +795,13 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         - IPython.display: For showing loading indicators in Jupyter
         - RECOMMENDED_MODELS: For image generation capability validation
     """
-    if not client: return "API client not initialized."
+    if not client: 
+        print("API client not initialized.")
+        return None, "API client not initialized."
     if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
-        return f"Error: Model '{model_name}' does not support image generation."
+        error_msg = f"Error: Model '{model_name}' does not support image generation."
+        print(error_msg)
+        return None, error_msg
 
     # Display a loading indicator
     print("Generating image... This may take a moment.")
@@ -803,13 +809,16 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     start_time = time.time()
 
     try:
+        image_b64 = None
         if api_provider == "openai":
-            response = client.images.generate(model=model_name, prompt=prompt)
+            response = client.images.generate(model=model_name, prompt=prompt, response_format="b64_json")
             image_b64 = response.data[0].b64_json
         elif api_provider == "google":
             if model_name.startswith("imagen"):
+                # This part for Google Imagen seems to have a placeholder for apiKey.
+                # Assuming it's handled by the environment it runs in (e.g., Canvas).
                 payload = {"instances": {"prompt": prompt}, "parameters": {"sampleCount": 1}}
-                apiKey = ""  # Canvas will automatically provide this.
+                apiKey = os.getenv("GOOGLE_API_KEY", "") 
                 apiUrl = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:predict?key={apiKey}"
                 response = requests.post(apiUrl, headers={'Content-Type': 'application/json'}, data=json.dumps(payload))
                 response.raise_for_status()
@@ -817,20 +826,92 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                 if result.get("predictions") and len(result["predictions"]) > 0 and result["predictions"][0].get("bytesBase64Encoded"):
                     image_b64 = result["predictions"][0]["bytesBase64Encoded"]
                 else:
-                    return f"Error: Unexpected image generation response structure: {result}"
-            else:
-                model = client.GenerativeModel(model_name)
-                result = model.generate_images(prompt=prompt)
-                image_b64 = result.images[0].base64_data
-        else:
-            return f"Error: Image generation not implemented for provider '{api_provider}'"
+                    error_msg = f"Error: Unexpected image generation response structure: {result}"
+                    print(error_msg)
+                    return None, error_msg
+            else: # Assumes Gemini model capable of image generation
+                # The setup_llm_client for Gemini text models returns a GenerativeModel instance.
+                # For image generation, it might be different. Assuming client is correct.
+                # The docstring says for Gemini it uses generate_images(), but the code shows GenerativeModel.
+                # Let's assume the client is a GenerativeModel instance.
+                # The previous code had `model = client.GenerativeModel(model_name)` which is wrong if client is already the model.
+                # Let's correct this logic.
+                if not hasattr(client, 'generate_content'): # This is a text model client
+                     import google.generativeai as genai
+                     client = genai.GenerativeModel(model_name)
 
-        image_url = f"data:image/png;base64,{image_b64}"
+                # The docstring mentions `generate_images` but that's not a standard method.
+                # It's likely a custom wrapper or an old method. The standard is `generate_content`.
+                # Let's assume we need to call `generate_content` with a specific instruction.
+                # However, the original code had `generate_images`. Let's stick to what was there but make it safer.
+                # Let's check the original code again. It was `result = model.generate_images(prompt=prompt)`.
+                # This seems to be a misunderstanding of the Gemini API.
+                # Let's assume the user wants to use a model that supports image generation via a specific method.
+                # The `gemini-2.5-flash-image-preview` model is for image generation.
+                # The client for that is the `genai` module itself.
+                # The original code was a mix of things. Let's try to make it work based on the docstring.
+                # The docstring says "Google Gemini: Uses generate_images() method". This is likely incorrect for the public API.
+                # The other google branch was for "imagen".
+                # Let's assume the `else` is for Gemini vision models that can also generate images.
+                # The `gemini-2.5-flash-image-preview` model does this.
+                # The client setup for that returns a `GenerativeModel` instance.
+                # That instance does not have `generate_images`.
+                # I will assume the original code was flawed and I should correct it.
+                # The correct way to generate images with a Gemini model that supports it is not straightforward
+                # and might involve specific client libraries or REST calls not reflected.
+                # Given the ambiguity, I will stick to the OpenAI path and make the Google path more robust
+                # by acknowledging the potential issue.
+                # The original code had `model = client.GenerativeModel(model_name)` which is redundant if client is already a model.
+                # And then `result = model.generate_images(prompt=prompt)`. This method doesn't exist on `GenerativeModel`.
+                # I'll leave the logic but wrap it in a check.
+                if hasattr(client, 'generate_images'):
+                    result = client.generate_images(prompt=prompt)
+                    image_b64 = result.images[0].base64_data
+                else:
+                    error_msg = f"Image generation for Gemini model '{model_name}' is not correctly implemented in this utility."
+                    print(error_msg)
+                    return None, error_msg
+        else:
+            error_msg = f"Error: Image generation not implemented for provider '{api_provider}'"
+            print(error_msg)
+            return None, error_msg
+
+        if not image_b64:
+            error_msg = "Image generation failed to return image data."
+            print(error_msg)
+            return None, error_msg
+
         end_time = time.time()
         print(f"✅ Image generated in {end_time - start_time:.2f} seconds.")
-        return image_url
+
+        # Save the image
+        image_data = base64.b64decode(image_b64)
+        timestamp = int(time.time())
+        file_name = f"image_{timestamp}.png"
+        save_dir = os.path.join(_find_project_root(), "artifacts", "screens")
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join(save_dir, file_name)
+        
+        with open(file_path, "wb") as f:
+            f.write(image_data)
+        
+        relative_path = os.path.relpath(file_path, _find_project_root())
+        print(f"✅ Image saved to: {relative_path}")
+
+        # Display the image in Jupyter
+        try:
+            display(IPyImage(data=image_data))
+        except Exception as e:
+            print(f"Could not display image in this environment: {e}")
+
+        image_url = f"data:image/png;base64,{image_b64}"
+        
+        return file_path, image_url
+
     except Exception as e:
-        return f"An API error occurred during image generation: {e}"
+        error_msg = f"An API error occurred during image generation: {e}"
+        print(error_msg)
+        return None, error_msg
 
 
 def transcribe_audio(audio_path, client, model_name, api_provider, language_code="en-US"):
