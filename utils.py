@@ -1052,34 +1052,15 @@ def get_image_edit_completion(prompt: str, image_path: str, client, model_name: 
         image_data_base64 = None
 
         if api_provider == "huggingface":
-            # The `image_to_image` task is not directly supported by the client's
-            # convenience methods for these models, so we use the generic `post`
-            # method to construct the request manually.
-            with open(image_path, "rb") as f:
-                image_bytes = f.read()
+            # image_to_image expects a PIL image
+            pil_image = Image.open(image_path)
 
-            # The payload needs the image bytes and the prompt as "text"
-            payload = {
-                "inputs": image_bytes,
-                "parameters": {
-                    "prompt": prompt
-                }
-            }
-            
-            # Make a raw post request to the model's inference endpoint
-            response_bytes = client.post(
-                data=image_bytes, 
-                model=model_name, 
-                task="image-to-image",
-                params={"prompt": prompt}
-            )
+            # Call the image-to-image endpoint
+            edited_image = client.image_to_image(image=pil_image, prompt=prompt)
 
-            # The response is the raw image bytes
-            pil_image = Image.open(BytesIO(response_bytes))
-            
-            # Convert PIL image to base64
+            # Convert the returned PIL image to base64
             buffered = BytesIO()
-            pil_image.save(buffered, format="PNG")
+            edited_image.save(buffered, format="PNG")
             image_data_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
         else:
             return None, f"Provider '{api_provider}' is not supported for image editing yet."
@@ -1108,6 +1089,8 @@ def get_image_edit_completion(prompt: str, image_path: str, client, model_name: 
         return file_path, f"data:image/png;base64,{image_data_base64}"
 
     except Exception as e:
+        if "Task 'image-to-image' not supported" in str(e):
+            return None, f"The model '{model_name}' does not support the image-to-image task through the current API provider. This is a limitation of the backend service, not the model itself."
         return None, f"An API error occurred during image editing: {e}"
 
 def transcribe_audio(audio_path, client, model_name, api_provider, language_code="en-US"):
