@@ -1052,18 +1052,34 @@ def get_image_edit_completion(prompt: str, image_path: str, client, model_name: 
         image_data_base64 = None
 
         if api_provider == "huggingface":
-            # image_to_image expects a PIL image
+            # The `image_to_image` task is not directly supported by the client's
+            # convenience methods for these models, so we use the generic `post`
+            # method to construct the request manually.
             with open(image_path, "rb") as f:
                 image_bytes = f.read()
+
+            # The payload needs the image bytes and the prompt as "text"
+            payload = {
+                "inputs": image_bytes,
+                "parameters": {
+                    "prompt": prompt
+                }
+            }
             
-            pil_image = Image.open(BytesIO(image_bytes))
+            # Make a raw post request to the model's inference endpoint
+            response_bytes = client.post(
+                data=image_bytes, 
+                model=model_name, 
+                task="image-to-image",
+                params={"prompt": prompt}
+            )
 
-            # Call the image-to-image endpoint
-            edited_image = client.image_to_image(pil_image, prompt=prompt)
-
-            # Convert the returned PIL image to base64
+            # The response is the raw image bytes
+            pil_image = Image.open(BytesIO(response_bytes))
+            
+            # Convert PIL image to base64
             buffered = BytesIO()
-            edited_image.save(buffered, format="PNG")
+            pil_image.save(buffered, format="PNG")
             image_data_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
         else:
             return None, f"Provider '{api_provider}' is not supported for image editing yet."
