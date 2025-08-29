@@ -291,13 +291,6 @@ if __name__ == "__main__":
     import uvicorn
     import importlib
 
-    # Uvicorn's auto-reload requires the application to be importable by
-    # module path (e.g. "app.main:app"). When running `python app/main.py`,
-    # the interpreter's sys.path[0] is set to the `app/` directory and the
-    # top-level package `app` is not importable which causes a
-    # ModuleNotFoundError inside the reloader subprocess. We try to import
-    # the package first and only enable reload when possible. Otherwise we
-    # start the server without reload to avoid the error.
     try:
         importlib.import_module("app")
         uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
