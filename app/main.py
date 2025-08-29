@@ -289,12 +289,4 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
 
 if __name__ == "__main__":
     import uvicorn
-    import importlib
-
-    try:
-        importlib.import_module("app")
-        uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
-    except Exception:
-        # Fallback: start without reload (safe when launching as a script)
-        print("Note: 'app' package not importable — starting server without reload.")
-        uvicorn.run(app, host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

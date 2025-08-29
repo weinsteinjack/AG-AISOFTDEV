@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+Labs/
+Slides/
+Solutions/
+Supporting Materials/
+.DS_Store
+Daily agenda.ipynb
+artifacts/
+tests/
+.ipynb_checkpoints
+.vscode
+*.pyc
+*.log
+onboarding.db
+.env

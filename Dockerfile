@@ -1,6 +1,5 @@
-Dockerfile
 # Use the official Python image as the base for the first stage
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -28,4 +27,5 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENV PYTHONPATH=/app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
