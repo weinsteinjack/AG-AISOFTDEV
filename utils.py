@@ -90,10 +90,6 @@ RECOMMENDED_MODELS = {
         "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 1_000_000, "output_tokens": 32_000
     },
-    "gpt-4.5": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 128_000, "output_tokens": 16_384
-    },
     "o3": {
         "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 200_000, "output_tokens": 100_000
@@ -140,60 +136,76 @@ RECOMMENDED_MODELS = {
     },
 
     # ==========================================
-    # Google — Gemini / Imagen / Speech-to-Text
+    # Google — Gemini / Imagen / Veo (Gemini API only)
     # ==========================================
     "gemini-2.5-pro": {
         "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 1_048_576, "output_tokens": 65_536
-    },
+    },  # Model card shows 1M / 65k. :contentReference[oaicite:1]{index=1}
     "gemini-2.5-flash": {
         "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 1_048_576, "output_tokens": 65_536
-    },
+    },  # 1M / 65k. :contentReference[oaicite:2]{index=2}
     "gemini-2.5-flash-lite": {
         "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 1_048_576, "output_tokens": 65_536
-    },
+    },  # 1M / 65k. :contentReference[oaicite:3]{index=3}
     "gemini-live-2.5-flash-preview": {
         "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },
+    },  # Live API preview; 1M / 8k. :contentReference[oaicite:4]{index=4}
+
+    # Gemini image-generation (conversational)
     "gemini-2.5-flash-image-preview": {
         "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
         "context_window_tokens": 32_768, "output_tokens": 32_768
-    },
-    "gemini-2.0-flash": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
+    },  # Image generate/edit preview; 32k/32k. :contentReference[oaicite:5]{index=5}
+    "gemini-2.0-flash-preview-image-generation": {
+        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": 32_000, "output_tokens": 8_192
+    },  # 2.0 image-gen preview. :contentReference[oaicite:6]{index=6}
+    "gemini-1.5-pro": {
+        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": 2_000_000, "output_tokens": 8_192
+    },  # 1.5 Pro with image generation; 2M / 8k. :contentReference[oaicite:13]{index=13}
+    "gemini-1.5-flash": {
+        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": 1_000_000, "output_tokens": 8_192
+    },  # 1.5 Flash with image generation; 1M / 8k. :contentReference[oaicite:14]{index=14}
+    "gemini-2.0-flash-exp": {
+        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
         "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },
-    "gemini-2.0-flash-lite": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },
-    "gemini-2.0-flash-live-001": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },
-    "gemini-veo-3": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "imagen-3.0-generate-002": {
-        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
+    },  # 2.0 Flash Experimental with image generation; 1M / 8k. :contentReference[oaicite:15]{index=15}
+
+    # Imagen (specialized image generation via Gemini API)
     "imagen-4.0-generate-001": {
         "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
         "context_window_tokens": 480, "output_tokens": None
-    },
-    "google-cloud/speech-to-text/latest_long": {
-        "provider": "google", "vision": False, "image_generation": False, "audio_transcription": True,
+    },  # 480-token prompt; Standard. :contentReference[oaicite:10]{index=10}
+    "imagen-4.0-ultra-generate-001": {
+        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": 480, "output_tokens": None
+    },  # Ultra variant; 480 tokens. :contentReference[oaicite:11]{index=11}
+    "imagen-4.0-fast-generate-001": {
+        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": 480, "output_tokens": None
+    },  # Fast variant; 480 tokens. :contentReference[oaicite:12]{index=12}
+    "imagen-3.0-generate-002": {
+        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
         "context_window_tokens": None, "output_tokens": None
-    },
-    "google-cloud/speech-to-text/latest_short": {
-        "provider": "google", "vision": False, "image_generation": False, "audio_transcription": True,
-        "context_window_tokens": None, "output_tokens": None
-    },
+    },  # Imagen 3 (Generate 002). :contentReference[oaicite:13]{index=13}
+
+    # Veo (video generation via Gemini API)
+    "veo-3.0-generate-preview": {
+        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
+        "context_window_tokens": 1_024, "output_tokens": None
+    },  # Text input 1,024 tokens; outputs video+audio. :contentReference[oaicite:14]{index=14}
+    "veo-3.0-fast-generate-preview": {
+        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
+        "context_window_tokens": 1_024, "output_tokens": None
+    },  # Fast preview variant. :contentReference[oaicite:15]{index=15}
+
+    # ... keep everything above unchanged ...
 
     # =========================
     # Hugging Face — OSS
@@ -214,39 +226,42 @@ RECOMMENDED_MODELS = {
         "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 4_096, "output_tokens": 1_024
     },
-    "tokyotech-llm/Llama-3.1-Swallow-70B-Instruct-v0.3": {
-        "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 4_096, "output_tokens": 1_024
-    },
     "mistralai/Mistral-7B-Instruct-v0.3": {
         "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 32_768, "output_tokens": 8_192
     },
-    "deepseek-ai/DeepSeek-V3": {
+    "deepseek-ai/DeepSeek-V3.1": {
         "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
         "context_window_tokens": 128_000, "output_tokens": 100_000
     },
-    "deepseek-ai/DeepSeek-V3-Small": {
-        "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 128_000, "output_tokens": 100_000
+
+    # --- Image generation / editing models ---
+    "Qwen/Qwen-Image": {
+        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": None, "output_tokens": None
     },
-    "deepseek-ai/DeepSeek-VL2": {
-        "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 32_000, "output_tokens": 8_000
+    "Qwen/Qwen-Image-Edit": {
+        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": None, "output_tokens": None
     },
-    "deepseek-ai/DeepSeek-VL2-Small": {
-        "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 32_000, "output_tokens": 8_000
+    "stabilityai/stable-diffusion-3.5-large": {
+        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": None, "output_tokens": None
     },
-    "deepseek-ai/DeepSeek-VL2-Tiny": {
-        "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 32_000, "output_tokens": 8_000
+    "black-forest-labs/FLUX.1-dev-onnx": {
+        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": None, "output_tokens": None
     },
-    "deepseek-ai/Janus-Pro-7B": {
-        "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 0, "output_tokens": 0
+    "black-forest-labs/FLUX.1-Depth-dev": {
+        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": None, "output_tokens": None
+    },
+    "black-forest-labs/FLUX.1-Kontext-dev": {
+        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
+        "context_window_tokens": None, "output_tokens": None
     },
 }
+
 
 def recommended_models_table(task=None, provider=None, vision=None, image_generation=None,
                              audio_transcription=None, min_context=None, min_output_tokens=None):
