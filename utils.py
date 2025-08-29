@@ -1,9 +1,3 @@
-# --- Helper Script for AI-Driven Software Engineering Course ---
-# Description: This script provides a unified interface for interacting with
-#              multiple LLM providers (OpenAI, Anthropic, Hugging Face, Google Gemini)
-#              and simplifies common tasks like artifact management.
-# -----------------------------------------------------------------
-
 import os
 import json
 import requests
@@ -15,14 +9,10 @@ import mimetypes
 import time
 from typing import Any, Callable
 
-# --- Dynamic Library Installation ---
-# Provide a broad-typed `display` name so static type checkers won't complain
 display: Callable[..., Any] = lambda *a, **k: None
-# Optional helpers; we import inside a try to avoid hard dependency on IPython/dotenv
 _load_dotenv = None
 _have_ipython_display = False
 
-# Initialize display and other IPython functions as no-op fallbacks
 def _display(*args, **kwargs):
     for a in args:
         print(a)
@@ -46,34 +36,27 @@ try:
     from dotenv import load_dotenv as _ld
     _load_dotenv = _ld
 except Exception:
-    # dotenv is optional; functions that rely on it will handle absence gracefully
     _load_dotenv = None
 
 try:
     import IPython.display as _IPython_display
-    # Only override if IPython is available
     display = _IPython_display.display  # type: ignore
     Markdown = _IPython_display.Markdown  # type: ignore
     Code = _IPython_display.Code  # type: ignore
     IPyImage = _IPython_display.Image  # type: ignore
     _have_ipython_display = True
 except Exception:
-    # Use our underscore-prefixed fallback implementations for environments without IPython
     display = _display
     Markdown = _Markdown
     Code = _Code
     IPyImage = _IPyImage
 
-# --- Global Variables & Configuration ---
-# Load environment variables from .env file if python-dotenv was available
 if _load_dotenv:
     try:
         _load_dotenv()
     except Exception:
-        # best-effort; don't fail the module import if .env can't be loaded
         pass
 
-# Centralized dictionary to store model metadata
 MODELS_JSON_PATH = os.path.join(os.path.dirname(__file__), 'models.json')
 if os.path.exists(MODELS_JSON_PATH):
     with open(MODELS_JSON_PATH, 'r') as f:
@@ -82,10 +65,7 @@ else:
     print(f"Warning: '{MODELS_JSON_PATH}' not found. Using an empty model list.")
     ALL_MODELS = {}
 
-# Backwards-compatible alias used across the module
 RECOMMENDED_MODELS = ALL_MODELS
-
-# --- Core Functions ---
 
 def get_model_info(model_name):
     """
@@ -141,24 +121,16 @@ def get_client_for_model(model_name):
             from anthropic import Anthropic
             client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         elif provider == "huggingface":
-            # For Hugging Face, we often use the requests library directly
-            # but a dedicated client could be used if preferred.
-            # We will return a "pseudo-client" dictionary for consistency.
             client = {
                 "provider": "huggingface",
                 "api_key": os.getenv("HUGGINGFACE_API_KEY"),
                 "api_url": f"https://api-inference.huggingface.co/models/{model_name}"
             }
         elif provider == "google":
-            # Try multiple Google client libraries
             try:
-                # New `google-genai` library
                 import google.generativeai as genai
                 api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
                 if api_key:
-                    # The google-genai package has different initialization APIs across versions.
-                    # Try module-level configure() if present, otherwise try a Client class,
-                    # and as a last resort set an api_key attribute on the module.
                     initialized = False
                     configure_fn = getattr(genai, "configure", None)
                     if callable(configure_fn):
@@ -167,7 +139,6 @@ def get_client_for_model(model_name):
                             client = genai
                             initialized = True
                         except Exception:
-                            # If configure exists but fails, fall through to other options
                             initialized = False
 
                     if not initialized:
@@ -182,7 +153,6 @@ def get_client_for_model(model_name):
 
                     if not initialized:
                         try:
-                            # Some variants expect a module-level api_key attribute
                             setattr(genai, "api_key", api_key)
                         except Exception:
                             pass
@@ -195,11 +165,6 @@ def get_client_for_model(model_name):
                     from google.generativeai.generative_models import GenerativeModel
                     api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
                     if api_key:
-                        # This path might require a different initialization
-                        # For simplicity, we'll assume the newer library is preferred.
-                        # If you need the old one, adjust the client creation here.
-                        print("ℹ️ Found older google.generativeai library. The new `google-genai` is recommended.")
-                        # Create a model instance as the "client"
                         client = GenerativeModel(model_name)
                     else:
                         print("⚠️ Google API key not found. Set GOOGLE_API_KEY or GEMINI_API_KEY.")
@@ -368,8 +333,6 @@ def show_recommended_models(
     )
     display(Markdown(table_md))
 
-# --- Artifact Management ---
-
 def _get_artifact_path(artifact_name):
     """Constructs the full path for a given artifact name."""
     return os.path.join('artifacts', artifact_name)
@@ -418,8 +381,6 @@ def display_artifact_local(artifact_name, language=None):
             else:
                 display(Code(content))
 
-
-# --- Unified Model Interaction ---
 
 def _start_loading_indicator(message="Thinking..."):
     """Lightweight, non-blocking loading helper.
@@ -495,16 +456,13 @@ def generate_content(
         if is_imagen_model:
             file_path, data_url_or_error = get_image_generation_completion(prompt, client, model_name, provider)
             if file_path:
-                # get_image_generation_completion returns (file_path, data_url)
                 return data_url_or_error
             else:
-                # Return None and print the error message for consistency
                 print(f"❌ Image generation failed: {data_url_or_error}")
                 return None
 
         # 3) Vision completion (text + image -> text)
         if is_vision_model and image_path:
-            # get_vision_completion will handle local paths and URLs
             return get_vision_completion(prompt or "", image_path, client, model_name, provider)
 
         # 4) Text-only completion
@@ -536,51 +494,39 @@ def display_generated_content(content, prompt=None):
         print("🤷 No content to display.")
         return
 
-    # Check if it's a base64 image
     if re.match(r'^[A-Za-z0-9+/=]+$', content.strip()):
         try:
-            # Attempt to decode to see if it's valid base64
             img_data = base64.b64decode(content)
-            # A simple heuristic: if it decodes and the first few bytes look like a PNG/JPEG,
-            # it's probably an image.
             if img_data.startswith(b'\x89PNG') or img_data.startswith(b'\xff\xd8'):
                 if prompt:
                     display(Markdown(f"**Image generated from prompt:** *'{prompt}'*"))
                 display(IPyImage(data=img_data))
                 return
         except Exception:
-            # Not a valid base64 string, so treat as text
             pass
 
-    # Check if it's a JSON string
     stripped_content = content.strip()
     if (stripped_content.startswith('{') and stripped_content.endswith('}')) or \
        (stripped_content.startswith('[') and stripped_content.endswith(']')):
         try:
-            # Try to parse it as JSON
             json.loads(stripped_content)
             display(Markdown("**Generated JSON:**"))
             display(Code(stripped_content, language='json'))
             return
         except json.JSONDecodeError:
-            # Not valid JSON, fall through to treat as text/code
             pass
 
-    # Check if it's a Python code block
     if "```python" in content:
         display(Markdown("**Generated Python Code:**"))
-        # Extract content within the python block for proper rendering
         match = re.search(r'```python\n(.*)\n```', content, re.DOTALL)
         if match:
             display(Code(match.group(1).strip(), language='python'))
-        else: # Fallback for malformed blocks
+        else:
             display(Markdown(content))
         return
 
     # Default to Markdown
     display(Markdown(content))
-
-# --- Environment and API Client Setup ---
 
 def load_environment():
     """
@@ -780,17 +726,13 @@ def setup_llm_client(model_name="gpt-4o"):
             if not api_key: raise ValueError("HUGGINGFACE_API_KEY not found in .env file.")
             client = InferenceClient(model=model_name, token=api_key)
         
-        elif api_provider == "gemini" or api_provider == "google":  # Google for image generation, text/vision or STT
+        elif api_provider == "gemini" or api_provider == "google":
             if config.get("audio_transcription"):
-                # Use Cloud Speech-to-Text (separate library)
-                # Attempt a few safe import strategies to satisfy different environments and static analyzers.
                 try:
-                    # Preferred import path (most common)
                     from google.cloud import speech as speech_mod  # type: ignore
                     client = speech_mod.SpeechClient()
                 except Exception:
                     try:
-                        # Fallback: import via importlib to avoid static import-resolution issues
                         import importlib
                         speech_mod = importlib.import_module("google.cloud.speech")
                         client = speech_mod.SpeechClient()
@@ -799,15 +741,10 @@ def setup_llm_client(model_name="gpt-4o"):
                         print("Install with: pip install google-cloud-speech")
                         return None, None, None
             else:
-                # Prefer the new Google Gen AI SDK (google-genai). Fallback to legacy google.generativeai.
                 try:
-                    # Prefer the canonical package name first, fall back to alternate module names.
-                    # Some environments provide `google.generativeai` (modern), others may provide `google.genai`.
                     try:
                         import google.generativeai as google_genai
                     except Exception:
-                        # Avoid "from google import genai" which can trigger static import errors
-                        # Use importlib to dynamically import alternate module names if available.
                         try:
                             import importlib
                             google_genai = importlib.import_module('google.genai')
@@ -821,8 +758,6 @@ def setup_llm_client(model_name="gpt-4o"):
                     api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
                     client = None
                     if api_key:
-                        # Some SDK variants expose a Client class, others use a module-level configure().
-                        # Use defensive attribute checks to support both shapes.
                         ClientCls = getattr(google_genai, "Client", None)
                         if callable(ClientCls):
                             try:
@@ -830,7 +765,6 @@ def setup_llm_client(model_name="gpt-4o"):
                             except Exception:
                                 client = None
                         if client is None:
-                            # try module-level configure()
                             configure_fn = getattr(google_genai, "configure", None)
                             if callable(configure_fn):
                                 try:
@@ -839,8 +773,6 @@ def setup_llm_client(model_name="gpt-4o"):
                                 except Exception:
                                     client = None
                     else:
-                        # ADC/Workload Identity path (Vertex AI) — try to instantiate Client if available,
-                        # otherwise keep the module as the client placeholder to be handled later.
                         ClientCls = getattr(google_genai, "Client", None)
                         if callable(ClientCls):
                             try:
@@ -857,7 +789,6 @@ def setup_llm_client(model_name="gpt-4o"):
                     except Exception:
                         pass
                 except ImportError:
-                    # Neither google.generativeai nor google.genai is installed.
                     raise ImportError("Google GenAI libraries not found; install 'google-genai' or an equivalent package.")
     except ImportError as e:
         print(f"ERROR: The required library for '{api_provider}' is not installed: {e}")
@@ -867,8 +798,6 @@ def setup_llm_client(model_name="gpt-4o"):
         return None, None, None
     print(f"✅ LLM Client configured: Using '{api_provider}' with model '{model_name}'")
     return client, model_name, api_provider
-
-# --- Core Interaction Functions ---
 
 def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
     """
@@ -966,33 +895,27 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
     if not client: return "API client not initialized."
     try:
         if api_provider == "openai":
-            # Some newer models use different endpoints
             try:
-                # Try chat completions first (standard endpoint)
                 response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}], temperature=temperature)
                 return response.choices[0].message.content
             except Exception as api_error:
                 error_message = str(api_error).lower()
                 
                 if "temperature" in error_message and "unsupported" in error_message:
-                    # Retry without temperature parameter
                     try:
                         response = client.chat.completions.create(model=model_name, messages=[{"role": "user", "content": prompt}])
                         return response.choices[0].message.content
                     except Exception as retry_error:
                         if "v1/responses" in str(retry_error):
-                            # Use the responses endpoint for certain models
                             response = client.responses.create(model=model_name, input=prompt)
                             return response.choices[0].text
                         else:
                             raise retry_error
                 elif "v1/responses" in str(api_error):
-                    # Use the responses endpoint for certain models
                     try:
                         response = client.responses.create(model=model_name, input=prompt, temperature=temperature)
                         return response.text
                     except Exception as resp_error:
-                        # Try responses endpoint without temperature
                         response = client.responses.create(model=model_name, input=prompt)
                         return response.text
                 else:
@@ -1349,7 +1272,6 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
         image_bytes = None
 
-        # --- OpenAI ---
         if api_provider == 'openai':
             try:
                 # Common modern client shape
@@ -1377,7 +1299,6 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             except Exception as e:
                 print(f"OpenAI image generation error: {e}")
 
-        # --- Hugging Face ---
         if image_bytes is None and api_provider == 'huggingface':
             try:
                 # Client might be a dict from get_client_for_model or an InferenceClient
@@ -1480,7 +1401,6 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             except Exception as e:
                 print(f"Hugging Face image generation error: {e}")
 
-        # --- Google (Gemini / Imagen / Vertex) ---
         if image_bytes is None and api_provider in ('google', 'gemini'):
             try:
                 # Try new google-genai client shapes
@@ -1837,8 +1757,6 @@ def clean_llm_output(output_str: str, language: str = 'json') -> str:
                 return output_str.strip()
     return output_str.strip()
 
-
-# --- Artifact Management & Display ---
 
 def _find_project_root():
     """
