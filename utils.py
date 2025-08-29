@@ -870,14 +870,33 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         image_data_base64 = None
         
         if api_provider == "openai":
-            response = client.images.generate(
-                model=model_name,
-                prompt=prompt,
-                n=1,
-                size="1024x1024",
-                response_format="b64_json"
-            )
-            image_data_base64 = response.data[0].b64_json
+            params = {
+                "model": model_name,
+                "prompt": prompt,
+                "n": 1,
+                "size": "1024x1024",
+            }
+            # gpt-image-1 doesn't support b64_json response format, it returns a URL by default
+            if model_name != 'gpt-image-1':
+                params["response_format"] = "b64_json"
+
+            response = client.images.generate(**params)
+
+            if model_name == 'gpt-image-1' and response.data[0].url:
+                # Download image from URL and convert to base64
+                img_resp = requests.get(response.data[0].url)
+                img_resp.raise_for_status()
+                image_data_base64 = base64.b64encode(img_resp.content).decode('utf-8')
+            else:
+                image_data_base64 = response.data[0].b64_json
+        elif api_provider == "huggingface":
+            pil_image = client.text_to_image(prompt)
+            
+            # Convert PIL image to base64
+            buffered = BytesIO()
+            pil_image.save(buffered, format="PNG")
+            image_data_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
         elif api_provider == "google":
             if "gemini" in model_name:
                 # For Gemini image generation models
