@@ -248,14 +248,6 @@ RECOMMENDED_MODELS = {
         "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
         "context_window_tokens": None, "output_tokens": None
     },
-    "black-forest-labs/FLUX.1-dev-onnx": {
-        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "black-forest-labs/FLUX.1-Depth-dev": {
-        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
     "black-forest-labs/FLUX.1-Kontext-dev": {
         "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
         "context_window_tokens": None, "output_tokens": None
@@ -987,99 +979,194 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     except Exception as e:
         return None, f"An API error occurred during image generation: {e}"
 
+def get_image_edit_completion(prompt: str, image_path: str, client, model_name: str, api_provider: str):
+    """
+    Edits an existing image based on a text prompt using an image-to-image model.
+
+    This function provides a unified interface for image editing across different
+    providers. It takes a local image path and a prompt, sends them to the model,
+    and returns the edited image as a base64-encoded data URL.
+
+    Args:
+        prompt (str): The text description of the edits to apply to the image.
+        image_path (str): The local file path to the image to be edited.
+        client: The initialized API client object from setup_llm_client().
+        model_name (str): The identifier of the image editing model to use.
+        api_provider (str): The provider name (e.g., "huggingface").
+
+    Returns:
+        tuple[str, str]: A tuple containing:
+            - file_path (str): The local path to the saved edited image file.
+            - image_url (str): A data URL string for the edited image.
+            Returns (None, None) if an error occurs.
+
+    Raises:
+        None: This function catches all exceptions and returns error messages
+            as strings instead of raising exceptions.
+
+    Notes:
+        - Validates that the model supports image editing using RECOMMENDED_MODELS
+        - Displays a loading indicator during editing (can take 5-15 seconds)
+        - Tracks and reports editing time
+        - Provider-specific handling:
+            - Hugging Face: Uses image_to_image() method
+        - The returned data URL can be used directly in HTML or markdown
+        - Loading indicators are shown in console and Jupyter environments
+
+    Example:
+        >>> client, model, provider = setup_llm_client("huggingface-image-editor")
+        >>> file_path, image_url = get_image_edit_completion(
+        ...     "Add a sunset in the background",
+        ...     "artifacts/screens/image_1662586800.png",
+        ...     client, model, provider
+        ... )
+        Editing image... This may take a moment.
+        ⏳ Editing image...
+        ✅ Image edited in 7.45 seconds.
+        ✅ Edited image saved to: artifacts/screens/image_edited_1662586800.png
+        >>> # Display in Jupyter: display(Image(url=image_url))
+
+    Dependencies:
+        - time: For tracking editing duration
+        - base64: For encoding images
+        - requests: For downloading images from URLs (if needed)
+        - PIL (Pillow): For image processing
+        - io.BytesIO: For converting image bytes to PIL Images
+        - RECOMMENDED_MODELS: For image editing capability validation
+    """
+    if not client:
+        return None, "API client not initialized."
+
+    if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
+        return None, f"Error: Model '{model_name}' does not support image editing."
+
+    if not os.path.exists(image_path):
+        return None, f"Error: Local image file not found at {image_path}"
+
+    # Display a loading indicator
+    print("Editing image... This may take a moment.")
+    display(Markdown("⏳ Editing image..."))
+    start_time = time.time()
+
+    try:
+        image_data_base64 = None
+
+        if api_provider == "huggingface":
+            # image_to_image expects a PIL image
+            with open(image_path, "rb") as f:
+                image_bytes = f.read()
+            
+            pil_image = Image.open(BytesIO(image_bytes))
+
+            # Call the image-to-image endpoint
+            edited_image = client.image_to_image(pil_image, prompt=prompt)
+
+            # Convert the returned PIL image to base64
+            buffered = BytesIO()
+            edited_image.save(buffered, format="PNG")
+            image_data_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        else:
+            return None, f"Provider '{api_provider}' is not supported for image editing yet."
+
+        if not image_data_base64:
+            return None, "Image editing failed or returned no data."
+
+        # Save and display the image
+        duration = time.time() - start_time
+        print(f"✅ Image edited in {duration:.2f} seconds.")
+
+        image_bytes = base64.b64decode(image_data_base64)
+
+        # Create a unique filename
+        timestamp = int(time.time() * 1000)
+        file_path = f"artifacts/screens/image_edited_{timestamp}.png"
+
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        with open(file_path, "wb") as f:
+            f.write(image_bytes)
+        print(f"✅ Edited image saved to: {file_path}")
+
+        # Return the data URL
+        return file_path, f"data:image/png;base64,{image_data_base64}"
+
+    except Exception as e:
+        return None, f"An API error occurred during image editing: {e}"
 
 def transcribe_audio(audio_path, client, model_name, api_provider, language_code="en-US"):
     """
-    Transcribes audio from a file using a speech-to-text model.
+    Transcribes an audio file to text using a speech-to-text model.
     
-    This function provides a unified interface for converting speech in audio files
-    to text across different providers. It handles various audio formats and
-    provider-specific API differences.
+    This function provides a unified interface for audio transcription across
+    different providers. It handles the API differences and returns the
+    transcribed text.
     
     Args:
-        audio_path (str): Path to the audio file to transcribe. Can be absolute
-            or relative. Supported formats vary by provider but typically include
-            MP3, WAV, M4A, and other common audio formats.
+        audio_path (str): The local file path to the audio file to transcribe.
         client: The initialized API client object from setup_llm_client().
-            - OpenAI: OpenAI client instance
-            - Google: speech.SpeechClient instance
-        model_name (str): The identifier of the speech-to-text model to use.
-            Examples: "whisper-1", "google-cloud/speech-to-text/latest_long".
+        model_name (str): The identifier of the audio transcription model to use.
         api_provider (str): The provider name ("openai" or "google").
-        language_code (str, optional): The language of the audio in BCP-47 format.
-            Defaults to "en-US" (American English). Examples: "es-ES" (Spanish),
-            "fr-FR" (French), "ja-JP" (Japanese). Only used by Google Speech-to-Text.
+        language_code (str, optional): The language of the audio. Defaults to "en-US".
     
     Returns:
-        str: The transcribed text from the audio file. Returns an error message
-            string if the model doesn't support audio transcription, if the file
-            cannot be read, or if the API call fails. Returns "No transcription
-            available." if the audio couldn't be transcribed.
+        str: The transcribed text. Returns an error message string if the
+            API call fails.
     
     Raises:
         None: This function catches all exceptions and returns error messages
             as strings instead of raising exceptions.
     
     Notes:
-        - Validates that the model supports audio transcription using RECOMMENDED_MODELS
-        - Provider-specific handling:
-            - OpenAI (Whisper): Supports many languages automatically
-            - Google: Requires explicit language_code parameter
-        - File is read in binary mode and sent to the API
-        - Google returns results with alternatives; uses the first alternative
-        - Handles cases where no transcription is available
+        - Validates that the model supports audio transcription
+        - Handles different API structures for each provider
+        - OpenAI: Uses the audio.transcriptions.create() method
+        - Google: Uses the recognize() method with a RecognitionConfig
     
     Example:
-        >>> # OpenAI Whisper transcription
         >>> client, model, provider = setup_llm_client("whisper-1")
-        >>> text = transcribe_audio(
-        ...     "recording.mp3", client, model, provider
-        ... )
+        >>> text = transcribe_audio("path/to/audio.wav", client, model, provider)
         >>> print(text)
-        "Hello, this is a test recording."
-        
-        >>> # Google Speech-to-Text with Spanish audio
-        >>> client, model, provider = setup_llm_client("google-cloud/speech-to-text/latest_short")
-        >>> text = transcribe_audio(
-        ...     "spanish_audio.wav", client, model, provider, language_code="es-ES"
-        ... )
-        >>> print(text)
-        "Hola, esta es una grabación de prueba."
-        
-        >>> # Error handling
-        >>> text = transcribe_audio("audio.mp3", client, "gpt-4o", "openai")
-        >>> print(text)
-        "Error: Model 'gpt-4o' does not support audio transcription."
+        "This is the transcribed text from the audio file."
     
     Dependencies:
-        - google.cloud.speech: For Google Speech-to-Text (if using Google)
+        - Provider-specific client libraries
         - RECOMMENDED_MODELS: For audio transcription capability validation
     """
     if not client:
         return "API client not initialized."
+        
     if not RECOMMENDED_MODELS.get(model_name, {}).get("audio_transcription"):
         return f"Error: Model '{model_name}' does not support audio transcription."
 
+    if not os.path.exists(audio_path):
+        return f"Error: Audio file not found at {audio_path}"
+
     try:
         if api_provider == "openai":
-            with open(audio_path, "rb") as f:
-                response = client.audio.transcriptions.create(model=model_name, file=f)
-            return getattr(response, "text", response.get("text"))
+            with open(audio_path, "rb") as audio_file:
+                transcription = client.audio.transcriptions.create(
+                    model=model_name,
+                    file=audio_file
+                )
+            return transcription.text
         elif api_provider == "google":
-            from google.cloud import speech
-            with open(audio_path, "rb") as f:
-                audio_bytes = f.read()
-            audio = speech.RecognitionAudio(content=audio_bytes)
-            config = speech.RecognitionConfig(language_code=language_code)
+            with open(audio_path, "rb") as audio_file:
+                content = audio_file.read()
+
+            audio = {"content": content}
+            config = {
+                "language_code": language_code,
+            }
             response = client.recognize(config=config, audio=audio)
-            if response.results and response.results[0].alternatives:
+            
+            if response.results:
                 return response.results[0].alternatives[0].transcript
-            return "No transcription available."
-        else:
-            return f"Error: Audio transcription not implemented for provider '{api_provider}'"
+            else:
+                return "No transcription result from Google Speech-to-Text."
+
     except Exception as e:
         return f"An API error occurred during audio transcription: {e}"
-
 
 def clean_llm_output(output_str: str, language: str = 'json') -> str:
     """
