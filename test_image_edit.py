@@ -4,11 +4,6 @@ import time
 import json
 import logging
 
-
-# Note for demo
-
-
-
 # Ensure repository root is on the path so we can import local modules reliably
 ROOT = os.path.abspath(os.path.dirname(__file__))
 if ROOT not in sys.path:
