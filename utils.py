@@ -860,6 +860,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
     try:
         image_data_base64 = None
+        image_mime = None
         
         if api_provider == "openai":
             params = {
@@ -891,30 +892,87 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
         elif api_provider == "google":
             if "gemini" in model_name:
-                # For Gemini image generation models
-                try:
-                    response = client.generate_content(prompt)
-                    
-                    if response and hasattr(response, 'parts') and response.parts:
-                        part = response.parts[0]
-                        
-                        # Check for inline_data with actual content
-                        if hasattr(part, 'inline_data') and part.inline_data and hasattr(part.inline_data, 'data') and part.inline_data.data:
-                            img_bytes = part.inline_data.data
-                            image_data_base64 = base64.b64encode(img_bytes).decode('utf-8')
-                        else:
-                            # For models like gemini-2.5-flash-image-preview that return text descriptions
-                            if hasattr(part, 'text'):
+                # Prefer the new google-genai client for Gemini image preview models
+                if model_name == "gemini-2.5-flash-image-preview":
+                    try:
+                        # Lazy-import to avoid hard dependency if user doesn't use this path
+                        from google import genai as google_genai
+                        from google.genai import types as google_genai_types
+
+                        # Support either GEMINI_API_KEY or GOOGLE_API_KEY
+                        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+                        if not api_key:
+                            return None, "GEMINI_API_KEY or GOOGLE_API_KEY not found in environment. Please set one to use Gemini image preview."
+
+                        gg_client = google_genai.Client(api_key=api_key)
+
+                        contents = [
+                            google_genai_types.Content(
+                                role="user",
+                                parts=[google_genai_types.Part.from_text(text=prompt)],
+                            )
+                        ]
+                        generate_content_config = google_genai_types.GenerateContentConfig(
+                            response_modalities=["IMAGE", "TEXT"],
+                        )
+
+                        saved_img_bytes = None
+                        saved_mime = None
+
+                        for chunk in gg_client.models.generate_content_stream(
+                            model=model_name,
+                            contents=contents,
+                            config=generate_content_config,
+                        ):
+                            # Validate structure defensively
+                            if (
+                                not getattr(chunk, "candidates", None)
+                                or not chunk.candidates
+                                or not getattr(chunk.candidates[0], "content", None)
+                                or not getattr(chunk.candidates[0].content, "parts", None)
+                            ):
+                                continue
+
+                            part0 = chunk.candidates[0].content.parts[0]
+                            # Image bytes come via inline_data
+                            if getattr(part0, "inline_data", None) and getattr(part0.inline_data, "data", None):
+                                saved_img_bytes = part0.inline_data.data
+                                saved_mime = getattr(part0.inline_data, "mime_type", None) or "image/png"
+                            # Occasionally the stream also includes text; surface it for debugging
+                            elif getattr(part0, "text", None):
+                                print(part0.text)
+
+                        if not saved_img_bytes:
+                            return None, "Gemini image preview returned no image data."
+
+                        image_data_base64 = base64.b64encode(saved_img_bytes).decode("utf-8")
+                        image_mime = saved_mime
+
+                    except ImportError:
+                        return None, "google-genai package not installed. Run: pip install google-genai"
+                    except Exception as model_error:
+                        return None, f"Gemini image generation (preview) failed: {model_error}"
+                else:
+                    # Fallback for other Gemini models via google-generativeai GenerativeModel
+                    try:
+                        response = client.generate_content(prompt)
+
+                        if response and hasattr(response, 'parts') and response.parts:
+                            part = response.parts[0]
+
+                            if hasattr(part, 'inline_data') and part.inline_data and hasattr(part.inline_data, 'data') and part.inline_data.data:
+                                img_bytes = part.inline_data.data
+                                image_data_base64 = base64.b64encode(img_bytes).decode('utf-8')
+                            elif hasattr(part, 'text'):
                                 text_response = part.text
-                                # This model generates text descriptions rather than actual images
-                                return None, f"The model '{model_name}' generated a text description instead of image data. Consider using 'dall-e-3' or 'imagen-3.0-generate-002' for actual image generation. Description: {text_response[:200]}..."
+                                return None, f"The model '{model_name}' generated text instead of image data. Try 'gemini-2.5-flash-image-preview', 'dall-e-3', or 'imagen-3.0-generate-002'. Description: {text_response[:200]}..."
                             else:
                                 return None, "Gemini response contained no usable image data or text."
-                    else:
-                        return None, "Invalid or empty response from Gemini."
-                        
-                except Exception as model_error:
-                    return None, f"Gemini image generation failed: {model_error}"
+                        else:
+                            return None, "Invalid or empty response from Gemini."
+
+                    except Exception as model_error:
+                        return None, f"Gemini image generation failed: {model_error}"
 
             elif "imagen" in model_name:
                 # This is the REST API method for older Imagen models
@@ -964,7 +1022,15 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         
         # Create a unique filename
         timestamp = int(time.time() * 1000)
-        file_path = f"artifacts/screens/image_{timestamp}.png"
+        # Prefer mime-derived extension when available
+        ext = ".png"
+        mime_for_url = "image/png"
+        if image_mime:
+            guessed = mimetypes.guess_extension(image_mime)
+            if guessed:
+                ext = guessed
+                mime_for_url = image_mime
+        file_path = f"artifacts/screens/image_{timestamp}{ext}"
         
         # Ensure the directory exists
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -973,8 +1039,8 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             f.write(image_bytes)
         print(f"✅ Image saved to: {file_path}")
         
-        # Return the data URL
-        return file_path, f"data:image/png;base64,{image_data_base64}"
+        # Return the data URL using the appropriate mime type
+        return file_path, f"data:{mime_for_url};base64,{image_data_base64}"
 
     except Exception as e:
         return None, f"An API error occurred during image generation: {e}"
@@ -1338,4 +1404,3 @@ def _encode_image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
     return f"data:{mime_type};base64,{encoded_string}"
-

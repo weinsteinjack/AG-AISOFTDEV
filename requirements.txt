@@ -50,6 +50,7 @@ openai
 tiktoken
 anthropic
 google-generativeai
+google-genai
 
 # Utilities and data
 requests
