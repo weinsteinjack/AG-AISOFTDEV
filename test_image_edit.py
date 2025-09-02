@@ -20,14 +20,12 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def get_image_edit_models():
-    """Return model names that can be used for image editing."""
-    models = []
-    # Explicitly test the models that support image-to-image tasks
-    edit_models = ["Qwen/Qwen-Image-Edit", "black-forest-labs/FLUX.1-Kontext-dev"]
-    for name in edit_models:
-        if name in RECOMMENDED_MODELS and RECOMMENDED_MODELS[name].get("image_modification"):
-            models.append(name)
-    return sorted(models)
+    """Return all model names flagged for image modification in RECOMMENDED_MODELS."""
+    return sorted(
+        name
+        for name, cfg in RECOMMENDED_MODELS.items()
+        if cfg.get("image_modification") is True
+    )
 
 
 def get_random_screen_image(screens_dir="artifacts/screens"):

@@ -63,7 +63,7 @@ RECOMMENDED_MODELS = {
     "o3": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "o4-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "codex-mini-latest": {"provider": "openai", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
-    "gpt-image-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "gpt-image-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "dall-e-3": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "whisper-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": None, "output_tokens": None},
     "claude-opus-4-1-20250805": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
@@ -73,8 +73,8 @@ RECOMMENDED_MODELS = {
     "gemini-2.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
     "gemini-2.5-flash-lite": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
     "gemini-live-2.5-flash-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
-    "gemini-2.5-flash-image-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 32_768},
-    "gemini-2.0-flash-preview-image-generation": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_000, "output_tokens": 8_192},
+    "gemini-2.5-flash-image-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 32_768},
+    "gemini-2.0-flash-preview-image-generation": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": 32_000, "output_tokens": 8_192},
     "gemini-1.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 2_000_000, "output_tokens": 8_192},
     "gemini-1.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 8_192},
     "gemini-2.0-flash-exp": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
@@ -86,15 +86,16 @@ RECOMMENDED_MODELS = {
     "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 4_096, "output_tokens": 1_024},
     "mistralai/Mistral-7B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 8_192},
     "deepseek-ai/DeepSeek-V3.1": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 100_000},
-    "Qwen/Qwen-Image": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "Qwen/Qwen-Image": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "Qwen/Qwen-Image-Edit": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": False, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
-    "stabilityai/stable-diffusion-3.5-large": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "stabilityai/stable-diffusion-3.5-large": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "black-forest-labs/FLUX.1-Kontext-dev": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": False, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
 }
 
 
 def recommended_models_table(task=None, provider=None, vision=None, image_generation=None,
-                             audio_transcription=None, min_context=None, min_output_tokens=None):
+                             audio_transcription=None, min_context=None, min_output_tokens=None,
+                             image_modification=None):
     """
     Return a markdown table of recommended models, optionally filtered by attributes.
 
@@ -109,6 +110,9 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
             audio transcription.
         min_context (int, optional): Minimum context window size required.
         min_output_tokens (int, optional): Minimum max output tokens required.
+        image_modification (bool, optional): If set, include only models supporting
+            image editing/modification. Currently flagged editing models are
+            "Qwen/Qwen-Image-Edit" and "black-forest-labs/FLUX.1-Kontext-dev".
 
     Returns:
         str: Markdown formatted table.
@@ -120,11 +124,14 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
             vision = True
         elif t in {"image", "image_generation", "image-generation"} and image_generation is None:
             image_generation = True
+        elif t in {"image_modification", "image-edit", "image_edit", "image-editing", "editing"} and image_modification is None:
+            image_modification = True
         elif t in {"audio", "speech", "audio_transcription", "stt"} and audio_transcription is None:
             audio_transcription = True
         elif t == "text":
             vision = False if vision is None else vision
             image_generation = False if image_generation is None else image_generation
+            image_modification = False if image_modification is None else image_modification
             audio_transcription = False if audio_transcription is None else audio_transcription
 
     rows = []
@@ -133,6 +140,7 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
         model_provider = (cfg.get("provider") or "").lower()
         model_vision = cfg.get("vision", False)
         model_image = cfg.get("image_generation", False)
+        model_image_mod = cfg.get("image_modification", False)
         model_audio = cfg.get("audio_transcription", False)
 
         # Prefer canonical integer fields used in RECOMMENDED_MODELS
@@ -152,6 +160,8 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
             continue
         if image_generation is not None and bool(model_image) != bool(image_generation):
             continue
+        if image_modification is not None and bool(model_image_mod) != bool(image_modification):
+            continue
         if audio_transcription is not None and bool(model_audio) != bool(audio_transcription):
             continue
         if min_context and (context is None or (isinstance(context, int) and context < min_context)):
@@ -170,7 +180,7 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
 
         rows.append(
             f"| {model_name} | {model_provider or '-'} | {'✅' if model_vision else '❌'} | "
-            f"{'✅' if model_image else '❌'} | {'✅' if model_audio else '❌'} | "
+            f"{'✅' if model_image else '❌'} | {'✅' if model_image_mod else '❌'} | {'✅' if model_audio else '❌'} | "
             f"{_fmt_num(context)} | {_fmt_num(max_tokens)} |"
         )
 
@@ -178,8 +188,8 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
         return "No models match the specified criteria."
 
     header = (
-        "| Model | Provider | Vision | Image Gen | Audio Transcription | Context Window | Max Output Tokens |\n"
-        "|---|---|---|---|---|---|---|\n"
+        "| Model | Provider | Vision | Image Gen | Image Edit | Audio Transcription | Context Window | Max Output Tokens |\n"
+        "|---|---|---|---|---|---|---|---|\n"
     )
     table = header + "\n".join(rows)
     display(Markdown(table))
@@ -882,11 +892,13 @@ def get_image_edit_completion(
         - Tracks and reports editing time
         - Provider-specific handling:
             - Hugging Face: Uses image_to_image() method
+        - Supported editing models: "Qwen/Qwen-Image-Edit" and
+          "black-forest-labs/FLUX.1-Kontext-dev".
         - The returned data URL can be used directly in HTML or markdown
         - Loading indicators are shown in console and Jupyter environments
 
     Example:
-        >>> client, model, provider = setup_llm_client("huggingface-image-editor")
+        >>> client, model, provider = setup_llm_client("Qwen/Qwen-Image-Edit")
         >>> file_path, image_url = get_image_edit_completion(
         ...     "Add a sunset in the background",
         ...     "artifacts/screens/image_1662586800.png",
