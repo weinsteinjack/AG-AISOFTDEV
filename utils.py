@@ -55,7 +55,7 @@ RECOMMENDED_MODELS = {
     "gpt-5-nano-2025-08-07": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 400_000, "output_tokens": 128_000},
     "gpt-5-mini-2025-08-07": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 400_000, "output_tokens": 128_000},
     "gpt-5-2025-08-07": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 400_000, "output_tokens": 128_000},
-    "gpt-4o": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 16_384},
+    "gpt-4o": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 16_384},
     "gpt-4o-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 16_384},
     "gpt-4.1": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 32_768},
     "gpt-4.1-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 32_000},
@@ -63,23 +63,23 @@ RECOMMENDED_MODELS = {
     "o3": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "o4-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "codex-mini-latest": {"provider": "openai", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
-    "gpt-image-1": {"provider": "openai", "vision": True, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "gpt-image-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "dall-e-3": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "whisper-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": None, "output_tokens": None},
     "claude-opus-4-1-20250805": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "claude-opus-4-20250514": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "claude-sonnet-4-20250514": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 100_000},
-    "gemini-2.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
-    "gemini-2.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
-    "gemini-2.5-flash-lite": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
-    "gemini-live-2.5-flash-preview": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
-    "gemini-2.5-flash-image-preview": {"provider": "google", "vision": True, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 32_768},
-    "gemini-2.0-flash-preview-image-generation": {"provider": "google", "vision": True, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_000, "output_tokens": 8_192},
-    "gemini-1.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 2_000_000, "output_tokens": 8_192},
-    "gemini-1.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_000_000, "output_tokens": 8_192},
-    "gemini-2.0-flash-exp": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
-    "veo-3.0-generate-preview": {"provider": "google", "vision": True, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_024, "output_tokens": None},
-    "veo-3.0-fast-generate-preview": {"provider": "google", "vision": True, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_024, "output_tokens": None},
+    "gemini-2.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
+    "gemini-2.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
+    "gemini-2.5-flash-lite": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
+    "gemini-live-2.5-flash-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
+    "gemini-2.5-flash-image-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 32_768},
+    "gemini-2.0-flash-preview-image-generation": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_000, "output_tokens": 8_192},
+    "gemini-1.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 2_000_000, "output_tokens": 8_192},
+    "gemini-1.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 8_192},
+    "gemini-2.0-flash-exp": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
+    "veo-3.0-generate-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_024, "output_tokens": None},
+    "veo-3.0-fast-generate-preview": {"provider": "google", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_024, "output_tokens": None},
     "meta-llama/Llama-4-Scout-17B-16E-Instruct": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 10_000_000, "output_tokens": 100_000},
     "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 100_000},
     "meta-llama/Llama-3.3-70B-Instruct": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 8_192, "output_tokens": 4_096},
@@ -329,13 +329,14 @@ def setup_llm_client(model_name="gpt-4o"):
             api_key = os.getenv("HUGGINGFACE_API_KEY")
             if not api_key: raise ValueError("HUGGINGFACE_API_KEY not found in .env file.")
             client = InferenceClient(model=model_name, token=api_key)
-        elif api_provider == "gemini" or api_provider == "google": # Google for image generation or STT
+        elif api_provider == "gemini" or api_provider == "google": # Google for text/vision or STT
             if config.get("audio_transcription"):
                 from google.cloud import speech
                 client = speech.SpeechClient()
             else:
                 import google.generativeai as genai
-                api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for Gemini API
+                # Use GOOGLE_API_KEY for Gemini API
+                api_key = os.getenv("GOOGLE_API_KEY")
                 if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
                 genai.configure(api_key=api_key)
                 # For all Gemini models (text, vision, and image generation), instantiate a GenerativeModel.
@@ -539,18 +540,26 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 base64_image = _encode_image_to_base64(image_path_or_url)
                 image_url_data = {"url": base64_image}
 
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": image_url_data}
-                    ]
-                }],
-                max_tokens=4096
-            )
-            return response.choices[0].message.content
+            try:
+                # Avoid passing max_tokens to models that don't support it
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "image_url", "image_url": image_url_data}
+                        ]
+                    }]
+                )
+                return response.choices[0].message.content
+            except Exception as e:
+                err = str(e)
+                if "Unsupported parameter" in err and "max_tokens" in err:
+                    # retry without max_tokens already done; propagate as generic error
+                    return f"An API error occurred during vision completion: {e}"
+                # Other models might require the Responses API; provide a clear message
+                return f"An API error occurred during vision completion: {e}"
 
         elif api_provider == "anthropic":
             if is_url:
@@ -727,10 +736,10 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                         # Lazy-import to avoid hard dependency if user doesn't use this path
                         from google import genai as google_genai
                         
-                        # Support either GEMINI_API_KEY or GOOGLE_API_KEY
-                        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+                        # Use GOOGLE_API_KEY for Gemini image preview
+                        api_key = os.environ.get("GOOGLE_API_KEY")
                         if not api_key:
-                            return None, "GEMINI_API_KEY or GOOGLE_API_KEY not found in environment. Please set one to use Gemini image preview."
+                            return None, "GOOGLE_API_KEY not found in environment. Please set it to use Gemini image preview."
 
                         gg_client = google_genai.Client(api_key=api_key)
 
@@ -835,7 +844,14 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     except Exception as e:
         return None, f"An API error occurred during image generation: {e}"
 
-def get_image_edit_completion(prompt: str, image_path: str, client, model_name: str, api_provider: str):
+def get_image_edit_completion(
+    prompt: str,
+    image_path: str,
+    client,
+    model_name: str,
+    api_provider: str,
+    **edit_params,
+):
     """
     Edits an existing image based on a text prompt using an image-to-image model.
 
@@ -893,7 +909,8 @@ def get_image_edit_completion(prompt: str, image_path: str, client, model_name: 
     if not client:
         return None, "API client not initialized."
 
-    if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
+    # Validate using the correct capability flag for editing
+    if not RECOMMENDED_MODELS.get(model_name, {}).get("image_modification"):
         return None, f"Error: Model '{model_name}' does not support image editing."
 
     if not os.path.exists(image_path):
@@ -912,7 +929,16 @@ def get_image_edit_completion(prompt: str, image_path: str, client, model_name: 
             pil_image = Image.open(image_path)
 
             # Call the image-to-image endpoint
-            edited_image = client.image_to_image(image=pil_image, prompt=prompt)
+            try:
+                # Pass through model-specific params when supported
+                edited_image = client.image_to_image(
+                    image=pil_image,
+                    prompt=prompt,
+                    **(edit_params or {})
+                )
+            except TypeError:
+                # Some backends may not accept extra params; retry minimal
+                edited_image = client.image_to_image(image=pil_image, prompt=prompt)
 
             # Convert the returned PIL image to base64
             buffered = BytesIO()

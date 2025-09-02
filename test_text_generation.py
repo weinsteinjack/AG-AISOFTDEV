@@ -15,21 +15,16 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def get_text_generation_models():
-    """Return model names that can be used for text generation.
+    """Return only models explicitly marked as supporting text generation.
 
-    Rules:
-      - Exclude audio-transcription-only models (audio_transcription == True)
-      - Exclude image-generation-only models (image_generation == True and vision == False)
-      - Otherwise include the model (text / multimodal / conversational image models)
+    Selection rule:
+      - Include models where cfg.get("text_generation") is True.
+      - Exclude all others (including image-only or audio-only models).
     """
     models = []
     for name, cfg in RECOMMENDED_MODELS.items():
-        if cfg.get("audio_transcription"):
-            continue
-        if cfg.get("image_generation") and not cfg.get("vision"):
-            # Imagen / DALL·E style models that only generate images don't return text
-            continue
-        models.append(name)
+        if cfg.get("text_generation"):
+            models.append(name)
     return sorted(models)
 
 
