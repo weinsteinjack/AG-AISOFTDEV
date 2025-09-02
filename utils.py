@@ -249,7 +249,7 @@ def setup_llm_client(model_name="gpt-4o"):
     
     This function initializes the appropriate API client for the specified model,
     handling authentication and configuration for multiple providers including
-    OpenAI, Anthropic, Hugging Face, and Google (Gemini/Imagen/Speech-to-Text).
+    OpenAI, Anthropic, Hugging Face, and Google (Gemini/Speech-to-Text).
     It automatically loads environment variables and validates API keys.
     
     Args:
@@ -302,7 +302,7 @@ def setup_llm_client(model_name="gpt-4o"):
             - openai: For OpenAI models
             - anthropic: For Anthropic models
             - huggingface_hub: For Hugging Face models
-            - google.generativeai: For Google Gemini/Imagen
+            - google.generativeai: For Google Gemini
             - google.cloud.speech: For Google Speech-to-Text
         - RECOMMENDED_MODELS: Global dictionary with model configurations
     """
@@ -335,15 +335,11 @@ def setup_llm_client(model_name="gpt-4o"):
                 client = speech.SpeechClient()
             else:
                 import google.generativeai as genai
-                api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for both Gemini text and Imagen
+                api_key = os.getenv("GOOGLE_API_KEY") # Use GOOGLE_API_KEY for Gemini API
                 if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
                 genai.configure(api_key=api_key)
-                if config.get("image_generation") and "imagen" in model_name:
-                    # For Imagen models, we use the REST API, so the 'client' can be the genai module.
-                    client = genai
-                else:
-                    # For all Gemini models (text, vision, and image generation), we instantiate a GenerativeModel.
-                    client = genai.GenerativeModel(model_name)
+                # For all Gemini models (text, vision, and image generation), instantiate a GenerativeModel.
+                client = genai.GenerativeModel(model_name)
     except ImportError:
         print(f"ERROR: The required library for '{api_provider}' is not installed.")
         return None, None, None
@@ -632,7 +628,6 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             detailed and specific for best results. Example: "A serene mountain
             landscape at sunset with a lake in the foreground".
         client: The initialized API client object from setup_llm_client().
-            For Google Imagen, this might be the genai module itself.
         model_name (str): The identifier of the image generation model to use.
             Examples: "dall-e-3", "gemini-2.5-flash-image-preview".
         api_provider (str): The provider name ("openai" or "google").
@@ -653,8 +648,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         - Tracks and reports generation time
         - Provider-specific handling:
             - OpenAI: Uses images.generate() API, returns base64 directly
-            - Google Imagen: Uses REST API with predict endpoint
-            - Google Gemini: Uses generate_images() method
+            - Google Gemini: Uses generate_content or google-genai streaming for preview models
         - The returned data URL can be used directly in HTML or markdown
         - Loading indicators are shown in console and Jupyter environments
     
@@ -679,8 +673,6 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
     
     Dependencies:
         - time: For tracking generation duration
-        - json: For handling Google API payloads
-        - requests: For Google Imagen REST API calls
         - IPython.display: For showing loading indicators in Jupyter
         - RECOMMENDED_MODELS: For image generation capability validation
     """
