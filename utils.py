@@ -539,14 +539,20 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
 
     is_url = image_path_or_url.startswith('http://') or image_path_or_url.startswith('https://')
 
+    # Resolve local path relative to project root
+    if not is_url:
+        project_root = _find_project_root()
+        resolved_path = os.path.join(project_root, image_path_or_url)
+        if not os.path.exists(resolved_path):
+            return f"Error: Local image file not found at {image_path_or_url}"
+        image_path_or_url = resolved_path
+
     try:
         if api_provider == "openai":
             image_url_data = {}
             if is_url:
                 image_url_data = {"url": image_path_or_url}
             else:
-                if not os.path.exists(image_path_or_url):
-                    return f"Error: Local image file not found at {image_path_or_url}"
                 base64_image = _encode_image_to_base64(image_path_or_url)
                 image_url_data = {"url": base64_image}
 
