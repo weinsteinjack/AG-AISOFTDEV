@@ -5,7 +5,6 @@
 # -----------------------------------------------------------------
 
 import os
-import json
 import requests
 from PIL import Image
 from io import BytesIO
@@ -55,203 +54,944 @@ except ImportError:
 # --- Model & Provider Configuration ---
 
 RECOMMENDED_MODELS = {
-    # =========================
-    # OpenAI — Text + Vision
-    # =========================
-    "gpt-5-nano-2025-08-07": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 400_000, "output_tokens": 128_000
-    },
-    "gpt-5-mini-2025-08-07": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 400_000, "output_tokens": 128_000
-    },
-    "gpt-5-2025-08-07": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 400_000, "output_tokens": 128_000
-    },
-    "gpt-4o": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 128_000, "output_tokens": 16_384
-    },
-    "gpt-4o-mini": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 128_000, "output_tokens": 16_384
-    },
-    "gpt-4.1": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 32_000
-    },
-    "gpt-4.1-mini": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 32_000
-    },
-    "gpt-4.1-nano": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 32_000
-    },
-    "o3": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 200_000, "output_tokens": 100_000
-    },
-    "o4-mini": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 200_000, "output_tokens": 100_000
-    },
-    "codex-mini-latest": {
-        "provider": "openai", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 200_000, "output_tokens": 100_000
-    },
 
-    # =========================
-    # OpenAI — Image / Audio
-    # =========================
-    "gpt-image-1": {
-        "provider": "openai", "vision": True, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "dall-e-3": {
-        "provider": "openai", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "whisper-1": {
-        "provider": "openai", "vision": False, "image_generation": False, "audio_transcription": True,
-        "context_window_tokens": None, "output_tokens": None
-    },
+    # =========================
 
-    # =========================
-    # Anthropic — Claude
-    # =========================
-    "claude-opus-4-1-20250805": {
-        "provider": "anthropic", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 200_000, "output_tokens": 100_000
-    },
-    "claude-opus-4-20250514": {
-        "provider": "anthropic", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 200_000, "output_tokens": 100_000
-    },
-    "claude-sonnet-4-20250514": {
-        "provider": "anthropic", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 100_000
-    },
+    # OpenAI — Text + Vision
 
-    # ==========================================
-    # Google — Gemini / Imagen / Veo (Gemini API only)
-    # ==========================================
-    "gemini-2.5-pro": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 65_536
-    },  # Model card shows 1M / 65k. :contentReference[oaicite:1]{index=1}
-    "gemini-2.5-flash": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 65_536
-    },  # 1M / 65k. :contentReference[oaicite:2]{index=2}
-    "gemini-2.5-flash-lite": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 65_536
-    },  # 1M / 65k. :contentReference[oaicite:3]{index=3}
-    "gemini-live-2.5-flash-preview": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },  # Live API preview; 1M / 8k. :contentReference[oaicite:4]{index=4}
+    # =========================
 
-    # Gemini image-generation (conversational)
-    "gemini-2.5-flash-image-preview": {
-        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 32_768, "output_tokens": 32_768
-    },  # Image generate/edit preview; 32k/32k. :contentReference[oaicite:5]{index=5}
-    "gemini-2.0-flash-preview-image-generation": {
-        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 32_000, "output_tokens": 8_192
-    },  # 2.0 image-gen preview. :contentReference[oaicite:6]{index=6}
-    "gemini-1.5-pro": {
-        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 2_000_000, "output_tokens": 8_192
-    },  # 1.5 Pro with image generation; 2M / 8k. :contentReference[oaicite:13]{index=13}
-    "gemini-1.5-flash": {
-        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 8_192
-    },  # 1.5 Flash with image generation; 1M / 8k. :contentReference[oaicite:14]{index=14}
-    "gemini-2.0-flash-exp": {
-        "provider": "google", "vision": True, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 1_048_576, "output_tokens": 8_192
-    },  # 2.0 Flash Experimental with image generation; 1M / 8k. :contentReference[oaicite:15]{index=15}
+    "gpt-5-nano-2025-08-07": {
 
-    # Imagen (specialized image generation via Gemini API)
-    "imagen-4.0-generate-001": {
-        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 480, "output_tokens": None
-    },  # 480-token prompt; Standard. :contentReference[oaicite:10]{index=10}
-    "imagen-4.0-ultra-generate-001": {
-        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 480, "output_tokens": None
-    },  # Ultra variant; 480 tokens. :contentReference[oaicite:11]{index=11}
-    "imagen-4.0-fast-generate-001": {
-        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": 480, "output_tokens": None
-    },  # Fast variant; 480 tokens. :contentReference[oaicite:12]{index=12}
-    "imagen-3.0-generate-002": {
-        "provider": "google", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },  # Imagen 3 (Generate 002). :contentReference[oaicite:13]{index=13}
+        "provider": "openai",
 
-    # Veo (video generation via Gemini API)
-    "veo-3.0-generate-preview": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_024, "output_tokens": None
-    },  # Text input 1,024 tokens; outputs video+audio. :contentReference[oaicite:14]{index=14}
-    "veo-3.0-fast-generate-preview": {
-        "provider": "google", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_024, "output_tokens": None
-    },  # Fast preview variant. :contentReference[oaicite:15]{index=15}
+        "vision": True,
 
-    # ... keep everything above unchanged ...
+        "text_generation": True,
 
-    # =========================
-    # Hugging Face — OSS
-    # =========================
-    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
-        "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 10_000_000, "output_tokens": 100_000
-    },
-    "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {
-        "provider": "huggingface", "vision": True, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 1_000_000, "output_tokens": 100_000
-    },
-    "meta-llama/Llama-3.3-70B-Instruct": {
-        "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 4_096, "output_tokens": 1_024
-    },
-    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {
-        "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 4_096, "output_tokens": 1_024
-    },
-    "mistralai/Mistral-7B-Instruct-v0.3": {
-        "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 32_768, "output_tokens": 8_192
-    },
-    "deepseek-ai/DeepSeek-V3.1": {
-        "provider": "huggingface", "vision": False, "image_generation": False, "audio_transcription": False,
-        "context_window_tokens": 128_000, "output_tokens": 100_000
-    },
+        "image_generation": False,
 
-    # --- Image generation / editing models ---
-    "Qwen/Qwen-Image": {
-        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "Qwen/Qwen-Image-Edit": {
-        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "stabilityai/stable-diffusion-3.5-large": {
-        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
-    "black-forest-labs/FLUX.1-Kontext-dev": {
-        "provider": "huggingface", "vision": False, "image_generation": True, "audio_transcription": False,
-        "context_window_tokens": None, "output_tokens": None
-    },
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 400_000,
+
+        "output_tokens": 128_000,
+
+    },
+
+    "gpt-5-mini-2025-08-07": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 400_000,
+
+        "output_tokens": 128_000,
+
+    },
+
+    "gpt-5-2025-08-07": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 400_000,
+
+        "output_tokens": 128_000,
+
+    },
+
+
+
+    "gpt-4o": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 128_000,
+
+        "output_tokens": 16_384,
+
+    },
+
+    "gpt-4o-mini": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 128_000,
+
+        "output_tokens": 16_384,
+
+    },
+
+    "gpt-4.1": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_000_000,
+
+        "output_tokens": 32_768,
+
+    },
+
+    "gpt-4.1-mini": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_000_000,
+
+        "output_tokens": 32_000,
+
+    },
+
+    "gpt-4.1-nano": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_000_000,
+
+        "output_tokens": 32_000,
+
+    },
+
+    "o3": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 200_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+    "o4-mini": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 200_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+
+
+    "codex-mini-latest": {
+
+        "provider": "openai",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+
+
+    # =========================
+
+    # OpenAI — Image / Audio
+
+    # =========================
+
+    "gpt-image-1": {
+
+        "provider": "openai",
+
+        "vision": True,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+    "dall-e-3": {
+
+        "provider": "openai",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+    "whisper-1": {
+
+        "provider": "openai",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+
+
+    # =========================
+
+    # Anthropic — Claude
+
+    # =========================
+
+    "claude-opus-4-1-20250805": {
+
+        "provider": "anthropic",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 200_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+    "claude-opus-4-20250514": {
+
+        "provider": "anthropic",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 200_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+    "claude-sonnet-4-20250514": {
+
+        "provider": "anthropic",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_000_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+
+
+    # ==========================================
+
+    # Google — Gemini / Imagen / Veo
+
+    # ==========================================
+
+    "gemini-2.5-pro": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 1_048_576,
+
+        "output_tokens": 65_536,
+
+    },
+
+    "gemini-2.5-flash": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 1_048_576,
+
+        "output_tokens": 65_536,
+
+    },
+
+    "gemini-2.5-flash-lite": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 1_048_576,
+
+        "output_tokens": 65_536,
+
+    },
+
+    "gemini-live-2.5-flash-preview": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 1_048_576,
+
+        "output_tokens": 8_192,
+
+    },
+
+
+
+    "gemini-2.5-flash-image-preview": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 32_768,
+
+        "output_tokens": 32_768,
+
+    },
+
+    "gemini-2.0-flash-preview-image-generation": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 32_000,
+
+        "output_tokens": 8_192,
+
+    },
+
+
+
+    "gemini-1.5-pro": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 2_000_000,
+
+        "output_tokens": 8_192,
+
+    },
+
+    "gemini-1.5-flash": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 1_000_000,
+
+        "output_tokens": 8_192,
+
+    },
+
+    "gemini-2.0-flash-exp": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": True,
+
+        "context_window_tokens": 1_048_576,
+
+        "output_tokens": 8_192,
+
+    },
+
+
+
+    "imagen-4.0-generate-001": {
+
+        "provider": "google",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 480,
+
+        "output_tokens": None,
+
+    },
+
+    "imagen-4.0-ultra-generate-001": {
+
+        "provider": "google",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 480,
+
+        "output_tokens": None,
+
+    },
+
+    "imagen-4.0-fast-generate-001": {
+
+        "provider": "google",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 480,
+
+        "output_tokens": None,
+
+    },
+
+    "imagen-3.0-generate-002": {
+
+        "provider": "google",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+
+
+    "veo-3.0-generate-preview": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": False,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_024,
+
+        "output_tokens": None,
+
+    },
+
+    "veo-3.0-fast-generate-preview": {
+
+        "provider": "google",
+
+        "vision": True,
+
+        "text_generation": False,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_024,
+
+        "output_tokens": None,
+
+    },
+
+
+
+    # =========================
+
+    # Hugging Face — OSS
+
+    # =========================
+
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 10_000_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 1_000_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+    "meta-llama/Llama-3.3-70B-Instruct": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 8_192,
+
+        "output_tokens": 4_096,
+
+    },
+
+    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 4_096,
+
+        "output_tokens": 1_024,
+
+    },
+
+    "mistralai/Mistral-7B-Instruct-v0.3": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 32_768,
+
+        "output_tokens": 8_192,
+
+    },
+
+    "deepseek-ai/DeepSeek-V3.1": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": True,
+
+        "image_generation": False,
+
+        "image_modification": False,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": 128_000,
+
+        "output_tokens": 100_000,
+
+    },
+
+
+
+    "Qwen/Qwen-Image": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+    "Qwen/Qwen-Image-Edit": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": False,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+    "stabilityai/stable-diffusion-3.5-large": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": True,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+    "black-forest-labs/FLUX.1-Kontext-dev": {
+
+        "provider": "huggingface",
+
+        "vision": False,
+
+        "text_generation": False,
+
+        "image_generation": False,
+
+        "image_modification": True,
+
+        "audio_transcription": False,
+
+        "context_window_tokens": None,
+
+        "output_tokens": None,
+
+    },
+
+}
+
+"""
+Sanitized rebuild of RECOMMENDED_MODELS to ensure ASCII-only content
+and removal of deprecated Imagen REST models.
+"""
+RECOMMENDED_MODELS = {
+    "gpt-5-nano-2025-08-07": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 400_000, "output_tokens": 128_000},
+    "gpt-5-mini-2025-08-07": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 400_000, "output_tokens": 128_000},
+    "gpt-5-2025-08-07": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 400_000, "output_tokens": 128_000},
+    "gpt-4o": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 16_384},
+    "gpt-4o-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 16_384},
+    "gpt-4.1": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 32_768},
+    "gpt-4.1-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 32_000},
+    "gpt-4.1-nano": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 32_000},
+    "o3": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
+    "o4-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
+    "codex-mini-latest": {"provider": "openai", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "gpt-image-1": {"provider": "openai", "vision": True, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "dall-e-3": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "whisper-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": None, "output_tokens": None},
+    "claude-opus-4-1-20250805": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
+    "claude-opus-4-20250514": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
+    "claude-sonnet-4-20250514": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 100_000},
+    "gemini-2.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
+    "gemini-2.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
+    "gemini-2.5-flash-lite": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 65_536},
+    "gemini-live-2.5-flash-preview": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
+    "gemini-2.5-flash-image-preview": {"provider": "google", "vision": True, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 32_768},
+    "gemini-2.0-flash-preview-image-generation": {"provider": "google", "vision": True, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": 32_000, "output_tokens": 8_192},
+    "gemini-1.5-pro": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 2_000_000, "output_tokens": 8_192},
+    "gemini-1.5-flash": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_000_000, "output_tokens": 8_192},
+    "gemini-2.0-flash-exp": {"provider": "google", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": 1_048_576, "output_tokens": 8_192},
+    "veo-3.0-generate-preview": {"provider": "google", "vision": True, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_024, "output_tokens": None},
+    "veo-3.0-fast-generate-preview": {"provider": "google", "vision": True, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_024, "output_tokens": None},
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 10_000_000, "output_tokens": 100_000},
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 100_000},
+    "meta-llama/Llama-3.3-70B-Instruct": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 8_192, "output_tokens": 4_096},
+    "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.5": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 4_096, "output_tokens": 1_024},
+    "mistralai/Mistral-7B-Instruct-v0.3": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 32_768, "output_tokens": 8_192},
+    "deepseek-ai/DeepSeek-V3.1": {"provider": "huggingface", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 128_000, "output_tokens": 100_000},
+    "Qwen/Qwen-Image": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "Qwen/Qwen-Image-Edit": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": False, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "stabilityai/stable-diffusion-3.5-large": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": True, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "black-forest-labs/FLUX.1-Kontext-dev": {"provider": "huggingface", "vision": False, "text_generation": False, "image_generation": False, "image_modification": True, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
 }
 
 
@@ -601,7 +1341,7 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
                     try:
                         response = client.responses.create(model=model_name, input=prompt, temperature=temperature)
                         return response.text
-                    except Exception as resp_error:
+                    except Exception:
                         # Try responses endpoint without temperature
                         response = client.responses.create(model=model_name, input=prompt)
                         return response.text
@@ -796,15 +1536,14 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         client: The initialized API client object from setup_llm_client().
             For Google Imagen, this might be the genai module itself.
         model_name (str): The identifier of the image generation model to use.
-            Examples: "dall-e-3", "imagen-3.0-generate-002".
+            Examples: "dall-e-3", "gemini-2.5-flash-image-preview".
         api_provider (str): The provider name ("openai" or "google").
     
     Returns:
         tuple[str, str]: A tuple containing:
             - file_path (str): The local path to the saved image file.
-            - image_url (str): A data URL string in the format "data:image/png;base64,{base64_data}"
-              that can be used directly in HTML img tags or displayed in Jupyter.
-            Returns (None, None) if an error occurs.
+            - image_url (str): A data URL string like "data:image/png;base64,{...}" suitable for HTML/Jupyter.
+            On error returns (None, error_message).
     
     Raises:
         None: This function catches all exceptions and returns error messages
@@ -893,12 +1632,11 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         elif api_provider == "google":
             if "gemini" in model_name:
                 # Prefer the new google-genai client for Gemini image preview models
-                if model_name == "gemini-2.5-flash-image-preview":
+                if model_name in ("gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation"):
                     try:
                         # Lazy-import to avoid hard dependency if user doesn't use this path
                         from google import genai as google_genai
-                        from google.genai import types as google_genai_types
-
+                        
                         # Support either GEMINI_API_KEY or GOOGLE_API_KEY
                         api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
                         if not api_key:
@@ -906,15 +1644,14 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
                         gg_client = google_genai.Client(api_key=api_key)
 
-                        contents = [
-                            google_genai_types.Content(
-                                role="user",
-                                parts=[google_genai_types.Part.from_text(text=prompt)],
-                            )
-                        ]
-                        generate_content_config = google_genai_types.GenerateContentConfig(
-                            response_modalities=["IMAGE", "TEXT"],
-                        )
+                        # Build request using plain dicts with correct shapes.
+                        # parts items must be {"text": ...}, no extra "type" key.
+                        contents = [{
+                            "role": "user",
+                            "parts": [{"text": prompt}],
+                        }]
+
+                        generate_content_config = {"response_modalities": ["IMAGE", "TEXT"]}
 
                         saved_img_bytes = None
                         saved_mime = None
@@ -965,7 +1702,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                                 image_data_base64 = base64.b64encode(img_bytes).decode('utf-8')
                             elif hasattr(part, 'text'):
                                 text_response = part.text
-                                return None, f"The model '{model_name}' generated text instead of image data. Try 'gemini-2.5-flash-image-preview', 'dall-e-3', or 'imagen-3.0-generate-002'. Description: {text_response[:200]}..."
+                                return None, f"The model '{model_name}' generated text instead of image data. Try 'gemini-2.5-flash-image-preview' or 'dall-e-3'. Description: {text_response[:200]}..."
                             else:
                                 return None, "Gemini response contained no usable image data or text."
                         else:
@@ -973,43 +1710,6 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
                     except Exception as model_error:
                         return None, f"Gemini image generation failed: {model_error}"
-
-            elif "imagen" in model_name:
-                # This is the REST API method for older Imagen models
-                project_id = os.getenv("GOOGLE_PROJECT_ID")
-                if not project_id:
-                    return None, "GOOGLE_PROJECT_ID not found in .env for Imagen model."
-                
-                # The client is the genai module, so we need to get the credentials
-                # This is a bit of a workaround. A better solution would be to have
-                # the setup_llm_client return credentials or a configured session.
-                # For now, we assume the user is authenticated in their environment.
-                # We'll use requests to make the REST call.
-                
-                # Get the access token from the gcloud command line tool.
-                # This is not ideal but works for a local development environment.
-                try:
-                    import subprocess
-                    token = subprocess.check_output(['gcloud', 'auth', 'print-access-token']).decode('utf-8').strip()
-                except Exception as e:
-                    return None, f"Could not get gcloud access token: {e}"
-
-                endpoint = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/{model_name}:predict"
-                headers = {
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json; charset=utf-8"
-                }
-                payload = {
-                    "instances": [{"prompt": prompt}],
-                    "parameters": {"sampleCount": 1}
-                }
-                
-                api_response = requests.post(endpoint, headers=headers, json=payload)
-                if api_response.status_code != 200:
-                    return None, f"Google Imagen API error: {api_response.text}"
-                
-                response_data = api_response.json()
-                image_data_base64 = response_data['predictions'][0]['bytesBase64Encoded']
 
         if not image_data_base64:
             return None, "Image generation failed or returned no data."

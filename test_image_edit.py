@@ -27,16 +27,21 @@ def get_image_edit_models():
 
 def run_tests(output_path="artifacts/image_edit_report.json"):
     prompt = "Add a funny hat to the main subject."
-    # Use a pre-existing image from the artifacts as the base for editing
-    # Let's find one to use. We'll need to make sure one exists.
-    # For now, assuming a file exists at this path.
-    # A better implementation would be to generate one first or have a stable test asset.
-    image_path = "artifacts/screens/image_1756471808087.png" 
-    
+    # Ensure a base image exists; create a simple placeholder if needed
+    image_path = "artifacts/screens/base_edit_input.png"
     if not os.path.exists(image_path):
-        logging.error(f"Base image for editing not found at: {image_path}")
-        logging.error("Please generate an image first by running the image generation tests.")
-        return
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        try:
+            from PIL import Image, ImageDraw
+            img = Image.new('RGB', (512, 512), color=(240, 240, 240))
+            draw = ImageDraw.Draw(img)
+            draw.rectangle([50, 50, 200, 200], outline=(255, 0, 0), width=5)
+            draw.text((60, 60), "Edit Me", fill=(0, 0, 0))
+            img.save(image_path, format='PNG')
+            logging.info(f"Created placeholder base image at: {image_path}")
+        except Exception as e:
+            logging.error(f"Failed to create placeholder image: {e}")
+            return
 
     models = get_image_edit_models()
     logging.info(f"Found {len(models)} candidate image-editing models to test.")
