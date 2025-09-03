@@ -293,9 +293,10 @@ You are {persona}.
 Provide any relevant background or constraints needed to complete the task below. If the user input omits constraints, assume reasonable defaults and clearly label any assumptions you make.
 </context>
 
-<instructions>
+    <instructions>
 Perform the task described in <user_input> below. Follow the CARE/RISE-informed protocol: clarify ambiguous terms when necessary, ground the output in the provided context, structure your answer clearly, and decompose multi-step tasks into ordered steps.
 Be concise and produce only the requested output (no meta-commentary).{cot_instruction}
+STRICT: Do NOT repeat, echo, or include the original task description, the <user_input> block, or any part of this prompt in your response. Return only the task result.
 </instructions>
 
 <user_input>
@@ -306,7 +307,7 @@ Be concise and produce only the requested output (no meta-commentary).{cot_instr
 
 <output_format>
 Produce the output requested by the user. If the user asked for a specific format (JSON, markdown list, table, Gherkin, etc.), follow that format exactly. If no explicit format was requested, default to a concise markdown list for brainstorms or a short structured JSON array for structured requests.
-Return ONLY the task output (no analysis) unless the user explicitly asked for your reasoning.
+Return ONLY the task output (no analysis) unless the user explicitly asked for your reasoning. Do NOT echo the prompt or any wrapper tags.
 </output_format>
 """.strip()
 
