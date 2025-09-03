@@ -201,161 +201,6 @@ def recommended_models_table(task=None, provider=None, text_generation=None, vis
     display(Markdown(table))
     return table
 
-
-def prompt_enhancer(user_input: str, model_name: str = "o3", persona: str = None, examples: list = None) -> str:
-    """Enhance a raw user prompt into a high-quality, structured prompt using the
-    Prompt Enhancer meta-prompt. This function returns a string suitable to pass
-    directly to other helper functions like `get_completion`.
-
-    Args:
-        user_input: Raw user-provided instruction or requirement text.
-        model_name: Optional model name (should be a key from RECOMMENDED_MODELS).
-        persona: Optional persona string to override the default persona selection.
-        examples: Optional list of (input, output) tuples to include as few-shot examples.
-
-    Returns:
-        A single string containing the optimized prompt.
-    
-    Example:
-        >>> from utils import prompt_enhancer, setup_llm_client, get_completion
-        >>> examples = [
-        ...     ("Convert the following list of features into a JSON array of strings.", "[\"feature A\", \"feature B\"]"),
-        ...     ("Produce a 3-bullet summary of product goals.", "- Reduce onboarding time\n- Improve role clarity\n- Surface learning resources")
-        ... ]
-        >>> enhanced = prompt_enhancer(
-        ...     user_input=(
-        ...         "Create 5 concise user stories from: \"We need a tool to help our company's new hires get up to speed.\""
-        ...     ),
-        ...     model_name='gpt-4o',
-        ...     persona='Senior Product Manager and prompt engineer',
-        ...     examples=examples
-        ... )
-        >>> client, model_name, api_provider = setup_llm_client(model_name='gpt-4o')
-        >>> response = get_completion(enhanced, client, model_name, api_provider)
-        >>> print(response)
-    """
-    # Basic validation / defaults
-    if not isinstance(user_input, str) or not user_input.strip():
-        raise ValueError("user_input must be a non-empty string")
-
-    chosen_model = model_name if model_name in RECOMMENDED_MODELS else None
-    if model_name and not chosen_model:
-        # Fall back but inform the caller via the prompt itself (non-fatal)
-        model_note = f"WARNING: model '{model_name}' not found in RECOMMENDED_MODELS. Using generic guidance."
-    else:
-        model_note = f"Using model: {chosen_model}" if chosen_model else "Using model: unspecified"
-
-    # Heuristics to decide whether to include Chain-of-Thought or examples
-    lower = user_input.lower()
-    cot_triggers = ["analyze", "explain", "reason", "derive", "solve", "design", "compare", "justify"]
-    icl_triggers = ["json", "schema", "format", "table", "csv", "gherkin", "gherkin", "exact", "strict"]
-
-    include_cot = any(tok in lower for tok in cot_triggers) or len(user_input) > 300
-    include_icl = any(tok in lower for tok in icl_triggers)
-
-    # Default persona if not provided
-    if not persona:
-        # Pick a provider-aware persona when possible
-        if chosen_model:
-            provider = RECOMMENDED_MODELS[chosen_model].get("provider")
-            persona = f"an expert {provider} prompt engineer" if provider else "an expert prompt engineer"
-        else:
-            persona = "an elite Prompt Optimization Engine"
-
-    # Build examples block if requested or provided
-    examples_block = ""
-    if examples and isinstance(examples, list) and examples:
-        ex_lines = ["<examples>"]
-        for inp, outp in examples[:2]:
-            ex_lines.append("- INPUT: " + str(inp).strip())
-            ex_lines.append("  OUTPUT: " + str(outp).strip())
-        ex_lines.append("</examples>")
-        examples_block = "\n" + "\n".join(ex_lines) + "\n"
-    elif include_icl:
-        # Provide a minimal illustrative example for structured outputs
-        examples_block = (
-            "\n<examples>\n- INPUT: Convert the following list of features into a JSON array of strings.\n  OUTPUT: [\"feature A\", \"feature B\"]\n</examples>\n"
-        )
-
-    # Chain-of-Thought instruction
-    cot_instruction = "" if not include_cot else "\n\n# Reasoning requirement:\nPlease think step-by-step and show your chain-of-thought reasoning before the final answer. Use concise numbered steps.\n"
-
-    # Construct the final prompt to send to the LLM (perform the user's task).
-    # The prompt explicitly assigns persona, provides context and constraints,
-    # includes optional chain-of-thought instruction, and supplies examples.
-    optimized_prompt = f"""
-<persona>
-You are {persona}.
-{model_note}
-</persona>
-
-<context>
-Provide any relevant background or constraints needed to complete the task below. If the user input omits constraints, assume reasonable defaults and clearly label any assumptions you make.
-</context>
-
-    <instructions>
-Perform the task described in <user_input> below. Follow the CARE/RISE-informed protocol: clarify ambiguous terms when necessary, ground the output in the provided context, structure your answer clearly, and decompose multi-step tasks into ordered steps.
-Be concise and produce only the requested output (no meta-commentary).{cot_instruction}
-STRICT: Do NOT repeat, echo, or include the original task description, the <user_input> block, or any part of this prompt in your response. Return only the task result.
-</instructions>
-
-<user_input>
-{user_input.strip()}
-</user_input>
-
-{examples_block}
-
-<output_format>
-Produce the output requested by the user. If the user asked for a specific format (JSON, markdown list, table, Gherkin, etc.), follow that format exactly. If no explicit format was requested, default to a concise markdown list for brainstorms or a short structured JSON array for structured requests.
-Return ONLY the task output (no analysis) unless the user explicitly asked for your reasoning. Do NOT echo the prompt or any wrapper tags.
-</output_format>
-""".strip()
-
-    return optimized_prompt
-
-
-def remove_contiguous_duplicate_block(text: str) -> str:
-    """Detect and remove an exact contiguous duplicate block in the LLM output.
-
-    This handles the common model behaviour of echoing the same response twice
-    (for example, an assumptions paragraph followed by the same list repeated).
-
-    The function looks for a prefix block that is immediately repeated and,
-    if found, removes the second copy. If no contiguous duplicate is found,
-    returns the original text unchanged.
-
-    Args:
-        text: The LLM output string.
-
-    Returns:
-        A cleaned string with contiguous duplicated block removed when detected.
-    """
-    if not isinstance(text, str) or not text.strip():
-        return text
-
-    lines = text.splitlines()
-    n = len(lines)
-    # Check for a repeated prefix block: [0:l] == [l:2*l]
-    for l in range(1, n // 2 + 1):
-        if lines[0:l] == lines[l:2 * l]:
-            # remove the second contiguous copy
-            new_lines = lines[:l] + lines[2 * l:]
-            return "\n".join(new_lines).strip()
-
-    # Also handle the simple case where the entire text is duplicated twice
-    if n % 2 == 0 and lines[: n // 2] == lines[n // 2:]:
-        return "\n".join(lines[: n // 2]).strip()
-
-    return text.strip()
-
-# Expose the cleaner as an attribute on the prompt_enhancer function so callers
-# can use `prompt_enhancer.clean(output)` without importing the helper directly.
-try:
-    prompt_enhancer.clean = remove_contiguous_duplicate_block
-except NameError:
-    # In case prompt_enhancer isn't defined in this execution order, skip.
-    pass
-
 # --- Environment and API Client Setup ---
 
 def load_environment():
@@ -1250,6 +1095,116 @@ def clean_llm_output(output_str: str, language: str = 'json') -> str:
                 # If only one ``` or malformed, return original string
                 return output_str.strip()
     return output_str.strip()
+
+
+def prompt_enhancer(user_input, model_name="gpt-4o"):
+    """
+    Enhances a raw user prompt using a meta-prompt optimization system.
+    
+    This function takes a user's raw input and passes it through an elite 
+    Prompt Optimization Engine that applies advanced prompt engineering 
+    techniques to create a high-quality, optimized prompt suitable for 
+    use with other utils.py functions.
+    
+    The enhancement process includes:
+    - Role assignment and persona definition
+    - Context provision and grounding
+    - Task definition with clarity
+    - Output format specification
+    - Chain-of-Thought integration for complex reasoning
+    - In-Context Learning examples when needed
+    - Structural integrity with clear delimiters
+    
+    Args:
+        user_input (str): The raw user prompt or request to be enhanced.
+        model_name (str, optional): The model to use for enhancement. 
+            Defaults to "gpt-4o". Should be a key from RECOMMENDED_MODELS.
+    
+    Returns:
+        str: An enhanced, optimized prompt ready for use with other LLM functions.
+             Returns the original input with an error message if enhancement fails.
+    
+    Example:
+        >>> enhanced = prompt_enhancer("Write code for a login system")
+        >>> client, model, provider = setup_llm_client("gpt-4o")
+        >>> result = get_completion(enhanced, client, model, provider)
+        
+        >>> # The enhanced prompt will be much more structured and detailed
+        >>> # than the original "Write code for a login system"
+    
+    Dependencies:
+        - setup_llm_client(): For initializing the LLM client
+        - get_completion(): For getting the enhanced prompt from the LLM
+        - RECOMMENDED_MODELS: For model validation
+    """
+    if not user_input or not user_input.strip():
+        return "Error: No user input provided for enhancement."
+    
+    if model_name not in RECOMMENDED_MODELS:
+        return f"Error: Model '{model_name}' not found in RECOMMENDED_MODELS. Original input: {user_input}"
+    
+    # The meta-prompt for prompt optimization
+    optimization_prompt = f"""You are an elite Prompt Optimization Engine. Your design is based on the understanding that prompt engineering is a rigorous technical discipline, essential for maximizing LLM efficacy and reliability. Your function is to analyze raw user inputs and systematically compile them into optimized, high-quality prompts.
+
+**User Input:**
+<user_input>
+{user_input}
+</user_input>
+
+**Optimization Protocol:**
+Follow this systematic protocol to analyze the user input and construct the optimized prompt.
+
+### Phase 1: Analysis and Strategy Determination
+1.  **Analyze Intent and Complexity:** Deconstruct the user's input to identify the core objective. Assess the complexity: Does it require simple retrieval, creative generation, or complex, multi-step reasoning?
+2.  **Determine Strategic Enhancements:**
+    *   **Chain-of-Thought (CoT):** If the task involves complex reasoning, analysis, or multi-step problem-solving, you must incorporate CoT prompting (e.g., instructing the model to "think step by step").
+    *   **In-Context Learning (ICL):** If the task requires a highly specific output format (e.g., structured data) or involves nuanced pattern recognition, generate 1-2 relevant input/output examples (Few-Shot prompting) to guide the model.
+
+### Phase 2: Prompt Construction and Enhancement
+Construct the optimized prompt by ensuring the following components are explicitly defined and integrated:
+
+1.  **Role Assignment (Persona):**
+    *   Define the most authoritative expert persona for the LLM to adopt (e.g., "You are a Senior Cybersecurity Analyst," "Act as an expert Python developer"). This constrains the knowledge space for improved accuracy and focus.
+
+2.  **Context Provision and Grounding:**
+    *   Provide comprehensive background information, define key terms unambiguously, and state all constraints or rules. Ensure the model has sufficient information to ground its response in a relevant factual basis.
+
+3.  **Task Definition and Clarity:**
+    *   Use precise, unambiguous instructions and assertive action verbs (e.g., "Analyze," "Synthesize," "Generate").
+    *   Decompose the main objective into a clear sequence of steps if necessary.
+
+4.  **Expectation Setting (Output Specification):**
+    *   Explicitly define the desired output format (e.g., Markdown report, JSON object, bulleted list), length constraints, style, and target audience.
+
+### Phase 3: Structural Integrity
+Organize the entire prompt using clear structural delimiters to ensure optimal parsing by the target LLM. Clearly differentiate between instructions, context, examples, and the core task (e.g., using XML tags such as `<persona>`, `<context>`, `<instructions>`, `<examples>`, `<output_format>`).
+
+### Output
+Generate only the final, optimized prompt."""
+
+    try:
+        # Set up the LLM client for enhancement
+        client, actual_model, provider = setup_llm_client(model_name)
+        
+        if not client:
+            return f"Error: Failed to initialize LLM client for model '{model_name}'. Original input: {user_input}"
+        
+        # Get the enhanced prompt with low temperature for consistency
+        enhanced_prompt = get_completion(
+            optimization_prompt, 
+            client, 
+            actual_model, 
+            provider, 
+            temperature=0.3
+        )
+        
+        if not enhanced_prompt or enhanced_prompt.startswith("Error:") or enhanced_prompt.startswith("API client not initialized"):
+            return f"Error: Failed to enhance prompt. Original input: {user_input}"
+        
+        return enhanced_prompt.strip()
+        
+    except Exception as e:
+        return f"Error during prompt enhancement: {str(e)}. Original input: {user_input}"
 
 
 # --- Artifact Management & Display ---
