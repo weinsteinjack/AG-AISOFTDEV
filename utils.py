@@ -348,6 +348,14 @@ def remove_contiguous_duplicate_block(text: str) -> str:
 
     return text.strip()
 
+# Expose the cleaner as an attribute on the prompt_enhancer function so callers
+# can use `prompt_enhancer.clean(output)` without importing the helper directly.
+try:
+    prompt_enhancer.clean = remove_contiguous_duplicate_block
+except NameError:
+    # In case prompt_enhancer isn't defined in this execution order, skip.
+    pass
+
 # --- Environment and API Client Setup ---
 
 def load_environment():
