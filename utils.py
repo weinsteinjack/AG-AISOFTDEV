@@ -1097,7 +1097,7 @@ def clean_llm_output(output_str: str, language: str = 'json') -> str:
     return output_str.strip()
 
 
-def prompt_enhancer(user_input, model_name="gpt-4o"):
+def prompt_enhancer(user_input, model_name="gpt-4o", client=None, api_provider=None):
     """
     Enhances a raw user prompt using a meta-prompt optimization system.
     
@@ -1119,6 +1119,10 @@ def prompt_enhancer(user_input, model_name="gpt-4o"):
         user_input (str): The raw user prompt or request to be enhanced.
         model_name (str, optional): The model to use for enhancement. 
             Defaults to "gpt-4o". Should be a key from RECOMMENDED_MODELS.
+        client (optional): Pre-initialized LLM client. If provided, this client
+            will be used instead of creating a new one.
+        api_provider (str, optional): The API provider name. Required if client
+            is provided.
     
     Returns:
         str: An enhanced, optimized prompt ready for use with other LLM functions.
@@ -1129,11 +1133,11 @@ def prompt_enhancer(user_input, model_name="gpt-4o"):
         >>> client, model, provider = setup_llm_client("gpt-4o")
         >>> result = get_completion(enhanced, client, model, provider)
         
-        >>> # The enhanced prompt will be much more structured and detailed
-        >>> # than the original "Write code for a login system"
+        >>> # Using existing client to avoid duplicate setup
+        >>> enhanced = prompt_enhancer("Write code", "gpt-4o", client, provider)
     
     Dependencies:
-        - setup_llm_client(): For initializing the LLM client
+        - setup_llm_client(): For initializing the LLM client (if not provided)
         - get_completion(): For getting the enhanced prompt from the LLM
         - RECOMMENDED_MODELS: For model validation
     """
@@ -1183,11 +1187,16 @@ Organize the entire prompt using clear structural delimiters to ensure optimal p
 Generate only the final, optimized prompt."""
 
     try:
-        # Set up the LLM client for enhancement
-        client, actual_model, provider = setup_llm_client(model_name)
-        
-        if not client:
-            return f"Error: Failed to initialize LLM client for model '{model_name}'. Original input: {user_input}"
+        # Use provided client or set up a new one
+        if client and api_provider:
+            actual_model = model_name
+            provider = api_provider
+        else:
+            # Set up the LLM client for enhancement
+            client, actual_model, provider = setup_llm_client(model_name)
+            
+            if not client:
+                return f"Error: Failed to initialize LLM client for model '{model_name}'. Original input: {user_input}"
         
         # Get the enhanced prompt with low temperature for consistency
         enhanced_prompt = get_completion(
