@@ -313,6 +313,41 @@ Return ONLY the task output (no analysis) unless the user explicitly asked for y
 
     return optimized_prompt
 
+
+def remove_contiguous_duplicate_block(text: str) -> str:
+    """Detect and remove an exact contiguous duplicate block in the LLM output.
+
+    This handles the common model behaviour of echoing the same response twice
+    (for example, an assumptions paragraph followed by the same list repeated).
+
+    The function looks for a prefix block that is immediately repeated and,
+    if found, removes the second copy. If no contiguous duplicate is found,
+    returns the original text unchanged.
+
+    Args:
+        text: The LLM output string.
+
+    Returns:
+        A cleaned string with contiguous duplicated block removed when detected.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return text
+
+    lines = text.splitlines()
+    n = len(lines)
+    # Check for a repeated prefix block: [0:l] == [l:2*l]
+    for l in range(1, n // 2 + 1):
+        if lines[0:l] == lines[l:2 * l]:
+            # remove the second contiguous copy
+            new_lines = lines[:l] + lines[2 * l:]
+            return "\n".join(new_lines).strip()
+
+    # Also handle the simple case where the entire text is duplicated twice
+    if n % 2 == 0 and lines[: n // 2] == lines[n // 2:]:
+        return "\n".join(lines[: n // 2]).strip()
+
+    return text.strip()
+
 # --- Environment and API Client Setup ---
 
 def load_environment():
