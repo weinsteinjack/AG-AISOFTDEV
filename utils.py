@@ -201,6 +201,114 @@ def recommended_models_table(task=None, provider=None, text_generation=None, vis
     display(Markdown(table))
     return table
 
+
+def prompt_enhancer(user_input: str, model_name: str = None, persona: str = None, examples: list = None) -> str:
+    """Enhance a raw user prompt into a high-quality, structured prompt using the
+    Prompt Enhancer meta-prompt. This function returns a string suitable to pass
+    directly to other helper functions like `get_completion`.
+
+    Args:
+        user_input: Raw user-provided instruction or requirement text.
+        model_name: Optional model name (should be a key from RECOMMENDED_MODELS).
+        persona: Optional persona string to override the default persona selection.
+        examples: Optional list of (input, output) tuples to include as few-shot examples.
+
+    Returns:
+        A single string containing the optimized prompt.
+    
+    Example:
+        >>> from utils import prompt_enhancer, setup_llm_client, get_completion
+        >>> examples = [
+        ...     ("Convert the following list of features into a JSON array of strings.", "[\"feature A\", \"feature B\"]"),
+        ...     ("Produce a 3-bullet summary of product goals.", "- Reduce onboarding time\n- Improve role clarity\n- Surface learning resources")
+        ... ]
+        >>> enhanced = prompt_enhancer(
+        ...     user_input=(
+        ...         "Create 5 concise user stories from: \"We need a tool to help our company's new hires get up to speed.\""
+        ...     ),
+        ...     model_name='gpt-4o',
+        ...     persona='Senior Product Manager and prompt engineer',
+        ...     examples=examples
+        ... )
+        >>> client, model_name, api_provider = setup_llm_client(model_name='gpt-4o')
+        >>> response = get_completion(enhanced, client, model_name, api_provider)
+        >>> print(response)
+    """
+    # Basic validation / defaults
+    if not isinstance(user_input, str) or not user_input.strip():
+        raise ValueError("user_input must be a non-empty string")
+
+    chosen_model = model_name if model_name in RECOMMENDED_MODELS else None
+    if model_name and not chosen_model:
+        # Fall back but inform the caller via the prompt itself (non-fatal)
+        model_note = f"WARNING: model '{model_name}' not found in RECOMMENDED_MODELS. Using generic guidance."
+    else:
+        model_note = f"Using model: {chosen_model}" if chosen_model else "Using model: unspecified"
+
+    # Heuristics to decide whether to include Chain-of-Thought or examples
+    lower = user_input.lower()
+    cot_triggers = ["analyze", "explain", "reason", "derive", "solve", "design", "compare", "justify"]
+    icl_triggers = ["json", "schema", "format", "table", "csv", "gherkin", "gherkin", "exact", "strict"]
+
+    include_cot = any(tok in lower for tok in cot_triggers) or len(user_input) > 300
+    include_icl = any(tok in lower for tok in icl_triggers)
+
+    # Default persona if not provided
+    if not persona:
+        # Pick a provider-aware persona when possible
+        if chosen_model:
+            provider = RECOMMENDED_MODELS[chosen_model].get("provider")
+            persona = f"an expert {provider} prompt engineer" if provider else "an expert prompt engineer"
+        else:
+            persona = "an elite Prompt Optimization Engine"
+
+    # Build examples block if requested or provided
+    examples_block = ""
+    if examples and isinstance(examples, list) and examples:
+        ex_lines = ["<examples>"]
+        for inp, outp in examples[:2]:
+            ex_lines.append("- INPUT: " + str(inp).strip())
+            ex_lines.append("  OUTPUT: " + str(outp).strip())
+        ex_lines.append("</examples>")
+        examples_block = "\n" + "\n".join(ex_lines) + "\n"
+    elif include_icl:
+        # Provide a minimal illustrative example for structured outputs
+        examples_block = (
+            "\n<examples>\n- INPUT: Convert the following list of features into a JSON array of strings.\n  OUTPUT: [\"feature A\", \"feature B\"]\n</examples>\n"
+        )
+
+    # Chain-of-Thought instruction
+    cot_instruction = "" if not include_cot else "\n\n# Reasoning requirement:\nPlease think step-by-step and show your chain-of-thought reasoning before the final answer. Use concise numbered steps.\n"
+
+    # Construct the final optimized prompt using structured delimiters
+    optimized_prompt = f"""
+<persona>
+You are {persona}.
+{model_note}
+</persona>
+
+<context>
+Provide any necessary background or constraints here. If none are supplied by the user, assume reasonable defaults and ask clarifying questions when needed.
+</context>
+
+<instructions>
+You will analyze the user's input below and produce a single, high-quality prompt that maximizes clarity, context, structure, and output reliability. Follow the CARE/RISE-informed protocol: clarify ambiguous terms, add grounding context, define exact output format, and decompose multi-step tasks.
+{cot_instruction}
+</instructions>
+
+<user_input>
+{user_input.strip()}
+</user_input>
+
+{examples_block}
+
+<output_format>
+Return ONLY the final, optimized prompt as plain text. Do not include commentary, analysis, or any other text. Use clear structural delimiters such as <persona>, <context>, <instructions>, <examples>, and <output_format> when needed by the target model. If a specific output format is requested by the user (e.g., JSON), include a single short example in <examples> demonstrating the format.
+</output_format>
+""".strip()
+
+    return optimized_prompt
+
 # --- Environment and API Client Setup ---
 
 def load_environment():
