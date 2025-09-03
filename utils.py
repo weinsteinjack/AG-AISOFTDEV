@@ -202,7 +202,7 @@ def recommended_models_table(task=None, provider=None, text_generation=None, vis
     return table
 
 
-def prompt_enhancer(user_input: str, model_name: str = None, persona: str = None, examples: list = None) -> str:
+def prompt_enhancer(user_input: str, model_name: str = "o3", persona: str = None, examples: list = None) -> str:
     """Enhance a raw user prompt into a high-quality, structured prompt using the
     Prompt Enhancer meta-prompt. This function returns a string suitable to pass
     directly to other helper functions like `get_completion`.
