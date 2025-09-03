@@ -93,7 +93,7 @@ RECOMMENDED_MODELS = {
 }
 
 
-def recommended_models_table(task=None, provider=None, vision=None, image_generation=None,
+def recommended_models_table(task=None, provider=None, text_generation=None, vision=None, image_generation=None,
                              audio_transcription=None, min_context=None, min_output_tokens=None,
                              image_modification=None):
     """
@@ -101,9 +101,10 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
 
     Args:
         task (str, optional): High level task to filter models. Accepts values like
-            'vision', 'image', 'audio', or 'text'. These set sensible defaults for
+            'text', 'vision', 'image', 'audio'. These set sensible defaults for
             the corresponding capability flags unless explicitly provided.
         provider (str, optional): Filter models by provider name (e.g. ``'openai'``).
+        text_generation (bool, optional): If set, include only models supporting text generation.
         vision (bool, optional): If set, include only models that match vision capability.
         image_generation (bool, optional): If set, include only image generation models.
         audio_transcription (bool, optional): If set, include only models supporting
@@ -128,7 +129,9 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
             image_modification = True
         elif t in {"audio", "speech", "audio_transcription", "stt"} and audio_transcription is None:
             audio_transcription = True
-        elif t == "text":
+        elif t == "text" and text_generation is None:
+            text_generation = True
+            # Also ensure other modalities are off unless specified
             vision = False if vision is None else vision
             image_generation = False if image_generation is None else image_generation
             image_modification = False if image_modification is None else image_modification
@@ -138,6 +141,7 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
     for model_name in sorted(RECOMMENDED_MODELS.keys()):
         cfg = RECOMMENDED_MODELS[model_name]
         model_provider = (cfg.get("provider") or "").lower()
+        model_text = cfg.get("text_generation", False)
         model_vision = cfg.get("vision", False)
         model_image = cfg.get("image_generation", False)
         model_image_mod = cfg.get("image_modification", False)
@@ -155,6 +159,8 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
 
         # Normalize provider filter to be case-insensitive
         if provider and model_provider != provider.lower():
+            continue
+        if text_generation is not None and bool(model_text) != bool(text_generation):
             continue
         if vision is not None and bool(model_vision) != bool(vision):
             continue
@@ -179,7 +185,7 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
                 return str(x)
 
         rows.append(
-            f"| {model_name} | {model_provider or '-'} | {'✅' if model_vision else '❌'} | "
+            f"| {model_name} | {model_provider or '-'} | {'✅' if model_text else '❌'} | {'✅' if model_vision else '❌'} | "
             f"{'✅' if model_image else '❌'} | {'✅' if model_image_mod else '❌'} | {'✅' if model_audio else '❌'} | "
             f"{_fmt_num(context)} | {_fmt_num(max_tokens)} |"
         )
@@ -188,8 +194,8 @@ def recommended_models_table(task=None, provider=None, vision=None, image_genera
         return "No models match the specified criteria."
 
     header = (
-        "| Model | Provider | Vision | Image Gen | Image Edit | Audio Transcription | Context Window | Max Output Tokens |\n"
-        "|---|---|---|---|---|---|---|---|\n"
+        "| Model | Provider | Text | Vision | Image Gen | Image Edit | Audio Transcription | Context Window | Max Output Tokens |\n"
+        "|---|---|---|---|---|---|---|---|---|\n"
     )
     table = header + "\n".join(rows)
     display(Markdown(table))
