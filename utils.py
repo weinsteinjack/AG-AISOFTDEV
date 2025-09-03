@@ -280,7 +280,9 @@ def prompt_enhancer(user_input: str, model_name: str = "o3", persona: str = None
     # Chain-of-Thought instruction
     cot_instruction = "" if not include_cot else "\n\n# Reasoning requirement:\nPlease think step-by-step and show your chain-of-thought reasoning before the final answer. Use concise numbered steps.\n"
 
-    # Construct the final optimized prompt using structured delimiters
+    # Construct the final prompt to send to the LLM (perform the user's task).
+    # The prompt explicitly assigns persona, provides context and constraints,
+    # includes optional chain-of-thought instruction, and supplies examples.
     optimized_prompt = f"""
 <persona>
 You are {persona}.
@@ -288,12 +290,12 @@ You are {persona}.
 </persona>
 
 <context>
-Provide any necessary background or constraints here. If none are supplied by the user, assume reasonable defaults and ask clarifying questions when needed.
+Provide any relevant background or constraints needed to complete the task below. If the user input omits constraints, assume reasonable defaults and clearly label any assumptions you make.
 </context>
 
 <instructions>
-You will analyze the user's input below and produce a single, high-quality prompt that maximizes clarity, context, structure, and output reliability. Follow the CARE/RISE-informed protocol: clarify ambiguous terms, add grounding context, define exact output format, and decompose multi-step tasks.
-{cot_instruction}
+Perform the task described in <user_input> below. Follow the CARE/RISE-informed protocol: clarify ambiguous terms when necessary, ground the output in the provided context, structure your answer clearly, and decompose multi-step tasks into ordered steps.
+Be concise and produce only the requested output (no meta-commentary).{cot_instruction}
 </instructions>
 
 <user_input>
@@ -303,7 +305,8 @@ You will analyze the user's input below and produce a single, high-quality promp
 {examples_block}
 
 <output_format>
-Return ONLY the final, optimized prompt as plain text. Do not include commentary, analysis, or any other text. Use clear structural delimiters such as <persona>, <context>, <instructions>, <examples>, and <output_format> when needed by the target model. If a specific output format is requested by the user (e.g., JSON), include a single short example in <examples> demonstrating the format.
+Produce the output requested by the user. If the user asked for a specific format (JSON, markdown list, table, Gherkin, etc.), follow that format exactly. If no explicit format was requested, default to a concise markdown list for brainstorms or a short structured JSON array for structured requests.
+Return ONLY the task output (no analysis) unless the user explicitly asked for your reasoning.
 </output_format>
 """.strip()
 
