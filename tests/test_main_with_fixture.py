@@ -1,24 +1,19 @@
 def test_create_user(client, db_session):
-    user_data = {
-        "email": "test@example.com",
-        "name": "Test User",
-        "role": "Developer"
-    }
-    response = client.post("/users/", json=user_data)
+    response = client.post("/users/", json={"email": "test@example.com", "password": "testpassword"})
     assert response.status_code == 200
-    assert response.json()["email"] == user_data["email"]
+    assert response.json()["email"] == "test@example.com"
 
-def test_read_users(client, db_session):
-    user_data = {
-        "email": "sample@example.com",
-        "name": "Sample User",
-        "role": "Manager"
-    }
-    # Create a user
-    client.post("/users/", json=user_data)
-    
-    # Read users
-    response = client.get("/users/")
+def test_get_user(client, db_session):
+    # First, create a user
+    create_response = client.post("/users/", json={"email": "test@example.com", "password": "testpassword"})
+    assert create_response.status_code == 200
+
+    # Now, retrieve the user
+    user_id = create_response.json()["id"]
+    response = client.get(f"/users/{user_id}")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
-    assert len(response.json()) > 0
+    assert response.json()["email"] == "test@example.com"
+
+def test_get_nonexistent_user(client, db_session):
+    response = client.get("/users/99999")  # Assuming 99999 is a non-existent ID
+    assert response.status_code == 404
