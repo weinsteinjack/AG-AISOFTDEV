@@ -65,6 +65,7 @@ RECOMMENDED_MODELS = {
     "codex-mini-latest": {"provider": "openai", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "gpt-image-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "dall-e-3": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
+    "imagen-4.0-generate-001": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "whisper-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": None, "output_tokens": None},
     "claude-opus-4-1-20250805": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "claude-opus-4-20250514": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
@@ -751,7 +752,47 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             image_data_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
         elif api_provider == "google":
-            if "gemini" in model_name:
+            if "imagen" in model_name:
+                # Google Imagen via google-genai Client
+                try:
+                    from google import genai as google_genai
+                    from google.genai import types as google_types
+                except ImportError:
+                    return None, "google-genai package not installed. Run: pip install google-genai"
+
+                api_key = os.environ.get("GOOGLE_API_KEY")
+                if not api_key:
+                    return None, "GOOGLE_API_KEY not found in environment. Please set it to use Google Imagen."
+
+                gg_client = google_genai.Client(api_key=api_key)
+                try:
+                    resp = gg_client.models.generate_images(
+                        model=model_name,
+                        prompt=prompt,
+                        config=google_types.GenerateImagesConfig(number_of_images=1),
+                    )
+                except Exception as model_error:
+                    return None, f"Google Imagen generation failed: {model_error}"
+
+                # Extract first image as PNG bytes
+                img_obj = None
+                if hasattr(resp, "generated_images") and resp.generated_images:
+                    first = resp.generated_images[0]
+                    img_obj = getattr(first, "image", None)
+
+                if img_obj is None:
+                    return None, "Google Imagen returned no image data."
+
+                try:
+                    buf = BytesIO()
+                    # PIL Image object expected
+                    img_obj.save(buf, format="PNG")
+                    image_data_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+                    image_mime = "image/png"
+                except Exception as encode_error:
+                    return None, f"Failed to serialize Imagen output: {encode_error}"
+
+            elif "gemini" in model_name:
                 # Prefer the new google-genai client for Gemini image preview models
                 if model_name in ("gemini-2.5-flash-image-preview", "gemini-2.0-flash-preview-image-generation"):
                     try:
