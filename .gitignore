@@ -50,9 +50,5 @@ htmlcov/
 .cache
 .pytest_cache/
 
-# Ad-hoc test runner scripts (not part of the core package)
-test_text_generation.py
-test_vision_completion.py
-test_image_generation.py
-test_image_edit.py
-test_transcribe_audio.py
+# Ignore tests directory
+tests/

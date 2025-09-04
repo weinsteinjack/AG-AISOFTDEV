@@ -1309,12 +1309,11 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
         - IPython.display: For displaying images in Jupyter notebooks (optional)
     """
     try:
+        # Route output through strict artifacts resolver
+        full_path = _resolve_artifact_path(output_path, ensure_dir=True)
+
         # FIX: Corrected the PlantUML URL
         pl = PlantUML(url='http://www.plantuml.com/plantuml/img/')
-        project_root = _find_project_root()
-        
-        full_path = os.path.join(project_root, output_path)
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         # plantuml library versions differ in their `processes` signature.
         # Some accept an `outfile` kwarg, others return the image data or a URL.
         result = None
@@ -1343,7 +1342,8 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
         # At this point, the plantuml lib may have already written the file
         # or we wrote it above. Check for file existence before displaying.
         if os.path.exists(full_path):
-            print(f"✅ Diagram rendered and saved to: {output_path}")
+            rel = os.path.relpath(full_path, _find_project_root())
+            print(f"✅ Diagram rendered and saved to: {rel}")
             try:
                 # IPython Image accepts filename= or url=. Use filename for local file.
                 display(IPyImage(filename=full_path))
@@ -1354,6 +1354,7 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
             print(f"⚠️ Diagram rendering returned no file. Result: {result}")
     except Exception as e:
         print(f"❌ Error rendering PlantUML diagram: {e}")
+        raise
 
 def _encode_image_to_base64(image_path):
     """Encodes a local image file to a base64 data URL."""

@@ -1,12 +1,22 @@
+import os
+import importlib.util
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-# Import the FastAPI app and DB objects from the project
-# This repo's app lives in app/main.py
-from app.main import Base, get_db, app
+# Import the FastAPI app and DB objects from the project without relying on package layout
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+_APP_MAIN_PATH = os.path.join(_ROOT, "app", "main.py")
+_SPEC = importlib.util.spec_from_file_location("app_main_module", _APP_MAIN_PATH)
+_MOD = importlib.util.module_from_spec(_SPEC)
+assert _SPEC and _SPEC.loader
+_SPEC.loader.exec_module(_MOD)  # type: ignore[attr-defined]
+
+Base = _MOD.Base
+get_db = _MOD.get_db
+app = _MOD.app
 
 # Create a new SQLAlchemy engine for an in-memory SQLite database
 SQLALCHEMY_DATABASE_URL = "sqlite://"
