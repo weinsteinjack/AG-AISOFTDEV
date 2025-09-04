@@ -52,3 +52,13 @@ htmlcov/
 
 # Ignore tests directory
 tests/
+
+# Project-specific config and entry files to ignore
+pytest.ini
+
+# Dockerfile variants (covering common filename casing)
+dockerfile
+Dockerfile
+
+# Root HTML entry that may be generated for demos
+index.html
