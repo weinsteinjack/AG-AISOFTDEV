@@ -13,6 +13,8 @@ pytest
 
 # Environment helpers
 python-dotenv
+jupyter
+ipywidgets
 
 # Web UI
 streamlit

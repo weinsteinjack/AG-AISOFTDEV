@@ -1097,7 +1097,7 @@ def clean_llm_output(output_str: str, language: str = 'json') -> str:
     return output_str.strip()
 
 
-def prompt_enhancer(user_input, model_name="gpt-4o", client=None, api_provider=None):
+def prompt_enhancer(user_input, model_name="o3", client=None, api_provider=None):
     """
     Enhances a raw user prompt using a meta-prompt optimization system.
     
