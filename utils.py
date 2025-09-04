@@ -15,7 +15,7 @@ import time # For loading indicator
 # --- Dynamic Library Installation ---
 try:
     from dotenv import load_dotenv
-    from IPython.display import display, Markdown, Code, Image as IPyImage
+    from IPython.display import display, Markdown, Image as IPyImage
     from plantuml import PlantUML
 except ImportError:
     # Provide safe fallbacks so the module can be imported even when optional deps are missing.
@@ -32,9 +32,6 @@ except ImportError:
         return None
 
     def Markdown(text):
-        return text
-
-    def Code(text):
         return text
 
     class IPyImage:
@@ -62,12 +59,7 @@ RECOMMENDED_MODELS = {
     "gpt-4.1-nano": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 1_000_000, "output_tokens": 32_000},
     "o3": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "o4-mini": {"provider": "openai", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
-    "codex-mini-latest": {"provider": "openai", "vision": False, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
-    "gpt-image-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
     "dall-e-3": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": None, "output_tokens": None},
-    "imagen-4.0-generate-001": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": 480, "output_tokens": None},
-    "imagen-4.0-ultra-generate-001": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": 480, "output_tokens": None},
-    "imagen-4.0-fast-generate-001": {"provider": "google", "vision": False, "text_generation": False, "image_generation": True, "image_modification": False, "audio_transcription": False, "context_window_tokens": 480, "output_tokens": None},
     "whisper-1": {"provider": "openai", "vision": False, "text_generation": False, "image_generation": False, "image_modification": False, "audio_transcription": True, "context_window_tokens": None, "output_tokens": None},
     "claude-opus-4-1-20250805": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
     "claude-opus-4-20250514": {"provider": "anthropic", "vision": True, "text_generation": True, "image_generation": False, "image_modification": False, "audio_transcription": False, "context_window_tokens": 200_000, "output_tokens": 100_000},
@@ -348,18 +340,23 @@ def setup_llm_client(model_name="gpt-4o"):
             api_key = os.getenv("HUGGINGFACE_API_KEY")
             if not api_key: raise ValueError("HUGGINGFACE_API_KEY not found in .env file.")
             client = InferenceClient(model=model_name, token=api_key)
-        elif api_provider == "gemini" or api_provider == "google": # Google for text/vision or STT
+        elif api_provider == "gemini" or api_provider == "google": # Google for text/vision, Imagen, or STT
             if config.get("audio_transcription"):
                 from google.cloud import speech
                 client = speech.SpeechClient()
             else:
-                import google.generativeai as genai
-                # Use GOOGLE_API_KEY for Gemini API
+                # Decide based on model family
                 api_key = os.getenv("GOOGLE_API_KEY")
                 if not api_key: raise ValueError("GOOGLE_API_KEY not found in .env file.")
-                genai.configure(api_key=api_key)
-                # For all Gemini models (text, vision, and image generation), instantiate a GenerativeModel.
-                client = genai.GenerativeModel(model_name)
+                if "imagen" in model_name:
+                    # Use the new google-genai low-level Client for Imagen
+                    from google import genai as google_genai
+                    client = google_genai.Client(api_key=api_key)
+                else:
+                    # Use google-generativeai GenerativeModel for Gemini text/vision
+                    import google.generativeai as genai
+                    genai.configure(api_key=api_key)
+                    client = genai.GenerativeModel(model_name)
     except ImportError:
         print(f"ERROR: The required library for '{api_provider}' is not installed.")
         return None, None, None
@@ -566,7 +563,6 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 image_url_data = {"url": base64_image}
 
             try:
-                # Avoid passing max_tokens to models that don't support it
                 response = client.chat.completions.create(
                     model=model_name,
                     messages=[{
@@ -579,11 +575,7 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 )
                 return response.choices[0].message.content
             except Exception as e:
-                err = str(e)
-                if "Unsupported parameter" in err and "max_tokens" in err:
-                    # retry without max_tokens already done; propagate as generic error
-                    return f"An API error occurred during vision completion: {e}"
-                # Other models might require the Responses API; provide a clear message
+                # Surface the provider error clearly
                 return f"An API error occurred during vision completion: {e}"
 
         elif api_provider == "anthropic":
@@ -593,8 +585,6 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 img_content = response_img.content
                 mime_type = response_img.headers.get('Content-Type', 'image/jpeg')
             else:
-                if not os.path.exists(image_path_or_url):
-                    return f"Error: Local image file not found at {image_path_or_url}"
                 with open(image_path_or_url, "rb") as f:
                     img_content = f.read()
                 mime_type, _ = mimetypes.guess_type(image_path_or_url)
@@ -622,8 +612,6 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 response_img.raise_for_status()
                 img = Image.open(BytesIO(response_img.content))
             else:
-                if not os.path.exists(image_path_or_url):
-                    return f"Error: Local image file not found at {image_path_or_url}"
                 img = Image.open(image_path_or_url)
             
             response = client.generate_content([prompt, img])
@@ -635,8 +623,6 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 response_img.raise_for_status()
                 img = Image.open(BytesIO(response_img.content))
             else:
-                if not os.path.exists(image_path_or_url):
-                    return f"Error: Local image file not found at {image_path_or_url}"
                 img = Image.open(image_path_or_url)
                 
             # Note: HuggingFace's image_to_text might not support a separate text prompt in all cases.
@@ -762,11 +748,16 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                 except ImportError:
                     return None, "google-genai package not installed. Run: pip install google-genai"
 
-                api_key = os.environ.get("GOOGLE_API_KEY")
-                if not api_key:
-                    return None, "GOOGLE_API_KEY not found in environment. Please set it to use Google Imagen."
+                # Prefer provided client if it's a google-genai Client; else create one
+                gg_client = None
+                if client is not None and hasattr(client, "models") and hasattr(client.models, "generate_images"):
+                    gg_client = client
+                else:
+                    api_key = os.environ.get("GOOGLE_API_KEY")
+                    if not api_key:
+                        return None, "GOOGLE_API_KEY not found in environment. Please set it to use Google Imagen."
+                    gg_client = google_genai.Client(api_key=api_key)
 
-                gg_client = google_genai.Client(api_key=api_key)
                 try:
                     resp = gg_client.models.generate_images(
                         model=model_name,
