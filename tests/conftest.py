@@ -2,10 +2,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from myapp import Base  # Adjust the import based on actual app structure
-from myapp import get_db  # Adjust the import based on actual app structure
 from fastapi.testclient import TestClient
-from myapp import app  # Adjust the import based on actual app structure
+
+# Import the FastAPI app and DB objects from the project
+# This repo's app lives in app/main.py
+from app.main import Base, get_db, app
 
 # Create a new SQLAlchemy engine for an in-memory SQLite database
 SQLALCHEMY_DATABASE_URL = "sqlite://"
@@ -44,3 +45,5 @@ def client(db_session):
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as client:
         yield client
+    # Clean up override after each test function
+    app.dependency_overrides.pop(get_db, None)
