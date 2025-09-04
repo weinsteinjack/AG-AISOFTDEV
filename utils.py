@@ -851,17 +851,15 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
             if guessed:
                 ext = guessed
                 mime_for_url = image_mime
-        file_path = f"artifacts/screens/image_{timestamp}{ext}"
-        
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        with open(file_path, "wb") as f:
+        rel_path = f"artifacts/screens/image_{timestamp}{ext}"
+        full_path = _resolve_artifact_path(rel_path, ensure_dir=True)
+
+        with open(full_path, "wb") as f:
             f.write(image_bytes)
-        print(f"✅ Image saved to: {file_path}")
+        print(f"✅ Image saved to: {os.path.relpath(full_path, _find_project_root())}")
         
         # Return the data URL using the appropriate mime type
-        return file_path, f"data:{mime_for_url};base64,{image_data_base64}"
+        return full_path, f"data:{mime_for_url};base64,{image_data_base64}"
 
     except Exception as e:
         return None, f"An API error occurred during image generation: {e}"
@@ -982,17 +980,15 @@ def get_image_edit_completion(
 
         # Create a unique filename
         timestamp = int(time.time() * 1000)
-        file_path = f"artifacts/screens/image_edited_{timestamp}.png"
+        rel_path = f"artifacts/screens/image_edited_{timestamp}.png"
+        full_path = _resolve_artifact_path(rel_path, ensure_dir=True)
 
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        with open(file_path, "wb") as f:
+        with open(full_path, "wb") as f:
             f.write(image_bytes)
-        print(f"✅ Edited image saved to: {file_path}")
+        print(f"✅ Edited image saved to: {os.path.relpath(full_path, _find_project_root())}")
 
         # Return the data URL
-        return file_path, f"data:image/png;base64,{image_data_base64}"
+        return full_path, f"data:image/png;base64,{image_data_base64}"
 
     except Exception as e:
         if "Task 'image-to-image' not supported" in str(e):
@@ -1234,23 +1230,74 @@ def _find_project_root():
     return os.getcwd()
 
 
+def _resolve_artifact_path(file_path: str, *, ensure_dir: bool = False) -> str:
+    """
+    Resolve a given file path to an absolute path under the project `artifacts/` directory.
+
+    Accepts either paths beginning with `artifacts/` or paths relative to the
+    artifacts directory (e.g., `screens/img.png`). Ensures that the resolved path
+    cannot escape the artifacts directory (guards against path traversal).
+
+    Args:
+        file_path: A relative path like `artifacts/foo.txt` or `logs/run.txt`.
+        ensure_dir: If True, creates the parent directory of the resolved path.
+
+    Returns:
+        The absolute, normalized path within the artifacts directory.
+
+    Raises:
+        ValueError: If the resolved path is outside the artifacts directory or if
+            an absolute path is provided outside of artifacts.
+    """
+    project_root = _find_project_root()
+    artifacts_root = os.path.realpath(os.path.join(project_root, 'artifacts'))
+
+    # Normalize incoming path: allow with or without leading 'artifacts/'
+    if os.path.isabs(file_path):
+        candidate = os.path.realpath(file_path)
+    else:
+        if file_path.startswith('artifacts' + os.sep) or file_path == 'artifacts':
+            candidate = os.path.realpath(os.path.join(project_root, file_path))
+        else:
+            candidate = os.path.realpath(os.path.join(artifacts_root, file_path))
+
+    # Ensure candidate is within artifacts_root
+    if candidate != artifacts_root and not candidate.startswith(artifacts_root + os.sep):
+        raise ValueError(f"Path '{file_path}' is outside the artifacts directory.")
+
+    if ensure_dir:
+        os.makedirs(os.path.dirname(candidate), exist_ok=True)
+    return candidate
+
+
 def save_artifact(content, file_path):
-    """Saves content to a specified file path, creating directories if needed."""
+    """
+    Save content under the project `artifacts/` folder only.
+
+    Accepts paths with or without the `artifacts/` prefix. Any attempt to save
+    outside `artifacts/` raises ValueError. Creates parent directories as needed.
+    """
     try:
-        project_root = _find_project_root()
-        full_path = os.path.join(project_root, file_path)
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        full_path = _resolve_artifact_path(file_path, ensure_dir=True)
         with open(full_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        print(f"✅ Successfully saved artifact to: {file_path}")
+        # Print relative to project root for readability
+        rel = os.path.relpath(full_path, _find_project_root())
+        print(f"✅ Successfully saved artifact to: {rel}")
     except Exception as e:
         print(f"❌ Error saving artifact to {file_path}: {e}")
+        raise
+
 
 def load_artifact(file_path):
-    """Loads content from a specified file path."""
+    """
+    Load content strictly from the project `artifacts/` folder.
+
+    Accepts paths with or without the `artifacts/` prefix. Any attempt to read
+    outside `artifacts/` raises ValueError.
+    """
     try:
-        project_root = _find_project_root()
-        full_path = os.path.join(project_root, file_path)
+        full_path = _resolve_artifact_path(file_path, ensure_dir=False)
         with open(full_path, 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
