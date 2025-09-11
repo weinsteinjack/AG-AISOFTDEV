@@ -10,6 +10,7 @@ flask
 
 # Testing
 pytest
+pytest-asyncio
 
 # Environment helpers
 python-dotenv

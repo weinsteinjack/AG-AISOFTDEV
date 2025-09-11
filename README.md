@@ -66,6 +66,24 @@ pytest tests/
 jupyter notebook
 ```
 
+### 4. Asynchronous LLM Calls (Optional)
+
+The `utils` package includes async counterparts for I/O helpers. You can run many
+model calls concurrently using `asyncio.gather`:
+
+```python
+import asyncio
+from utils import async_setup_llm_client, async_get_completion
+
+async def main():
+    client, model, provider = await async_setup_llm_client()
+    prompts = [f"Hello {i}!" for i in range(5)]
+    tasks = [async_get_completion(p, client, model, provider) for p in prompts]
+    return await asyncio.gather(*tasks)
+
+results = asyncio.run(main())
+```
+
 ## 📚 Course Structure
 
 ### Week 1: AI-Assisted Software Development

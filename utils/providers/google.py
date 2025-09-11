@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import asyncio
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
@@ -23,6 +24,10 @@ def setup_client(model_name: str, config: dict[str, Any]):
     return genai.GenerativeModel(model_name)
 
 
+async def async_setup_client(model_name: str, config: dict[str, Any]):
+    return await asyncio.to_thread(setup_client, model_name, config)
+
+
 def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
     try:
         api_key = os.getenv("GOOGLE_API_KEY", "")
@@ -35,8 +40,16 @@ def text_completion(client: Any, prompt: str, model_name: str, temperature: floa
         raise ProviderOperationError("google", model_name, "completion", str(e))
 
 
+async def async_text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
+    return await asyncio.to_thread(text_completion, client, prompt, model_name, temperature)
+
+
 def vision_completion(*args, **kwargs):  # pragma: no cover
     raise ProviderOperationError("google", kwargs.get("model_name", ""), "vision", "Not implemented")
+
+
+async def async_vision_completion(*args, **kwargs):  # pragma: no cover
+    return await asyncio.to_thread(vision_completion, *args, **kwargs)
 
 
 def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
@@ -54,8 +67,16 @@ def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, st
     raise ProviderOperationError("google", model_name, "image generation", "Not implemented for this model")
 
 
+async def async_image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
+    return await asyncio.to_thread(image_generation, client, prompt, model_name)
+
+
 def image_edit(*args, **kwargs):  # pragma: no cover
     raise ProviderOperationError("google", kwargs.get("model_name", ""), "image edit", "Not implemented")
+
+
+async def async_image_edit(*args, **kwargs):  # pragma: no cover
+    return await asyncio.to_thread(image_edit, *args, **kwargs)
 
 
 def transcribe_audio(client: Any, audio_path: str, model_name: str, language_code: str = "en-US") -> str:
@@ -69,5 +90,16 @@ def transcribe_audio(client: Any, audio_path: str, model_name: str, language_cod
     if response.results:
         return response.results[0].alternatives[0].transcript
     raise ProviderOperationError(
-        "google", model_name, "audio transcription", "No transcription result from Google Speech-to-Text."
+        "google",
+        model_name,
+        "audio transcription",
+        "No transcription result from Google Speech-to-Text.",
+    )
+
+
+async def async_transcribe_audio(
+    client: Any, audio_path: str, model_name: str, language_code: str = "en-US"
+) -> str:
+    return await asyncio.to_thread(
+        transcribe_audio, client, audio_path, model_name, language_code
     )
