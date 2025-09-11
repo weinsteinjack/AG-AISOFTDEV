@@ -12,6 +12,8 @@ import base64
 import mimetypes
 import time # For loading indicator
 
+# Exceptions
+from .errors import ProviderOperationError
 # --- Dynamic Library Installation ---
 try:
     from dotenv import load_dotenv
@@ -390,12 +392,10 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
             make it more deterministic. Defaults to 0.7. Range typically 0.0-2.0.
     
     Returns:
-        str: The generated text completion from the model. Returns an error
-            message string if the API call fails.
-    
+        str: The generated text completion from the model.
+
     Raises:
-        None: This function catches all exceptions and returns error messages
-            as strings instead of raising exceptions.
+        ProviderOperationError: If the API call fails.
     
     Notes:
         - Handles different API structures for each provider
@@ -416,15 +416,17 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
         "The capital of France is Paris."
         
         >>> # Handle API errors gracefully
-        >>> response = get_completion("Hello", None, "gpt-4o", "openai")
-        >>> print(response)
-        "API client not initialized."
+        >>> try:
+        ...     get_completion("Hello", None, "gpt-4o", "openai")
+        ... except ProviderOperationError as e:
+        ...     print(e)
     
     Dependencies:
         - Provider-specific client libraries
         - RECOMMENDED_MODELS: For model capability validation
     """
-    if not client: return "API client not initialized."
+    if not client:
+        raise ProviderOperationError(api_provider, model_name, "completion", "API client not initialized.")
     try:
         if api_provider == "openai":
             # Some newer models use different endpoints
@@ -473,7 +475,18 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
             response = client.generate_content(prompt)
             return response.text
     except Exception as e:
-        return f"An API error occurred: {e}"
+        raise ProviderOperationError(api_provider, model_name, "completion", str(e))
+
+
+def get_completion_compat(prompt, client, model_name, api_provider, temperature=0.7):
+    """Deprecated compatibility wrapper for :func:`get_completion`.
+
+    Returns a tuple ``(result, error)`` where ``error`` is ``None`` on success.
+    """
+    try:
+        return get_completion(prompt, client, model_name, api_provider, temperature), None
+    except ProviderOperationError as e:
+        return None, str(e)
 
 def get_vision_completion(prompt, image_path_or_url, client, model_name, api_provider):
     """
@@ -497,12 +510,9 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
     
     Returns:
         str: The model's response analyzing the image based on the prompt.
-            Returns an error message string if the model doesn't support vision
-            or if the API call fails.
-    
+
     Raises:
-        None: This function catches all exceptions and returns error messages
-            as strings instead of raising exceptions.
+        ProviderOperationError: If the model doesn't support vision or if the API call fails.
     
     Notes:
         - Validates that the model supports vision using RECOMMENDED_MODELS
@@ -539,9 +549,10 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
         - io.BytesIO: For converting image bytes to PIL Images
         - RECOMMENDED_MODELS: For vision capability validation
     """
-    if not client: return "API client not initialized."
+    if not client:
+        raise ProviderOperationError(api_provider, model_name, "vision", "API client not initialized.")
     if not RECOMMENDED_MODELS.get(model_name, {}).get("vision"):
-        return f"Error: Model '{model_name}' does not support vision."
+        raise ProviderOperationError(api_provider, model_name, "vision", f"Model '{model_name}' does not support vision.")
 
     is_url = image_path_or_url.startswith('http://') or image_path_or_url.startswith('https://')
 
@@ -550,7 +561,7 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
         project_root = _find_project_root()
         resolved_path = os.path.join(project_root, image_path_or_url)
         if not os.path.exists(resolved_path):
-            return f"Error: Local image file not found at {image_path_or_url}"
+            raise ProviderOperationError(api_provider, model_name, "vision", f"Local image file not found at {image_path_or_url}")
         image_path_or_url = resolved_path
 
     try:
@@ -576,7 +587,7 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                 return response.choices[0].message.content
             except Exception as e:
                 # Surface the provider error clearly
-                return f"An API error occurred during vision completion: {e}"
+                raise ProviderOperationError(api_provider, model_name, "vision", f"An API error occurred during vision completion: {e}")
 
         elif api_provider == "anthropic":
             if is_url:
@@ -589,7 +600,7 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
                     img_content = f.read()
                 mime_type, _ = mimetypes.guess_type(image_path_or_url)
                 if not mime_type:
-                    return f"Error: Could not determine mime type for {image_path_or_url}"
+                    raise ProviderOperationError(api_provider, model_name, "vision", f"Could not determine mime type for {image_path_or_url}")
 
             img_data = base64.b64encode(img_content).decode('utf-8')
             
@@ -632,7 +643,18 @@ def get_vision_completion(prompt, image_path_or_url, client, model_name, api_pro
             return response
             
     except Exception as e:
-        return f"An API error occurred during vision completion: {e}"
+        raise ProviderOperationError(api_provider, model_name, "vision", str(e))
+
+
+def get_vision_completion_compat(prompt, image_path_or_url, client, model_name, api_provider):
+    """Deprecated compatibility wrapper for :func:`get_vision_completion`.
+
+    Returns a tuple ``(result, error)`` where ``error`` is ``None`` on success.
+    """
+    try:
+        return get_vision_completion(prompt, image_path_or_url, client, model_name, api_provider), None
+    except ProviderOperationError as e:
+        return None, str(e)
 
 def get_image_generation_completion(prompt, client, model_name, api_provider):
     """
@@ -656,11 +678,9 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         tuple[str, str]: A tuple containing:
             - file_path (str): The local path to the saved image file.
             - image_url (str): A data URL string like "data:image/png;base64,{...}" suitable for HTML/Jupyter.
-            On error returns (None, error_message).
-    
+
     Raises:
-        None: This function catches all exceptions and returns error messages
-            as strings instead of raising exceptions.
+        ProviderOperationError: If image generation fails.
     
     Notes:
         - Validates that the model supports image generation using RECOMMENDED_MODELS
@@ -685,22 +705,21 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         >>> # Display in Jupyter: display(Image(url=image_url))
         
         >>> # Error handling
-        >>> response = get_image_generation_completion(
-        ...     "A cat", client, "gpt-4o", "openai"
-        ... )
-        >>> print(response)
-        (None, "Error: Model 'gpt-4o' does not support image generation.")
+        >>> try:
+        ...     get_image_generation_completion("A cat", client, "gpt-4o", "openai")
+        ... except ProviderOperationError as e:
+        ...     print(e)
     
     Dependencies:
         - time: For tracking generation duration
         - IPython.display: For showing loading indicators in Jupyter
         - RECOMMENDED_MODELS: For image generation capability validation
     """
-    if not client: 
-        return None, "API client not initialized."
-        
+    if not client:
+        raise ProviderOperationError(api_provider, model_name, "image generation", "API client not initialized.")
+
     if not RECOMMENDED_MODELS.get(model_name, {}).get("image_generation"):
-        return None, f"Error: Model '{model_name}' does not support image generation."
+        raise ProviderOperationError(api_provider, model_name, "image generation", f"Model '{model_name}' does not support image generation.")
 
     # Display a loading indicator
     print("Generating image... This may take a moment.")
@@ -746,7 +765,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                     from google import genai as google_genai
                     from google.genai import types as google_types
                 except ImportError:
-                    return None, "google-genai package not installed. Run: pip install google-genai"
+                    raise ProviderOperationError(api_provider, model_name, "image generation", "google-genai package not installed. Run: pip install google-genai")
 
                 # Prefer provided client if it's a google-genai Client; else create one
                 gg_client = None
@@ -755,7 +774,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                 else:
                     api_key = os.environ.get("GOOGLE_API_KEY")
                     if not api_key:
-                        return None, "GOOGLE_API_KEY not found in environment. Please set it to use Google Imagen."
+                        raise ProviderOperationError(api_provider, model_name, "image generation", "GOOGLE_API_KEY not found in environment. Please set it to use Google Imagen.")
                     gg_client = google_genai.Client(api_key=api_key)
 
                 try:
@@ -765,7 +784,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                         config=google_types.GenerateImagesConfig(number_of_images=1),
                     )
                 except Exception as model_error:
-                    return None, f"Google Imagen generation failed: {model_error}"
+                    raise ProviderOperationError(api_provider, model_name, "image generation", f"Google Imagen generation failed: {model_error}")
 
                 # Extract first image as PNG bytes
                 img_obj = None
@@ -774,7 +793,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                     img_obj = getattr(first, "image", None)
 
                 if img_obj is None:
-                    return None, "Google Imagen returned no image data."
+                    raise ProviderOperationError(api_provider, model_name, "image generation", "Google Imagen returned no image data.")
 
                 try:
                     buf = BytesIO()
@@ -783,7 +802,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                     image_data_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
                     image_mime = "image/png"
                 except Exception as encode_error:
-                    return None, f"Failed to serialize Imagen output: {encode_error}"
+                    raise ProviderOperationError(api_provider, model_name, "image generation", f"Failed to serialize Imagen output: {encode_error}")
 
             elif "gemini" in model_name:
                 # Prefer the new google-genai client for Gemini image preview models
@@ -795,7 +814,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                         # Use GOOGLE_API_KEY for Gemini image preview
                         api_key = os.environ.get("GOOGLE_API_KEY")
                         if not api_key:
-                            return None, "GOOGLE_API_KEY not found in environment. Please set it to use Gemini image preview."
+                            raise ProviderOperationError(api_provider, model_name, "image generation", "GOOGLE_API_KEY not found in environment. Please set it to use Gemini image preview.")
 
                         gg_client = google_genai.Client(api_key=api_key)
 
@@ -835,15 +854,15 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                                 print(part0.text)
 
                         if not saved_img_bytes:
-                            return None, "Gemini image preview returned no image data."
+                            raise ProviderOperationError(api_provider, model_name, "image generation", "Gemini image preview returned no image data.")
 
                         image_data_base64 = base64.b64encode(saved_img_bytes).decode("utf-8")
                         image_mime = saved_mime
 
                     except ImportError:
-                        return None, "google-genai package not installed. Run: pip install google-genai"
+                        raise ProviderOperationError(api_provider, model_name, "image generation", "google-genai package not installed. Run: pip install google-genai")
                     except Exception as model_error:
-                        return None, f"Gemini image generation (preview) failed: {model_error}"
+                        raise ProviderOperationError(api_provider, model_name, "image generation", f"Gemini image generation (preview) failed: {model_error}")
                 else:
                     # Fallback for other Gemini models via google-generativeai GenerativeModel
                     try:
@@ -857,17 +876,17 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                                 image_data_base64 = base64.b64encode(img_bytes).decode('utf-8')
                             elif hasattr(part, 'text'):
                                 text_response = part.text
-                                return None, f"The model '{model_name}' generated text instead of image data. Try 'gemini-2.5-flash-image-preview' or 'dall-e-3'. Description: {text_response[:200]}..."
+                                raise ProviderOperationError(api_provider, model_name, "image generation", f"The model '{model_name}' generated text instead of image data. Try 'gemini-2.5-flash-image-preview' or 'dall-e-3'. Description: {text_response[:200]}...")
                             else:
-                                return None, "Gemini response contained no usable image data or text."
+                                raise ProviderOperationError(api_provider, model_name, "image generation", "Gemini response contained no usable image data or text.")
                         else:
-                            return None, "Invalid or empty response from Gemini."
+                            raise ProviderOperationError(api_provider, model_name, "image generation", "Invalid or empty response from Gemini.")
 
                     except Exception as model_error:
-                        return None, f"Gemini image generation failed: {model_error}"
+                        raise ProviderOperationError(api_provider, model_name, "image generation", f"Gemini image generation failed: {model_error}")
 
         if not image_data_base64:
-            return None, "Image generation failed or returned no data."
+            raise ProviderOperationError(api_provider, model_name, "image generation", "Image generation failed or returned no data.")
 
         # Save and display the image
         duration = time.time() - start_time
@@ -896,7 +915,18 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         return full_path, f"data:{mime_for_url};base64,{image_data_base64}"
 
     except Exception as e:
-        return None, f"An API error occurred during image generation: {e}"
+        raise ProviderOperationError(api_provider, model_name, "image generation", f"An API error occurred during image generation: {e}")
+
+
+def get_image_generation_completion_compat(prompt, client, model_name, api_provider):
+    """Deprecated compatibility wrapper for :func:`get_image_generation_completion`.
+
+    Returns a tuple ``(result, error)`` where ``error`` is ``None`` on success.
+    """
+    try:
+        return get_image_generation_completion(prompt, client, model_name, api_provider), None
+    except ProviderOperationError as e:
+        return None, str(e)
 
 def get_image_edit_completion(
     prompt: str,
@@ -924,11 +954,9 @@ def get_image_edit_completion(
         tuple[str, str]: A tuple containing:
             - file_path (str): The local path to the saved edited image file.
             - image_url (str): A data URL string for the edited image.
-            Returns (None, None) if an error occurs.
 
     Raises:
-        None: This function catches all exceptions and returns error messages
-            as strings instead of raising exceptions.
+        ProviderOperationError: If image editing fails.
 
     Notes:
         - Validates that the model supports image editing using RECOMMENDED_MODELS
@@ -963,14 +991,14 @@ def get_image_edit_completion(
         - RECOMMENDED_MODELS: For image editing capability validation
     """
     if not client:
-        return None, "API client not initialized."
+        raise ProviderOperationError(api_provider, model_name, "image editing", "API client not initialized.")
 
     # Validate using the correct capability flag for editing
     if not RECOMMENDED_MODELS.get(model_name, {}).get("image_modification"):
-        return None, f"Error: Model '{model_name}' does not support image editing."
+        raise ProviderOperationError(api_provider, model_name, "image editing", f"Model '{model_name}' does not support image editing.")
 
     if not os.path.exists(image_path):
-        return None, f"Error: Local image file not found at {image_path}"
+        raise ProviderOperationError(api_provider, model_name, "image editing", f"Local image file not found at {image_path}")
 
     # Display a loading indicator
     print("Editing image... This may take a moment.")
@@ -1001,10 +1029,10 @@ def get_image_edit_completion(
             edited_image.save(buffered, format="PNG")
             image_data_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
         else:
-            return None, f"Provider '{api_provider}' is not supported for image editing yet."
+            raise ProviderOperationError(api_provider, model_name, "image editing", f"Provider '{api_provider}' is not supported for image editing yet.")
 
         if not image_data_base64:
-            return None, "Image editing failed or returned no data."
+            raise ProviderOperationError(api_provider, model_name, "image editing", "Image editing failed or returned no data.")
 
         # Save and display the image
         duration = time.time() - start_time
@@ -1026,8 +1054,19 @@ def get_image_edit_completion(
 
     except Exception as e:
         if "Task 'image-to-image' not supported" in str(e):
-            return None, f"The model '{model_name}' does not support the image-to-image task through the current API provider. This is a limitation of the backend service, not the model itself."
-        return None, f"An API error occurred during image editing: {e}"
+            raise ProviderOperationError(api_provider, model_name, "image editing", f"The model '{model_name}' does not support the image-to-image task through the current API provider. This is a limitation of the backend service, not the model itself.")
+        raise ProviderOperationError(api_provider, model_name, "image editing", f"An API error occurred during image editing: {e}")
+
+
+def get_image_edit_completion_compat(prompt: str, image_path: str, client, model_name: str, api_provider: str, **edit_params):
+    """Deprecated compatibility wrapper for :func:`get_image_edit_completion`.
+
+    Returns a tuple ``(result, error)`` where ``error`` is ``None`` on success.
+    """
+    try:
+        return get_image_edit_completion(prompt, image_path, client, model_name, api_provider, **edit_params), None
+    except ProviderOperationError as e:
+        return None, str(e)
 
 def transcribe_audio(audio_path, client, model_name, api_provider, language_code="en-US"):
     """
@@ -1045,12 +1084,10 @@ def transcribe_audio(audio_path, client, model_name, api_provider, language_code
         language_code (str, optional): The language of the audio. Defaults to "en-US".
     
     Returns:
-        str: The transcribed text. Returns an error message string if the
-            API call fails.
-    
+        str: The transcribed text.
+
     Raises:
-        None: This function catches all exceptions and returns error messages
-            as strings instead of raising exceptions.
+        ProviderOperationError: If transcription fails.
     
     Notes:
         - Validates that the model supports audio transcription
@@ -1069,13 +1106,13 @@ def transcribe_audio(audio_path, client, model_name, api_provider, language_code
         - RECOMMENDED_MODELS: For audio transcription capability validation
     """
     if not client:
-        return "API client not initialized."
-        
+        raise ProviderOperationError(api_provider, model_name, "audio transcription", "API client not initialized.")
+
     if not RECOMMENDED_MODELS.get(model_name, {}).get("audio_transcription"):
-        return f"Error: Model '{model_name}' does not support audio transcription."
+        raise ProviderOperationError(api_provider, model_name, "audio transcription", f"Model '{model_name}' does not support audio transcription.")
 
     if not os.path.exists(audio_path):
-        return f"Error: Audio file not found at {audio_path}"
+        raise ProviderOperationError(api_provider, model_name, "audio transcription", f"Audio file not found at {audio_path}")
 
     try:
         if api_provider == "openai":
@@ -1098,10 +1135,21 @@ def transcribe_audio(audio_path, client, model_name, api_provider, language_code
             if response.results:
                 return response.results[0].alternatives[0].transcript
             else:
-                return "No transcription result from Google Speech-to-Text."
+                raise ProviderOperationError(api_provider, model_name, "audio transcription", "No transcription result from Google Speech-to-Text.")
 
     except Exception as e:
-        return f"An API error occurred during audio transcription: {e}"
+        raise ProviderOperationError(api_provider, model_name, "audio transcription", f"An API error occurred during audio transcription: {e}")
+
+
+def transcribe_audio_compat(audio_path, client, model_name, api_provider, language_code="en-US"):
+    """Deprecated compatibility wrapper for :func:`transcribe_audio`.
+
+    Returns a tuple ``(result, error)`` where ``error`` is ``None`` on success.
+    """
+    try:
+        return transcribe_audio(audio_path, client, model_name, api_provider, language_code), None
+    except ProviderOperationError as e:
+        return None, str(e)
 
 def clean_llm_output(output_str: str, language: str = 'json') -> str:
     """
@@ -1156,7 +1204,9 @@ def prompt_enhancer(user_input, model_name="o3", client=None, api_provider=None)
     
     Returns:
         str: An enhanced, optimized prompt ready for use with other LLM functions.
-             Returns the original input with an error message if enhancement fails.
+
+    Raises:
+        ProviderOperationError: If prompt enhancement fails.
     
     Example:
         >>> enhanced = prompt_enhancer("Write code for a login system")
@@ -1172,10 +1222,12 @@ def prompt_enhancer(user_input, model_name="o3", client=None, api_provider=None)
         - RECOMMENDED_MODELS: For model validation
     """
     if not user_input or not user_input.strip():
-        return "Error: No user input provided for enhancement."
-    
+        prov = api_provider or RECOMMENDED_MODELS.get(model_name, {}).get("provider", "unknown")
+        raise ProviderOperationError(prov, model_name, "prompt enhancement", "No user input provided for enhancement.")
+
     if model_name not in RECOMMENDED_MODELS:
-        return f"Error: Model '{model_name}' not found in RECOMMENDED_MODELS. Original input: {user_input}"
+        prov = api_provider or "unknown"
+        raise ProviderOperationError(prov, model_name, "prompt enhancement", f"Model '{model_name}' not found in RECOMMENDED_MODELS. Original input: {user_input}")
     
     # The meta-prompt for prompt optimization
     optimization_prompt = f"""You are an elite Prompt Optimization Engine. Your design is based on the understanding that prompt engineering is a rigorous technical discipline, essential for maximizing LLM efficacy and reliability. Your function is to analyze raw user inputs and systematically compile them into optimized, high-quality prompts.
@@ -1222,28 +1274,36 @@ Generate only the final, optimized prompt."""
             actual_model = model_name
             provider = api_provider
         else:
-            # Set up the LLM client for enhancement
             client, actual_model, provider = setup_llm_client(model_name)
-            
             if not client:
-                return f"Error: Failed to initialize LLM client for model '{model_name}'. Original input: {user_input}"
-        
-        # Get the enhanced prompt with low temperature for consistency
+                raise ProviderOperationError(provider or "unknown", model_name, "prompt enhancement", f"Failed to initialize LLM client for model '{model_name}'. Original input: {user_input}")
+
         enhanced_prompt = get_completion(
-            optimization_prompt, 
-            client, 
-            actual_model, 
-            provider, 
+            optimization_prompt,
+            client,
+            actual_model,
+            provider,
             temperature=0.3
         )
-        
-        if not enhanced_prompt or enhanced_prompt.startswith("Error:") or enhanced_prompt.startswith("API client not initialized"):
-            return f"Error: Failed to enhance prompt. Original input: {user_input}"
-        
+
         return enhanced_prompt.strip()
-        
+
+    except ProviderOperationError as e:
+        raise ProviderOperationError(e.provider, e.model, "prompt enhancement", str(e))
     except Exception as e:
-        return f"Error during prompt enhancement: {str(e)}. Original input: {user_input}"
+        prov = api_provider or locals().get("provider", "unknown")
+        raise ProviderOperationError(prov, model_name, "prompt enhancement", f"{e}. Original input: {user_input}")
+
+
+def prompt_enhancer_compat(user_input, model_name="o3", client=None, api_provider=None):
+    """Deprecated compatibility wrapper for :func:`prompt_enhancer`.
+
+    Returns a tuple ``(result, error)`` where ``error`` is ``None`` on success.
+    """
+    try:
+        return prompt_enhancer(user_input, model_name, client, api_provider), None
+    except ProviderOperationError as e:
+        return None, str(e)
 
 
 # --- Artifact Management & Display ---

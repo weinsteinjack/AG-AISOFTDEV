@@ -13,3 +13,13 @@ class ArtifactSecurityError(ArtifactError):
 class ArtifactNotFoundError(ArtifactError):
     """Raised when an expected artifact is missing."""
     pass
+
+
+class ProviderOperationError(UtilsError):
+    """Error raised for provider/model operation failures."""
+
+    def __init__(self, provider: str, model: str, operation: str, message: str):
+        self.provider = provider
+        self.model = model
+        self.operation = operation
+        super().__init__(f"[{provider}:{model}] {operation} error: {message}")
