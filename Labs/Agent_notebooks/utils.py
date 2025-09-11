@@ -6,13 +6,13 @@
 
 import os
 import json
-import requests
 from PIL import Image
 from io import BytesIO
 import re
 import base64
 from IPython.display import Image as IPyImage, display
 from utils.logging import get_logger
+from utils.http import TOTAL_TIMEOUT
 
 logger = get_logger()
 
@@ -241,16 +241,21 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
     if not client: return "API client not initialized."
     try:
         if api_provider == "openai":
-            response = client.chat.completions.create(model=model_name, 
-                                                      messages=[{"role": "user", "content": prompt}], 
-                                                      temperature=temperature)
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                timeout=TOTAL_TIMEOUT,
+            )
             return response.choices[0].message.content
         elif api_provider == "anthropic":
-            response = client.messages.create(model=model_name,
-                                              max_tokens=4096,
-                                              temperature=temperature,
-                                              messages=[{"role": "user", "content": prompt}]
-                                              )
+            response = client.messages.create(
+                model=model_name,
+                max_tokens=4096,
+                temperature=temperature,
+                messages=[{"role": "user", "content": prompt}],
+                timeout=TOTAL_TIMEOUT,
+            )
             return response.content[0].text
     except Exception as e:
         return f"An API error occurred: {e}"

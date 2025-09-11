@@ -4,6 +4,8 @@ import os
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
+from ..http import TOTAL_TIMEOUT
+from ..rate_limit import rate_limit
 
 
 def setup_client(model_name: str, config: dict[str, Any]):
@@ -16,11 +18,14 @@ def setup_client(model_name: str, config: dict[str, Any]):
 
 def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
     try:
+        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        rate_limit("anthropic", api_key, model_name)
         response = client.messages.create(
             model=model_name,
             max_tokens=4096,
             temperature=temperature,
             messages=[{"role": "user", "content": prompt}],
+            timeout=TOTAL_TIMEOUT,
         )
         return response.content[0].text
     except Exception as e:  # pragma: no cover - network dependent

@@ -4,6 +4,8 @@ import os
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
+from ..http import TOTAL_TIMEOUT
+from ..rate_limit import rate_limit
 
 
 def setup_client(model_name: str, config: dict[str, Any]):
@@ -23,7 +25,11 @@ def setup_client(model_name: str, config: dict[str, Any]):
 
 def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
     try:
-        response = client.generate_content(prompt)
+        api_key = os.getenv("GOOGLE_API_KEY", "")
+        rate_limit("google", api_key, model_name)
+        response = client.generate_content(
+            prompt, timeout=TOTAL_TIMEOUT
+        )
         return response.text
     except Exception as e:  # pragma: no cover - network dependent
         raise ProviderOperationError("google", model_name, "completion", str(e))
@@ -37,7 +43,12 @@ def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, st
     if "imagen" in model_name:
         from google import genai as google_genai
         from google.genai import types as google_types
-        response = client.models.generate_images(model=model_name, prompt=prompt)
+
+        api_key = os.getenv("GOOGLE_API_KEY", "")
+        rate_limit("google", api_key, model_name)
+        response = client.models.generate_images(
+            model=model_name, prompt=prompt, request_options={"timeout": TOTAL_TIMEOUT}
+        )
         image_data_base64 = response.generated_images[0].bytes_base64
         return image_data_base64, "image/png"
     raise ProviderOperationError("google", model_name, "image generation", "Not implemented for this model")
@@ -48,11 +59,15 @@ def image_edit(*args, **kwargs):  # pragma: no cover
 
 
 def transcribe_audio(client: Any, audio_path: str, model_name: str, language_code: str = "en-US") -> str:
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    rate_limit("google", api_key, model_name)
     with open(audio_path, "rb") as audio_file:
         content = audio_file.read()
     audio = {"content": content}
     config = {"language_code": language_code}
-    response = client.recognize(config=config, audio=audio)
+    response = client.recognize(config=config, audio=audio, timeout=TOTAL_TIMEOUT)
     if response.results:
         return response.results[0].alternatives[0].transcript
-    raise ProviderOperationError("google", model_name, "audio transcription", "No transcription result from Google Speech-to-Text.")
+    raise ProviderOperationError(
+        "google", model_name, "audio transcription", "No transcription result from Google Speech-to-Text."
+    )
