@@ -28,6 +28,14 @@ async def async_setup_client(model_name: str, config: dict[str, Any]) -> Any:
     return AsyncOpenAI(api_key=api_key)
 
 
+# Some OpenAI models (e.g., reasoning models like o3, o3-mini, o1)
+# do not support custom temperature values. Only the default is allowed.
+def _supports_temperature(model_name: str) -> bool:
+    # Heuristic: current reasoning models start with "o" (e.g., o3, o3-mini, o1)
+    # Keep temperature for other families (e.g., gpt-4o, gpt-4.1, gpt-3.5, etc.).
+    return not model_name.lower().startswith("o")
+
+
 def text_completion(
     client: Any, prompt: str, model_name: str, temperature: float = 0.7
 ) -> str:
@@ -35,21 +43,25 @@ def text_completion(
         api_key = os.getenv("OPENAI_API_KEY", "")
         rate_limit("openai", api_key, model_name)
         try:
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                timeout=TOTAL_TIMEOUT,
-            )
+            chat_params: dict[str, Any] = {
+                "model": model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "timeout": TOTAL_TIMEOUT,
+            }
+            if _supports_temperature(model_name):
+                chat_params["temperature"] = temperature
+            response = client.chat.completions.create(**chat_params)
             return response.choices[0].message.content
         except Exception as api_error:
             if "v1/responses" in str(api_error):
-                response = client.responses.create(
-                    model=model_name,
-                    input=prompt,
-                    temperature=temperature,
-                    timeout=TOTAL_TIMEOUT,
-                )
+                resp_params: dict[str, Any] = {
+                    "model": model_name,
+                    "input": prompt,
+                    "timeout": TOTAL_TIMEOUT,
+                }
+                if _supports_temperature(model_name):
+                    resp_params["temperature"] = temperature
+                response = client.responses.create(**resp_params)
                 if hasattr(response, "text"):
                     return response.text
                 return response.choices[0].text
@@ -65,21 +77,25 @@ async def async_text_completion(
         api_key = os.getenv("OPENAI_API_KEY", "")
         rate_limit("openai", api_key, model_name)
         try:
-            response = await client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                timeout=TOTAL_TIMEOUT,
-            )
+            chat_params: dict[str, Any] = {
+                "model": model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "timeout": TOTAL_TIMEOUT,
+            }
+            if _supports_temperature(model_name):
+                chat_params["temperature"] = temperature
+            response = await client.chat.completions.create(**chat_params)
             return response.choices[0].message.content
         except Exception as api_error:
             if "v1/responses" in str(api_error):
-                response = await client.responses.create(
-                    model=model_name,
-                    input=prompt,
-                    temperature=temperature,
-                    timeout=TOTAL_TIMEOUT,
-                )
+                resp_params: dict[str, Any] = {
+                    "model": model_name,
+                    "input": prompt,
+                    "timeout": TOTAL_TIMEOUT,
+                }
+                if _supports_temperature(model_name):
+                    resp_params["temperature"] = temperature
+                response = await client.responses.create(**resp_params)
                 if hasattr(response, "text"):
                     return response.text
                 return response.choices[0].text

@@ -37,7 +37,14 @@ def text_completion(
     try:
         api_key = os.getenv("GOOGLE_API_KEY", "")
         rate_limit("google", api_key, model_name)
-        response = client.generate_content(prompt, timeout=TOTAL_TIMEOUT)
+        # google.generativeai's GenerativeModel does not accept a `timeout` kwarg.
+        # Use `request_options={"timeout": ...}` instead. Also pass temperature via
+        # generation_config so callers can control creativity similar to other providers.
+        response = client.generate_content(
+            prompt,
+            request_options={"timeout": TOTAL_TIMEOUT},
+            generation_config={"temperature": temperature},
+        )
         return response.text
     except Exception as e:  # pragma: no cover - network dependent
         raise ProviderOperationError("google", model_name, "completion", str(e))
