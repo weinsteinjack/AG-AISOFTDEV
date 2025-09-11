@@ -258,6 +258,15 @@ docker run -p 8000:8000 --env-file .env ai-software-engineering
 - **[Docker Guide](Supporting%20Materials/Docker_Guide.md)**: Container deployment guide
 - **[API Key Generation Guide](Supporting%20Materials/🔑%20API%20Key%20Generation%20Guide%20for%20Labs.pdf)**: Step-by-step API setup
 - **[React Components Guide](Supporting%20Materials/How_to_View_Your_React_Components_Locally.md)**: Frontend development setup
+- **[Productionizing Utils](Supporting%20Materials/Productionizing_Utils.md)**: Timeouts, retries, rate limiting, and logging
+- **[Artifacts Guide](Supporting%20Materials/Artifacts_Guide.md)**: Artifact directory overrides and security
+
+## 🕰️ Deprecations
+
+Legacy helpers that returned ``(result, error_str)`` are deprecated.  Update
+existing code to call the standard functions and catch
+``ProviderOperationError`` instead.  Compatibility wrappers remain temporarily
+for transition but will be removed in a future release.
 
 ## 🤝 Contributing
 
