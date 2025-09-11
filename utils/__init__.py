@@ -14,6 +14,9 @@ import time # For loading indicator
 
 # Exceptions
 from .errors import ProviderOperationError
+from .logging import get_logger
+
+logger = get_logger()
 # --- Dynamic Library Installation ---
 try:
     from dotenv import load_dotenv
@@ -21,12 +24,15 @@ try:
     from plantuml import PlantUML
 except ImportError:
     # Provide safe fallbacks so the module can be imported even when optional deps are missing.
-    print("Warning: Optional core dependencies not found. Some features will be degraded.")
-    print("To enable full functionality run: pip install python-dotenv ipython plantuml")
+    logger.warning(
+        "Optional core dependencies not found. Some features will be degraded.")
+    logger.warning(
+        "To enable full functionality run: pip install python-dotenv ipython plantuml")
 
     # noop load_dotenv fallback
     def load_dotenv(*args, **kwargs):
-        print("Warning: python-dotenv not installed; .env will not be loaded.")
+        logger.warning(
+            "python-dotenv not installed; .env will not be loaded.")
 
     # minimal IPython.display fallbacks
     def display(*args, **kwargs):
@@ -44,9 +50,10 @@ except ImportError:
     # PlantUML fallback
     class PlantUML:
         def __init__(self, url=None):
-            print("Warning: plantuml not installed; rendering disabled.")
+            logger.warning("plantuml not installed; rendering disabled.")
+
         def processes(self, *args, **kwargs):
-            print("PlantUML rendering skipped (plantuml not installed).")
+            logger.warning("PlantUML rendering skipped (plantuml not installed).")
 
 
 # --- Model & Provider Configuration ---
@@ -253,7 +260,8 @@ def load_environment():
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path)
     else:
-        print("Warning: .env file not found. API keys may not be loaded.")
+        logger.warning(
+            ".env file not found. API keys may not be loaded.")
 
 
 def setup_llm_client(model_name="gpt-4o"):
@@ -321,7 +329,11 @@ def setup_llm_client(model_name="gpt-4o"):
     """
     load_environment()
     if model_name not in RECOMMENDED_MODELS:
-        print(f"ERROR: Model '{model_name}' is not in the list of recommended models.")
+        logger.error(
+            "Model '%s' is not in the list of recommended models.",
+            model_name,
+            extra={"provider": None, "model": model_name},
+        )
         return None, None, None
     config = RECOMMENDED_MODELS[model_name]
     api_provider = config["provider"]
@@ -360,12 +372,23 @@ def setup_llm_client(model_name="gpt-4o"):
                     genai.configure(api_key=api_key)
                     client = genai.GenerativeModel(model_name)
     except ImportError:
-        print(f"ERROR: The required library for '{api_provider}' is not installed.")
+        logger.error(
+            "The required library for '%s' is not installed.",
+            api_provider,
+            extra={"provider": api_provider, "model": model_name},
+        )
         return None, None, None
     except ValueError as e:
-        print(f"ERROR: {e}")
+        logger.error(
+            "%s",
+            e,
+            extra={"provider": api_provider, "model": model_name},
+        )
         return None, None, None
-    print(f"✅ LLM Client configured: Using '{api_provider}' with model '{model_name}'")
+    logger.info(
+        "LLM Client configured",
+        extra={"provider": api_provider, "model": model_name},
+    )
     return client, model_name, api_provider
 
 # --- Core Interaction Functions ---
@@ -412,14 +435,14 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
         ...     "What is the capital of France?",
         ...     client, model, provider, temperature=0.5
         ... )
-        >>> print(response)
+        >>> logger.info(response)
         "The capital of France is Paris."
         
         >>> # Handle API errors gracefully
         >>> try:
         ...     get_completion("Hello", None, "gpt-4o", "openai")
         ... except ProviderOperationError as e:
-        ...     print(e)
+        ...     logger.error(e)
     
     Dependencies:
         - Provider-specific client libraries
@@ -708,7 +731,7 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         >>> try:
         ...     get_image_generation_completion("A cat", client, "gpt-4o", "openai")
         ... except ProviderOperationError as e:
-        ...     print(e)
+        ...     logger.error(e)
     
     Dependencies:
         - time: For tracking generation duration
@@ -722,7 +745,10 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
         raise ProviderOperationError(api_provider, model_name, "image generation", f"Model '{model_name}' does not support image generation.")
 
     # Display a loading indicator
-    print("Generating image... This may take a moment.")
+    logger.info(
+        "Generating image",
+        extra={"provider": api_provider, "model": model_name},
+    )
     display(Markdown("⏳ Generating image..."))
     start_time = time.time()
 
@@ -851,7 +877,11 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
                                 saved_mime = getattr(part0.inline_data, "mime_type", None) or "image/png"
                             # Occasionally the stream also includes text; surface it for debugging
                             elif getattr(part0, "text", None):
-                                print(part0.text)
+                                logger.debug(
+                                    "%s",
+                                    part0.text,
+                                    extra={"provider": api_provider, "model": model_name},
+                                )
 
                         if not saved_img_bytes:
                             raise ProviderOperationError(api_provider, model_name, "image generation", "Gemini image preview returned no image data.")
@@ -890,7 +920,14 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
         # Save and display the image
         duration = time.time() - start_time
-        print(f"✅ Image generated in {duration:.2f} seconds.")
+        logger.info(
+            "Image generated",
+            extra={
+                "provider": api_provider,
+                "model": model_name,
+                "latency_ms": int(duration * 1000),
+            },
+        )
         
         image_bytes = base64.b64decode(image_data_base64)
         
@@ -909,7 +946,17 @@ def get_image_generation_completion(prompt, client, model_name, api_provider):
 
         with open(full_path, "wb") as f:
             f.write(image_bytes)
-        print(f"✅ Image saved to: {os.path.relpath(full_path, _find_project_root())}")
+        logger.info(
+            "Image saved",
+            extra={
+                "provider": api_provider,
+                "model": model_name,
+                "latency_ms": int(duration * 1000),
+                "artifacts_path": os.path.relpath(
+                    full_path, _find_project_root()
+                ),
+            },
+        )
         
         # Return the data URL using the appropriate mime type
         return full_path, f"data:{mime_for_url};base64,{image_data_base64}"
@@ -1001,7 +1048,10 @@ def get_image_edit_completion(
         raise ProviderOperationError(api_provider, model_name, "image editing", f"Local image file not found at {image_path}")
 
     # Display a loading indicator
-    print("Editing image... This may take a moment.")
+    logger.info(
+        "Editing image",
+        extra={"provider": api_provider, "model": model_name},
+    )
     display(Markdown("⏳ Editing image..."))
     start_time = time.time()
 
@@ -1036,7 +1086,14 @@ def get_image_edit_completion(
 
         # Save and display the image
         duration = time.time() - start_time
-        print(f"✅ Image edited in {duration:.2f} seconds.")
+        logger.info(
+            "Image edited",
+            extra={
+                "provider": api_provider,
+                "model": model_name,
+                "latency_ms": int(duration * 1000),
+            },
+        )
 
         image_bytes = base64.b64decode(image_data_base64)
 
@@ -1047,7 +1104,17 @@ def get_image_edit_completion(
 
         with open(full_path, "wb") as f:
             f.write(image_bytes)
-        print(f"✅ Edited image saved to: {os.path.relpath(full_path, _find_project_root())}")
+        logger.info(
+            "Edited image saved",
+            extra={
+                "provider": api_provider,
+                "model": model_name,
+                "latency_ms": int(duration * 1000),
+                "artifacts_path": os.path.relpath(
+                    full_path, _find_project_root()
+                ),
+            },
+        )
 
         # Return the data URL
         return full_path, f"data:image/png;base64,{image_data_base64}"
@@ -1098,7 +1165,7 @@ def transcribe_audio(audio_path, client, model_name, api_provider, language_code
     Example:
         >>> client, model, provider = setup_llm_client("whisper-1")
         >>> text = transcribe_audio("path/to/audio.wav", client, model, provider)
-        >>> print(text)
+        >>> logger.info(text)
         "This is the transcribed text from the audio file."
     
     Dependencies:
@@ -1320,7 +1387,8 @@ def _find_project_root():
             return path
         path = os.path.dirname(path)
     # Fallback if no markers are found (e.g., in a bare directory)
-    print("Warning: Project root marker not found. Defaulting to current directory.")
+    logger.warning(
+        "Project root marker not found. Defaulting to current directory.")
     return os.getcwd()
 
 
@@ -1377,9 +1445,17 @@ def save_artifact(content, file_path):
             f.write(content)
         # Print relative to project root for readability
         rel = os.path.relpath(full_path, _find_project_root())
-        print(f"✅ Successfully saved artifact to: {rel}")
+        logger.info(
+            "Successfully saved artifact",
+            extra={"artifacts_path": rel},
+        )
     except Exception as e:
-        print(f"❌ Error saving artifact to {file_path}: {e}")
+        logger.error(
+            "Error saving artifact to %s: %s",
+            file_path,
+            e,
+            extra={"artifacts_path": file_path},
+        )
         raise
 
 
@@ -1395,7 +1471,10 @@ def load_artifact(file_path):
         with open(full_path, 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
-        print(f"❌ Error: Artifact file not found at {file_path}.")
+        logger.error(
+            "Artifact file not found",
+            extra={"artifacts_path": file_path},
+        )
         return None
 
 def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
@@ -1484,7 +1563,10 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
         # or we wrote it above. Check for file existence before displaying.
         if os.path.exists(full_path):
             rel = os.path.relpath(full_path, _find_project_root())
-            print(f"✅ Diagram rendered and saved to: {rel}")
+            logger.info(
+                "Diagram rendered and saved",
+                extra={"artifacts_path": rel},
+            )
             try:
                 # IPython Image accepts filename= or url=. Use filename for local file.
                 display(IPyImage(filename=full_path))
@@ -1492,9 +1574,17 @@ def render_plantuml_diagram(puml_code, output_path="artifacts/diagram.png"):
                 # Best-effort fallback to markdown link if display fails.
                 display(Markdown(f"![diagram]({full_path})"))
         else:
-            print(f"⚠️ Diagram rendering returned no file. Result: {result}")
+            logger.warning(
+                "Diagram rendering returned no file. Result: %s",
+                result,
+                extra={"artifacts_path": full_path},
+            )
     except Exception as e:
-        print(f"❌ Error rendering PlantUML diagram: {e}")
+        logger.error(
+            "Error rendering PlantUML diagram: %s",
+            e,
+            extra={"artifacts_path": output_path},
+        )
         raise
 
 def _encode_image_to_base64(image_path):

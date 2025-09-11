@@ -2,6 +2,9 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.db_models import Base, User, OnboardingTask
+from utils.logging import get_logger
+
+logger = get_logger()
 
 def test_database_setup():
     """Test that the database setup works correctly"""
@@ -15,7 +18,6 @@ def test_database_setup():
     with engine.connect() as conn:
         result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table';"))
         tables = [row[0] for row in result]
-        print(f"Created tables: {tables}")
         assert 'users' in tables
         assert 'onboarding_tasks' in tables
     
@@ -39,7 +41,7 @@ def test_database_setup():
     assert db_user.email == "test@example.com"
     
     session.close()
-    print("Database setup test passed!")
+    logger.info("Database setup test passed!" )
 
 if __name__ == "__main__":
     test_database_setup()
