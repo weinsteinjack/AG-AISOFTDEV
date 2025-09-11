@@ -91,6 +91,21 @@ def get_completion(
     api_provider: str,
     temperature: float = 0.7,
 ) -> str:
+    """Fetch a text completion.
+
+    Raises
+    ------
+    ProviderOperationError
+        If the provider call fails.
+
+    Example
+    -------
+    >>> client, model, provider = setup_llm_client()
+    >>> try:
+    ...     get_completion("Hello", client, model, provider)
+    ... except ProviderOperationError:
+    ...     ...
+    """
     prompt = normalize_prompt(prompt)
     provider_module = ensure_provider(client, api_provider, model_name, "completion")
     return provider_module.text_completion(client, prompt, model_name, temperature)
@@ -105,12 +120,18 @@ async def async_get_completion(
 ) -> str:
     """Asynchronously fetch a text completion.
 
+    Raises
+    ------
+    ProviderOperationError
+        If the provider call fails.
+
     Example
     -------
     >>> import asyncio
     >>> async def main(prompts):
+    ...     client, model, provider = await async_setup_llm_client()
     ...     tasks = [
-    ...         async_get_completion(p, client, model_name, api_provider)
+    ...         async_get_completion(p, client, model, provider)
     ...         for p in prompts
     ...     ]
     ...     return await asyncio.gather(*tasks)
@@ -133,6 +154,11 @@ def get_completion_compat(
     api_provider: str,
     temperature: float = 0.7,
 ) -> Tuple[Optional[str], Optional[str]]:
+    """Compatibility wrapper returning ``(result, error_str)``.
+
+    .. deprecated:: 1.0
+       Use :func:`get_completion` and catch :class:`ProviderOperationError`.
+    """
     try:
         return (
             get_completion(prompt, client, model_name, api_provider, temperature),
@@ -149,6 +175,11 @@ async def async_get_completion_compat(
     api_provider: str,
     temperature: float = 0.7,
 ) -> Tuple[Optional[str], Optional[str]]:
+    """Async compatibility wrapper returning ``(result, error_str)``.
+
+    .. deprecated:: 1.0
+       Use :func:`async_get_completion` and catch :class:`ProviderOperationError`.
+    """
     try:
         return (
             await async_get_completion(
@@ -163,6 +194,18 @@ async def async_get_completion_compat(
 def get_vision_completion(
     prompt: str, image_path_or_url: str, client: Any, model_name: str, api_provider: str
 ) -> str:
+    """Fetch a vision completion for ``image_path_or_url``.
+
+    Raises
+    ------
+    ProviderOperationError
+        If the provider call fails.
+
+    Example
+    -------
+    >>> client, model, provider = setup_llm_client()
+    >>> get_vision_completion("Describe", "image.png", client, model, provider)
+    """
     prompt = normalize_prompt(prompt)
     provider_module = ensure_provider(
         client, api_provider, model_name, "vision completion"
@@ -179,6 +222,20 @@ async def async_get_vision_completion(
     model_name: str,
     api_provider: str,
 ) -> str:
+    """Asynchronously fetch a vision completion for an image.
+
+    Raises
+    ------
+    ProviderOperationError
+        If the provider call fails.
+
+    Example
+    -------
+    >>> client, model, provider = await async_setup_llm_client()
+    >>> await async_get_vision_completion(
+    ...     "Describe", "image.png", client, model, provider
+    ... )
+    """
     prompt = normalize_prompt(prompt)
     provider_module = ensure_provider(
         client, api_provider, model_name, "vision completion"
@@ -203,6 +260,11 @@ def get_vision_completion_compat(
     model_name: str,
     api_provider: str,
 ) -> Tuple[Optional[str], Optional[str]]:
+    """Compatibility wrapper returning ``(result, error_str)``.
+
+    .. deprecated:: 1.0
+       Use :func:`get_vision_completion` and catch :class:`ProviderOperationError`.
+    """
     try:
         return (
             get_vision_completion(
@@ -221,6 +283,11 @@ async def async_get_vision_completion_compat(
     model_name: str,
     api_provider: str,
 ) -> Tuple[Optional[str], Optional[str]]:
+    """Async compatibility wrapper returning ``(result, error_str)``.
+
+    .. deprecated:: 1.0
+       Use :func:`async_get_vision_completion` and catch :class:`ProviderOperationError`.
+    """
     try:
         return (
             await async_get_vision_completion(
@@ -255,7 +322,18 @@ def prompt_enhancer(
     client: Any | None = None,
     api_provider: str | None = None,
 ) -> str:
-    """Enhance a raw user prompt using a meta-prompt optimization system."""
+    """Enhance a raw user prompt using a meta-prompt optimization system.
+
+    Raises
+    ------
+    ProviderOperationError
+        If prompt enhancement fails.
+
+    Example
+    -------
+    >>> client, model, provider = setup_llm_client("o3")
+    >>> prompt_enhancer("write a poem", model, client, provider)
+    """
     user_input = normalize_prompt(user_input)
     if not user_input:
         prov = api_provider or RECOMMENDED_MODELS.get(model_name, {}).get(
@@ -374,6 +452,11 @@ def prompt_enhancer_compat(
     client: Any | None = None,
     api_provider: str | None = None,
 ) -> Tuple[Optional[str], Optional[str]]:
+    """Compatibility wrapper returning ``(result, error_str)``.
+
+    .. deprecated:: 1.0
+       Use :func:`prompt_enhancer` and catch :class:`ProviderOperationError`.
+    """
     try:
         return prompt_enhancer(user_input, model_name, client, api_provider), None
     except ProviderOperationError as e:
