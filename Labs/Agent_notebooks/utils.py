@@ -12,6 +12,9 @@ from io import BytesIO
 import re
 import base64
 from IPython.display import Image as IPyImage, display
+from utils.logging import get_logger
+
+logger = get_logger()
 
 # --- Dynamic Library Installation ---
 try:
@@ -19,8 +22,10 @@ try:
     from IPython.display import display, Markdown, Code, Image as IPyImage
     from plantuml import PlantUML
 except ImportError:
-    print("Core dependencies not found. Please install them by running:")
-    print("pip install python-dotenv ipython plantuml anthropic")
+    logger.warning(
+        "Core dependencies not found. Please install them by running:"
+    )
+    logger.warning("pip install python-dotenv ipython plantuml anthropic")
 
 # --- Model & Provider Configuration ---
 RECOMMENDED_MODELS = {
@@ -89,7 +94,7 @@ def load_environment():
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path)
     else:
-        print("Warning: .env file not found. API keys may not be loaded.")
+        logger.warning(".env file not found. API keys may not be loaded.")
 
 
 def setup_llm_client(model_name="gpt-3.5-turbo"):
@@ -148,7 +153,9 @@ def setup_llm_client(model_name="gpt-3.5-turbo"):
     """
     load_environment()
     if model_name not in RECOMMENDED_MODELS:
-        print(f"ERROR: Model '{model_name}' is not in the list of recommended models.")
+        logger.error(
+            "Model '%s' is not in the list of recommended models.", model_name
+        )
         return None, None, None
     config = RECOMMENDED_MODELS[model_name]
     api_provider = config["provider"]
@@ -165,12 +172,17 @@ def setup_llm_client(model_name="gpt-3.5-turbo"):
             if not api_key: raise ValueError("ANTHROPIC_API_KEY not found in .env file.")
             client = Anthropic(api_key=api_key)
     except ImportError:
-        print(f"ERROR: The required library for '{api_provider}' is not installed.")
+        logger.error(
+            "The required library for '%s' is not installed.", api_provider
+        )
         return None, None, None
     except ValueError as e:
-        print(f"ERROR: {e}")
+        logger.error("%s", e)
         return None, None, None
-    print(f"✅ LLM Client configured: Using '{api_provider}' with model '{model_name}'")
+    logger.info(
+        "LLM Client configured",
+        extra={"provider": api_provider, "model": model_name},
+    )
     return client, model_name, api_provider
 
 # --- Core Interaction Functions ---
@@ -215,12 +227,12 @@ def get_completion(prompt, client, model_name, api_provider, temperature=0.7):
         ...     "What is the capital of France?",
         ...     client, model, provider, temperature=0.5
         ... )
-        >>> print(response)
+        >>> logger.info(response)
         "The capital of France is Paris."
         
         >>> # Handle API errors gracefully
         >>> response = get_completion("Hello", None, "gpt-4o", "openai")
-        >>> print(response)
+        >>> logger.info(response)
         "API client not initialized."
     
     Dependencies:
