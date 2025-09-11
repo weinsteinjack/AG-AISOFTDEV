@@ -30,7 +30,7 @@ def _create_session() -> requests.Session:
         total=MAX_RETRIES,
         backoff_factor=1,
         status_forcelist=(429, 500, 502, 503, 504),
-        allowed_methods=False,
+        allowed_methods=None,
     )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
