@@ -34,7 +34,6 @@ def text_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=max(0.1, temperature),
             max_tokens=4096,
-            timeout=TOTAL_TIMEOUT,
         )
         return response.choices[0].message.content
     except Exception as e:  # pragma: no cover - network dependent
