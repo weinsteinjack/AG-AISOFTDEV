@@ -337,7 +337,17 @@ Generate only the final, optimized prompt."""
                     ),
                 )
 
-        assert actual_model is not None and provider is not None
+        if actual_model is None or provider is None:
+            raise ProviderOperationError(
+                provider or "unknown",
+                model_name,
+                "prompt enhancement",
+                (
+                    f"LLM client setup returned None for model or provider. "
+                    f"actual_model: {actual_model}, provider: {provider}. "
+                    f"Original input: {user_input}"
+                ),
+            )
         enhanced_prompt = get_completion(
             optimization_prompt,
             client,
