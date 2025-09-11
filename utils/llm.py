@@ -1,41 +1,56 @@
+# ruff: noqa: E501
 from __future__ import annotations
 
-import os
-import re
 import asyncio
-from typing import Any, Tuple
+import re
+from typing import Any, Optional, Tuple
 
 from .errors import ProviderOperationError
+from .helpers import ensure_provider, normalize_prompt
 from .logging import get_logger
-from .settings import load_environment
 from .models import RECOMMENDED_MODELS
 from .providers import PROVIDERS
+from .settings import load_environment
 
 logger = get_logger()
 
 
-def setup_llm_client(model_name: str = "gpt-4o") -> Tuple[Any, str, str] | Tuple[None, None, None]:
+def setup_llm_client(
+    model_name: str = "gpt-4o",
+) -> Tuple[Any, str, str] | Tuple[None, None, None]:
     """Configure and return an LLM client based on ``model_name``."""
     load_environment()
     if model_name not in RECOMMENDED_MODELS:
-        logger.error("Model '%s' is not in the list of recommended models.", model_name, extra={"provider": None, "model": model_name})
+        logger.error(
+            "Model '%s' is not in the list of recommended models.",
+            model_name,
+            extra={"provider": None, "model": model_name},
+        )
         return None, None, None
     config = RECOMMENDED_MODELS[model_name]
     provider_name = config["provider"]
     provider_module = PROVIDERS.get(provider_name)
     if not provider_module:
-        logger.error("Unsupported provider '%s'", provider_name, extra={"provider": provider_name, "model": model_name})
+        logger.error(
+            "Unsupported provider '%s'",
+            provider_name,
+            extra={"provider": provider_name, "model": model_name},
+        )
         return None, None, None
     try:
         client = provider_module.setup_client(model_name, config)
     except Exception as e:  # pragma: no cover - network dependent
         logger.error("%s", e, extra={"provider": provider_name, "model": model_name})
         return None, None, None
-    logger.info("LLM Client configured", extra={"provider": provider_name, "model": model_name})
+    logger.info(
+        "LLM Client configured", extra={"provider": provider_name, "model": model_name}
+    )
     return client, model_name, provider_name
 
 
-async def async_setup_llm_client(model_name: str = "gpt-4o") -> Tuple[Any, str, str] | Tuple[None, None, None]:
+async def async_setup_llm_client(
+    model_name: str = "gpt-4o",
+) -> Tuple[Any, str, str] | Tuple[None, None, None]:
     """Asynchronously configure and return an LLM client based on ``model_name``."""
     load_environment()
     if model_name not in RECOMMENDED_MODELS:
@@ -63,16 +78,21 @@ async def async_setup_llm_client(model_name: str = "gpt-4o") -> Tuple[Any, str, 
     except Exception as e:  # pragma: no cover - network dependent
         logger.error("%s", e, extra={"provider": provider_name, "model": model_name})
         return None, None, None
-    logger.info("LLM Client configured", extra={"provider": provider_name, "model": model_name})
+    logger.info(
+        "LLM Client configured", extra={"provider": provider_name, "model": model_name}
+    )
     return client, model_name, provider_name
 
 
-def get_completion(prompt: str, client: Any, model_name: str, api_provider: str, temperature: float = 0.7) -> str:
-    if not client:
-        raise ProviderOperationError(api_provider, model_name, "completion", "API client not initialized.")
-    provider_module = PROVIDERS.get(api_provider)
-    if not provider_module:
-        raise ProviderOperationError(api_provider, model_name, "completion", "Unsupported provider")
+def get_completion(
+    prompt: str,
+    client: Any,
+    model_name: str,
+    api_provider: str,
+    temperature: float = 0.7,
+) -> str:
+    prompt = normalize_prompt(prompt)
+    provider_module = ensure_provider(client, api_provider, model_name, "completion")
     return provider_module.text_completion(client, prompt, model_name, temperature)
 
 
@@ -95,11 +115,8 @@ async def async_get_completion(
     ...     ]
     ...     return await asyncio.gather(*tasks)
     """
-    if not client:
-        raise ProviderOperationError(api_provider, model_name, "completion", "API client not initialized.")
-    provider_module = PROVIDERS.get(api_provider)
-    if not provider_module:
-        raise ProviderOperationError(api_provider, model_name, "completion", "Unsupported provider")
+    prompt = normalize_prompt(prompt)
+    provider_module = ensure_provider(client, api_provider, model_name, "completion")
     if hasattr(provider_module, "async_text_completion"):
         return await provider_module.async_text_completion(
             client, prompt, model_name, temperature
@@ -109,9 +126,18 @@ async def async_get_completion(
     )
 
 
-def get_completion_compat(prompt: str, client: Any, model_name: str, api_provider: str, temperature: float = 0.7):
+def get_completion_compat(
+    prompt: str,
+    client: Any,
+    model_name: str,
+    api_provider: str,
+    temperature: float = 0.7,
+) -> Tuple[Optional[str], Optional[str]]:
     try:
-        return get_completion(prompt, client, model_name, api_provider, temperature), None
+        return (
+            get_completion(prompt, client, model_name, api_provider, temperature),
+            None,
+        )
     except ProviderOperationError as e:
         return None, str(e)
 
@@ -122,22 +148,28 @@ async def async_get_completion_compat(
     model_name: str,
     api_provider: str,
     temperature: float = 0.7,
-):
+) -> Tuple[Optional[str], Optional[str]]:
     try:
-        return await async_get_completion(
-            prompt, client, model_name, api_provider, temperature
-        ), None
+        return (
+            await async_get_completion(
+                prompt, client, model_name, api_provider, temperature
+            ),
+            None,
+        )
     except ProviderOperationError as e:
         return None, str(e)
 
 
-def get_vision_completion(prompt: str, image_path_or_url: str, client: Any, model_name: str, api_provider: str) -> str:
-    if not client:
-        raise ProviderOperationError(api_provider, model_name, "vision completion", "API client not initialized.")
-    provider_module = PROVIDERS.get(api_provider)
-    if not provider_module:
-        raise ProviderOperationError(api_provider, model_name, "vision completion", "Unsupported provider")
-    return provider_module.vision_completion(client, prompt, image_path_or_url, model_name)
+def get_vision_completion(
+    prompt: str, image_path_or_url: str, client: Any, model_name: str, api_provider: str
+) -> str:
+    prompt = normalize_prompt(prompt)
+    provider_module = ensure_provider(
+        client, api_provider, model_name, "vision completion"
+    )
+    return provider_module.vision_completion(
+        client, prompt, image_path_or_url, model_name
+    )
 
 
 async def async_get_vision_completion(
@@ -147,15 +179,10 @@ async def async_get_vision_completion(
     model_name: str,
     api_provider: str,
 ) -> str:
-    if not client:
-        raise ProviderOperationError(
-            api_provider, model_name, "vision completion", "API client not initialized."
-        )
-    provider_module = PROVIDERS.get(api_provider)
-    if not provider_module:
-        raise ProviderOperationError(
-            api_provider, model_name, "vision completion", "Unsupported provider"
-        )
+    prompt = normalize_prompt(prompt)
+    provider_module = ensure_provider(
+        client, api_provider, model_name, "vision completion"
+    )
     if hasattr(provider_module, "async_vision_completion"):
         return await provider_module.async_vision_completion(
             client, prompt, image_path_or_url, model_name
@@ -169,9 +196,20 @@ async def async_get_vision_completion(
     )
 
 
-def get_vision_completion_compat(prompt: str, image_path_or_url: str, client: Any, model_name: str, api_provider: str):
+def get_vision_completion_compat(
+    prompt: str,
+    image_path_or_url: str,
+    client: Any,
+    model_name: str,
+    api_provider: str,
+) -> Tuple[Optional[str], Optional[str]]:
     try:
-        return get_vision_completion(prompt, image_path_or_url, client, model_name, api_provider), None
+        return (
+            get_vision_completion(
+                prompt, image_path_or_url, client, model_name, api_provider
+            ),
+            None,
+        )
     except ProviderOperationError as e:
         return None, str(e)
 
@@ -182,38 +220,62 @@ async def async_get_vision_completion_compat(
     client: Any,
     model_name: str,
     api_provider: str,
-):
+) -> Tuple[Optional[str], Optional[str]]:
     try:
-        return await async_get_vision_completion(
-            prompt, image_path_or_url, client, model_name, api_provider
-        ), None
+        return (
+            await async_get_vision_completion(
+                prompt, image_path_or_url, client, model_name, api_provider
+            ),
+            None,
+        )
     except ProviderOperationError as e:
         return None, str(e)
 
 
-def clean_llm_output(output_str: str, language: str = 'json') -> str:
+def clean_llm_output(output_str: str, language: str = "json") -> str:
     """Cleans markdown code fences from LLM output."""
-    if '```' in output_str:
-        pattern = re.compile(r'```(?:' + re.escape(language) + r')?\s*\n(.*?)\n```', re.DOTALL | re.IGNORECASE)
+    if "```" in output_str:
+        pattern = re.compile(
+            r"```(?:" + re.escape(language) + r")?\s*\n(.*?)\n```",
+            re.DOTALL | re.IGNORECASE,
+        )
         match = pattern.search(output_str)
         if match:
             return match.group(1).strip()
-        parts = output_str.split('```')
+        parts = output_str.split("```")
         if len(parts) >= 3:
             return parts[1].strip()
         return output_str.strip()
     return output_str.strip()
 
 
-def prompt_enhancer(user_input, model_name="o3", client=None, api_provider=None):
+def prompt_enhancer(
+    user_input: str,
+    model_name: str = "o3",
+    client: Any | None = None,
+    api_provider: str | None = None,
+) -> str:
     """Enhance a raw user prompt using a meta-prompt optimization system."""
-    if not user_input or not user_input.strip():
-        prov = api_provider or RECOMMENDED_MODELS.get(model_name, {}).get("provider", "unknown")
-        raise ProviderOperationError(prov, model_name, "prompt enhancement", "No user input provided for enhancement.")
+    user_input = normalize_prompt(user_input)
+    if not user_input:
+        prov = api_provider or RECOMMENDED_MODELS.get(model_name, {}).get(
+            "provider", "unknown"
+        )
+        raise ProviderOperationError(
+            prov,
+            model_name,
+            "prompt enhancement",
+            "No user input provided for enhancement.",
+        )
 
     if model_name not in RECOMMENDED_MODELS:
         prov = api_provider or "unknown"
-        raise ProviderOperationError(prov, model_name, "prompt enhancement", f"Model '{model_name}' not found in RECOMMENDED_MODELS. Original input: {user_input}")
+        raise ProviderOperationError(
+            prov,
+            model_name,
+            "prompt enhancement",
+            f"Model '{model_name}' not found in RECOMMENDED_MODELS. Original input: {user_input}",
+        )
 
     optimization_prompt = f"""You are an elite Prompt Optimization Engine. Your design is based on the understanding that prompt engineering is a rigorous technical discipline, essential for maximizing LLM efficacy and reliability. Your function is to analyze raw user inputs and systematically compile them into optimized, high-quality prompts.
 
@@ -248,20 +310,34 @@ Construct the optimized prompt by ensuring the following components are explicit
     *   Explicitly define the desired output format (e.g., Markdown report, JSON object, bulleted list), length constraints, style, and target audience.
 
 ### Phase 3: Structural Integrity
-Organize the entire prompt using clear structural delimiters to ensure optimal parsing by the target LLM. Clearly differentiate between instructions, context, examples, and the core task (e.g., using XML tags such as `<persona>`, `<context>`, `<instructions>`, `<examples>`, `<output_format>`).
+Organize the entire prompt using clear structural delimiters to ensure optimal parsing
+by the target LLM. Clearly differentiate between instructions, context, examples,
+and the core task (e.g., using XML tags such as `<persona>`, `<context>`,
+`<instructions>`, `<examples>`, `<output_format>`).
 
 ### Output
 Generate only the final, optimized prompt."""
 
     try:
+        actual_model: str | None
+        provider: str | None
         if client and api_provider:
             actual_model = model_name
             provider = api_provider
         else:
             client, actual_model, provider = setup_llm_client(model_name)
             if not client:
-                raise ProviderOperationError(provider or "unknown", model_name, "prompt enhancement", f"Failed to initialize LLM client for model '{model_name}'. Original input: {user_input}")
+                raise ProviderOperationError(
+                    provider or "unknown",
+                    model_name,
+                    "prompt enhancement",
+                    (
+                        f"Failed to initialize LLM client for model '{model_name}'. "
+                        f"Original input: {user_input}"
+                    ),
+                )
 
+        assert actual_model is not None and provider is not None
         enhanced_prompt = get_completion(
             optimization_prompt,
             client,
@@ -274,10 +350,20 @@ Generate only the final, optimized prompt."""
         raise ProviderOperationError(e.provider, e.model, "prompt enhancement", str(e))
     except Exception as e:
         prov = api_provider or locals().get("provider", "unknown")
-        raise ProviderOperationError(prov, model_name, "prompt enhancement", f"{e}. Original input: {user_input}")
+        raise ProviderOperationError(
+            prov,
+            model_name,
+            "prompt enhancement",
+            f"{e}. Original input: {user_input}",
+        )
 
 
-def prompt_enhancer_compat(user_input, model_name="o3", client=None, api_provider=None):
+def prompt_enhancer_compat(
+    user_input: str,
+    model_name: str = "o3",
+    client: Any | None = None,
+    api_provider: str | None = None,
+) -> Tuple[Optional[str], Optional[str]]:
     try:
         return prompt_enhancer(user_input, model_name, client, api_provider), None
     except ProviderOperationError as e:
@@ -285,11 +371,17 @@ def prompt_enhancer_compat(user_input, model_name="o3", client=None, api_provide
 
 
 __all__ = [
-    'setup_llm_client', 'async_setup_llm_client',
-    'get_completion', 'get_completion_compat',
-    'async_get_completion', 'async_get_completion_compat',
-    'get_vision_completion', 'get_vision_completion_compat',
-    'async_get_vision_completion', 'async_get_vision_completion_compat',
-    'clean_llm_output',
-    'prompt_enhancer', 'prompt_enhancer_compat'
+    "setup_llm_client",
+    "async_setup_llm_client",
+    "get_completion",
+    "get_completion_compat",
+    "async_get_completion",
+    "async_get_completion_compat",
+    "get_vision_completion",
+    "get_vision_completion_compat",
+    "async_get_vision_completion",
+    "async_get_vision_completion_compat",
+    "clean_llm_output",
+    "prompt_enhancer",
+    "prompt_enhancer_compat",
 ]

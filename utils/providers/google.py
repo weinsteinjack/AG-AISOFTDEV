@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import asyncio
+import os
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
@@ -9,54 +9,60 @@ from ..http import TOTAL_TIMEOUT
 from ..rate_limit import rate_limit
 
 
-def setup_client(model_name: str, config: dict[str, Any]):
+def setup_client(model_name: str, config: dict[str, Any]) -> Any:
     if config.get("audio_transcription"):
         from google.cloud import speech
+
         return speech.SpeechClient()
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in .env file.")
     if "imagen" in model_name:
         from google import genai as google_genai
+
         return google_genai.Client(api_key=api_key)
     import google.generativeai as genai
+
     genai.configure(api_key=api_key)
     return genai.GenerativeModel(model_name)
 
 
-async def async_setup_client(model_name: str, config: dict[str, Any]):
+async def async_setup_client(model_name: str, config: dict[str, Any]) -> Any:
     return await asyncio.to_thread(setup_client, model_name, config)
 
 
-def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
+def text_completion(
+    client: Any, prompt: str, model_name: str, temperature: float = 0.7
+) -> str:
     try:
         api_key = os.getenv("GOOGLE_API_KEY", "")
         rate_limit("google", api_key, model_name)
-        response = client.generate_content(
-            prompt, timeout=TOTAL_TIMEOUT
-        )
+        response = client.generate_content(prompt, timeout=TOTAL_TIMEOUT)
         return response.text
     except Exception as e:  # pragma: no cover - network dependent
         raise ProviderOperationError("google", model_name, "completion", str(e))
 
 
-async def async_text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
-    return await asyncio.to_thread(text_completion, client, prompt, model_name, temperature)
+async def async_text_completion(
+    client: Any, prompt: str, model_name: str, temperature: float = 0.7
+) -> str:
+    return await asyncio.to_thread(
+        text_completion, client, prompt, model_name, temperature
+    )
 
 
-def vision_completion(*args, **kwargs):  # pragma: no cover
-    raise ProviderOperationError("google", kwargs.get("model_name", ""), "vision", "Not implemented")
+def vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
+    raise ProviderOperationError(
+        "google", kwargs.get("model_name", ""), "vision", "Not implemented"
+    )
 
 
-async def async_vision_completion(*args, **kwargs):  # pragma: no cover
+async def async_vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
     return await asyncio.to_thread(vision_completion, *args, **kwargs)
 
 
 def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
     if "imagen" in model_name:
-        from google import genai as google_genai
-        from google.genai import types as google_types
-
         api_key = os.getenv("GOOGLE_API_KEY", "")
         rate_limit("google", api_key, model_name)
         response = client.models.generate_images(
@@ -64,22 +70,32 @@ def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, st
         )
         image_data_base64 = response.generated_images[0].bytes_base64
         return image_data_base64, "image/png"
-    raise ProviderOperationError("google", model_name, "image generation", "Not implemented for this model")
+    raise ProviderOperationError(
+        "google", model_name, "image generation", "Not implemented for this model"
+    )
 
 
-async def async_image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
+async def async_image_generation(
+    client: Any, prompt: str, model_name: str
+) -> Tuple[str, str]:
     return await asyncio.to_thread(image_generation, client, prompt, model_name)
 
 
-def image_edit(*args, **kwargs):  # pragma: no cover
-    raise ProviderOperationError("google", kwargs.get("model_name", ""), "image edit", "Not implemented")
+def image_edit(*args: Any, **kwargs: Any) -> Tuple[str, str]:  # pragma: no cover
+    raise ProviderOperationError(
+        "google", kwargs.get("model_name", ""), "image edit", "Not implemented"
+    )
 
 
-async def async_image_edit(*args, **kwargs):  # pragma: no cover
+async def async_image_edit(
+    *args: Any, **kwargs: Any
+) -> Tuple[str, str]:  # pragma: no cover
     return await asyncio.to_thread(image_edit, *args, **kwargs)
 
 
-def transcribe_audio(client: Any, audio_path: str, model_name: str, language_code: str = "en-US") -> str:
+def transcribe_audio(
+    client: Any, audio_path: str, model_name: str, language_code: str = "en-US"
+) -> str:
     api_key = os.getenv("GOOGLE_API_KEY", "")
     rate_limit("google", api_key, model_name)
     with open(audio_path, "rb") as audio_file:
