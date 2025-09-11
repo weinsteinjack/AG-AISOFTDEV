@@ -16,11 +16,42 @@ from utils.artifacts import (
 def reset(monkeypatch):
     art._ARTIFACTS_DIR = None
     monkeypatch.delenv("AGA_ARTIFACTS_DIR", raising=False)
+    # Track created artifacts directories
+    created_artifacts_dirs = set()
+
+    # Patch save_artifact and set_artifacts_dir to record created dirs
+    orig_save_artifact = art.save_artifact
+    orig_set_artifacts_dir = art.set_artifacts_dir
+
+    def save_artifact_wrapper(*args, **kwargs):
+        # Determine the base_dir used
+        base_dir = kwargs.get("base_dir")
+        if base_dir is None:
+            # Use global artifacts dir
+            dir_path = art.get_artifacts_dir()
+        else:
+            dir_path = Path(base_dir)
+        created_artifacts_dirs.add(dir_path.resolve())
+        return orig_save_artifact(*args, **kwargs)
+
+    def set_artifacts_dir_wrapper(path):
+        created_artifacts_dirs.add(Path(path).resolve())
+        return orig_set_artifacts_dir(path)
+
+    art.save_artifact = save_artifact_wrapper
+    art.set_artifacts_dir = set_artifacts_dir_wrapper
+
     yield
+
     art._ARTIFACTS_DIR = None
     monkeypatch.delenv("AGA_ARTIFACTS_DIR", raising=False)
-    if Path("artifacts").exists():
-        shutil.rmtree("artifacts")
+    # Remove only the created artifacts directories
+    for dir_path in created_artifacts_dirs:
+        if dir_path.exists():
+            shutil.rmtree(dir_path)
+    # Restore patched functions
+    art.save_artifact = orig_save_artifact
+    art.set_artifacts_dir = orig_set_artifacts_dir
 
 
 def test_default_artifacts_dir(tmp_path, monkeypatch):
