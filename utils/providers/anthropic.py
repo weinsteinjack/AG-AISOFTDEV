@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import asyncio
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
@@ -14,6 +15,10 @@ def setup_client(model_name: str, config: dict[str, Any]):
     if not api_key:
         raise ValueError("ANTHROPIC_API_KEY not found in .env file.")
     return Anthropic(api_key=api_key)
+
+
+async def async_setup_client(model_name: str, config: dict[str, Any]):
+    return await asyncio.to_thread(setup_client, model_name, config)
 
 
 def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
@@ -32,17 +37,37 @@ def text_completion(client: Any, prompt: str, model_name: str, temperature: floa
         raise ProviderOperationError("anthropic", model_name, "completion", str(e))
 
 
+async def async_text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
+    return await asyncio.to_thread(text_completion, client, prompt, model_name, temperature)
+
+
 def vision_completion(*args, **kwargs):  # pragma: no cover
     raise ProviderOperationError("anthropic", kwargs.get("model_name", ""), "vision", "Not implemented")
+
+
+async def async_vision_completion(*args, **kwargs):  # pragma: no cover
+    return await asyncio.to_thread(vision_completion, *args, **kwargs)
 
 
 def image_generation(*args, **kwargs):  # pragma: no cover
     raise ProviderOperationError("anthropic", kwargs.get("model_name", ""), "image generation", "Not implemented")
 
 
+async def async_image_generation(*args, **kwargs):  # pragma: no cover
+    return await asyncio.to_thread(image_generation, *args, **kwargs)
+
+
 def image_edit(*args, **kwargs):  # pragma: no cover
     raise ProviderOperationError("anthropic", kwargs.get("model_name", ""), "image edit", "Not implemented")
 
 
+async def async_image_edit(*args, **kwargs):  # pragma: no cover
+    return await asyncio.to_thread(image_edit, *args, **kwargs)
+
+
 def transcribe_audio(*args, **kwargs):  # pragma: no cover
     raise ProviderOperationError("anthropic", kwargs.get("model_name", ""), "audio transcription", "Not implemented")
+
+
+async def async_transcribe_audio(*args, **kwargs):  # pragma: no cover
+    return await asyncio.to_thread(transcribe_audio, *args, **kwargs)
