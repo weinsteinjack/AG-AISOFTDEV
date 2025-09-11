@@ -6,6 +6,8 @@ import base64
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
+from ..http import TOTAL_TIMEOUT
+from ..rate_limit import rate_limit
 
 
 def setup_client(model_name: str, config: dict[str, Any]):
@@ -18,10 +20,13 @@ def setup_client(model_name: str, config: dict[str, Any]):
 
 def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
     try:
+        api_key = os.getenv("HUGGINGFACE_API_KEY", "")
+        rate_limit("huggingface", api_key, model_name)
         response = client.chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=max(0.1, temperature),
             max_tokens=4096,
+            timeout=TOTAL_TIMEOUT,
         )
         return response.choices[0].message.content
     except Exception as e:  # pragma: no cover - network dependent
@@ -33,7 +38,9 @@ def vision_completion(*args, **kwargs):  # pragma: no cover
 
 
 def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
-    pil_image = client.text_to_image(prompt)
+    api_key = os.getenv("HUGGINGFACE_API_KEY", "")
+    rate_limit("huggingface", api_key, model_name)
+    pil_image = client.text_to_image(prompt, timeout=TOTAL_TIMEOUT)
     buffered = BytesIO()
     pil_image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8"), "image/png"
