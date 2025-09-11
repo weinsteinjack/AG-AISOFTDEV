@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 import random
+from typing import Any
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -47,7 +49,7 @@ def get_session() -> requests.Session:
     return _SESSION
 
 
-def request(method: str, url: str, **kwargs) -> requests.Response:
+def request(method: str, url: str, **kwargs: Any) -> requests.Response:
     """Wrapper around ``Session.request`` applying default timeout."""
 
     if "timeout" not in kwargs:

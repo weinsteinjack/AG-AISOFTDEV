@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+import base64
 import os
 from io import BytesIO
-import base64
-import asyncio
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
@@ -11,19 +11,22 @@ from ..http import TOTAL_TIMEOUT
 from ..rate_limit import rate_limit
 
 
-def setup_client(model_name: str, config: dict[str, Any]):
+def setup_client(model_name: str, config: dict[str, Any]) -> Any:
     from huggingface_hub import InferenceClient
+
     api_key = os.getenv("HUGGINGFACE_API_KEY")
     if not api_key:
         raise ValueError("HUGGINGFACE_API_KEY not found in .env file.")
     return InferenceClient(model=model_name, token=api_key)
 
 
-async def async_setup_client(model_name: str, config: dict[str, Any]):
+async def async_setup_client(model_name: str, config: dict[str, Any]) -> Any:
     return await asyncio.to_thread(setup_client, model_name, config)
 
 
-def text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
+def text_completion(
+    client: Any, prompt: str, model_name: str, temperature: float = 0.7
+) -> str:
     try:
         api_key = os.getenv("HUGGINGFACE_API_KEY", "")
         rate_limit("huggingface", api_key, model_name)
@@ -38,15 +41,21 @@ def text_completion(client: Any, prompt: str, model_name: str, temperature: floa
         raise ProviderOperationError("huggingface", model_name, "completion", str(e))
 
 
-async def async_text_completion(client: Any, prompt: str, model_name: str, temperature: float = 0.7) -> str:
-    return await asyncio.to_thread(text_completion, client, prompt, model_name, temperature)
+async def async_text_completion(
+    client: Any, prompt: str, model_name: str, temperature: float = 0.7
+) -> str:
+    return await asyncio.to_thread(
+        text_completion, client, prompt, model_name, temperature
+    )
 
 
-def vision_completion(*args, **kwargs):  # pragma: no cover
-    raise ProviderOperationError("huggingface", kwargs.get("model_name", ""), "vision", "Not implemented")
+def vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
+    raise ProviderOperationError(
+        "huggingface", kwargs.get("model_name", ""), "vision", "Not implemented"
+    )
 
 
-async def async_vision_completion(*args, **kwargs):  # pragma: no cover
+async def async_vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
     return await asyncio.to_thread(vision_completion, *args, **kwargs)
 
 
@@ -59,21 +68,32 @@ def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, st
     return base64.b64encode(buffered.getvalue()).decode("utf-8"), "image/png"
 
 
-async def async_image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
+async def async_image_generation(
+    client: Any, prompt: str, model_name: str
+) -> Tuple[str, str]:
     return await asyncio.to_thread(image_generation, client, prompt, model_name)
 
 
-def image_edit(*args, **kwargs):  # pragma: no cover
-    raise ProviderOperationError("huggingface", kwargs.get("model_name", ""), "image edit", "Not implemented")
+def image_edit(*args: Any, **kwargs: Any) -> Tuple[str, str]:  # pragma: no cover
+    raise ProviderOperationError(
+        "huggingface", kwargs.get("model_name", ""), "image edit", "Not implemented"
+    )
 
 
-async def async_image_edit(*args, **kwargs):  # pragma: no cover
+async def async_image_edit(
+    *args: Any, **kwargs: Any
+) -> Tuple[str, str]:  # pragma: no cover
     return await asyncio.to_thread(image_edit, *args, **kwargs)
 
 
-def transcribe_audio(*args, **kwargs):  # pragma: no cover
-    raise ProviderOperationError("huggingface", kwargs.get("model_name", ""), "audio transcription", "Not implemented")
+def transcribe_audio(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
+    raise ProviderOperationError(
+        "huggingface",
+        kwargs.get("model_name", ""),
+        "audio transcription",
+        "Not implemented",
+    )
 
 
-async def async_transcribe_audio(*args, **kwargs):  # pragma: no cover
+async def async_transcribe_audio(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
     return await asyncio.to_thread(transcribe_audio, *args, **kwargs)

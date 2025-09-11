@@ -1,9 +1,11 @@
 import logging
 import os
 
+
 class _ContextFilter(logging.Filter):
     """Ensure log records always have provider, model, latency_ms, artifacts_path."""
-    def filter(self, record):
+
+    def filter(self, record: logging.LogRecord) -> bool:
         for attr in ("provider", "model", "latency_ms", "artifacts_path"):
             if not hasattr(record, attr):
                 setattr(record, attr, None)
