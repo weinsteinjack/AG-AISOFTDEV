@@ -7,7 +7,7 @@ from .errors import ArtifactError, ArtifactNotFoundError, ArtifactSecurityError
 
 # Global, overridable at runtime
 _ARTIFACTS_DIR: Optional[Path] = None
-_PROJECT_MARKERS = ("pyproject.toml", ".git", "requirements.txt", "setup.cfg", "README.md")
+_PROJECT_MARKERS = frozenset({"pyproject.toml", ".git", "requirements.txt", "setup.cfg", "README.md"})
 
 def detect_project_root(start: Optional[Path] = None) -> Path:
     start = start or Path.cwd()
