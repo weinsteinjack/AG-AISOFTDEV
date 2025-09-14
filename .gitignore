@@ -60,3 +60,7 @@ Dockerfile
 
 # Root HTML entry that may be generated for demos
 index.html
+
+# Type checker and linter caches
+.mypy_cache/
+.ruff_cache/
