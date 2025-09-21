@@ -17,6 +17,16 @@ def test_save_artifact_invalid_path(tmp_path):
     with pytest.raises(ArtifactSecurityError):
         artifacts.save_artifact({'x': 1}, '/tmp/test.json')
 
+
+def test_save_artifact_strips_redundant_folder(tmp_path):
+    artifacts_dir = tmp_path / 'artifacts'
+    artifacts.set_artifacts_dir(str(artifacts_dir))
+    saved_path = artifacts.save_artifact('hello', 'artifacts/sample.txt', overwrite=True)
+    assert saved_path == artifacts_dir / 'sample.txt'
+    assert not (artifacts_dir / 'artifacts').exists()
+    loaded = artifacts.load_artifact('artifacts/sample.txt', as_='text')
+    assert loaded == 'hello'
+
 def test_load_artifact_missing_file(tmp_path):
     artifacts.set_artifacts_dir(str(tmp_path))
     from utils.errors import ArtifactNotFoundError

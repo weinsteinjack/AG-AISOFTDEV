@@ -103,8 +103,27 @@ def resolve_artifact_path(
             )
         final = resolved
     else:
+        cleaned_target = target
+        if subdir is None:
+            base_name = base.name
+            if base_name:
+                base_segment = Path(base_name)
+                while True:
+                    try:
+                        relative_target = cleaned_target.relative_to(base_segment)
+                    except ValueError:
+                        break
+                    if relative_target == Path('.'):
+                        raise ArtifactError(
+                            "Filename must not resolve to the artifacts directory itself."
+                        )
+                    cleaned_target = relative_target
         # allow optional subdir
-        final = (base / (Path(subdir) if subdir else Path()) / target).resolve()
+        final = (
+            base
+            / (Path(subdir) if subdir else Path())
+            / cleaned_target
+        ).resolve()
         if not _is_within(final, base):
             raise ArtifactSecurityError(
                 f"Resolved path '{final}' escapes artifacts dir '{base}'."
