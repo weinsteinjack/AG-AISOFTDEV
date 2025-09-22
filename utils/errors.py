@@ -4,7 +4,7 @@ class UtilsError(Exception):
     pass
 
 
-class ArtifactError(UtilsError):
+class ArtifactError(UtilsError, ValueError):
     """Generic artifact operation error."""
 
     pass

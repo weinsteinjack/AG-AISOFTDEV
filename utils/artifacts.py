@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 from typing import Optional, Union, Literal, Any
+
 from .errors import ArtifactError, ArtifactNotFoundError, ArtifactSecurityError
 
 # Global, overridable at runtime
@@ -34,6 +35,12 @@ def detect_project_root(start: Optional[Path] = None) -> Path:
         if any((p / m).exists() for m in _PROJECT_MARKERS):
             return p
     return Path.cwd()
+
+
+def _find_project_root() -> str:
+    """Historically exported project root helper (string form)."""
+
+    return str(detect_project_root())
 
 def set_artifacts_dir(path: Union[str, Path]) -> Path:
     """Set a custom artifacts directory.
@@ -234,3 +241,14 @@ def load_artifact(
     if ext in {".txt", ".md", ".csv", ".tsv", ".log", ".sql", ".py"}:
         return path.read_text(encoding=encoding)
     return path.read_bytes()
+
+
+__all__ = [
+    "set_artifacts_dir",
+    "get_artifacts_dir",
+    "resolve_artifact_path",
+    "save_artifact",
+    "load_artifact",
+    "detect_project_root",
+    "_find_project_root",
+]

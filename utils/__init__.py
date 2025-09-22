@@ -30,6 +30,7 @@ from .audio import (
 from .artifacts import *  # noqa: F401,F403 re-export for backwards compatibility
 from .errors import *  # noqa: F401,F403
 from .logging import *  # noqa: F401,F403
+from .plantuml import render_plantuml_diagram
 
 __all__ = [
     'load_environment', 'load_dotenv', 'display', 'Markdown', 'IPyImage', 'PlantUML',
@@ -46,4 +47,5 @@ __all__ = [
     'transcribe_audio', 'transcribe_audio_compat',
     'async_transcribe_audio', 'async_transcribe_audio_compat',
     'clean_llm_output', 'prompt_enhancer', 'prompt_enhancer_compat',
+    'render_plantuml_diagram',
 ]
