@@ -1,474 +1,159 @@
 # 🚀 Deployment Guide: New Hire Onboarding Tool
 
-### 🎯 Goal
+This guide explains how to assemble and deploy the capstone project that threads through the first seven days of the program: the AI-assisted New Hire Onboarding Tool. Instead of introducing brand-new code, we will reference the notebooks you already completed and show how to stitch their outputs into a production-ready application.
 
-Guide students through the **final assembly and deployment** of the full-stack New Hire Onboarding Tool.
-This consolidates all course artifacts into a single, runnable application packaged inside a **Docker container**.
-
-> **Who this is for:**
-> Students who have completed the labs and want a **step-by-step walkthrough** to stitch the frontend to the backend and deploy a full application.
+> **Scope:** The repository does **not** ship a pre-built `app/` or `frontend/` directory. You will create those folders by exporting code from your lab notebooks (or by reusing the matching notebooks under `Solutions/`).
 
 ---
 
-## 📑 Table of Contents
+## 1. Architecture Recap
 
-1. [Application Architecture: A Deeper Look](#-1-application-architecture-a-deeper-look)
-2. [Connecting Frontend Components to Backend Endpoints](#-2-connecting-frontend-components-to-backend-endpoints)
-3. [Inventory of Required Artifacts](#-3-inventory-of-required-artifacts)
-4. [Assembling the Application](#-4-assembling-the-application)
-5. [Containerization: The Enhanced Dockerfile](#-5-containerization-the-enhanced-dockerfile)
-6. [Deployment and Execution](#-6-deployment-and-execution)
-7. [Troubleshooting Guide](#-7-troubleshooting-guide-for-beginners)
-8. [Stitching Overview (Intuition First)](#-8-stitching-overview-intuition-first)
-9. [Choose Your Deployment Pattern](#-9-choose-your-deployment-pattern)
+```
+ ┌──────────────┐      ┌───────────────┐      ┌─────────────────┐
+ │ React Client │◀────▶│ FastAPI Layer │◀────▶│ SQLite Knowledge │
+ │ (Day 8 Labs) │      │ (Day 3 Labs)  │      │  & Workflow Data │
+ └──────────────┘      └───────────────┘      └─────────────────┘
+           ▲                    │                         ▲
+           │                    ▼                         │
+           └──────────── RAG + Agents (Days 5–7) ─────────┘
+```
 
-   * 9A. [Pattern A: Single Image (FastAPI serves React)](#9a-pattern-a-single-image-fastapi-serves-react)
-   * 9B. [Pattern B: Two Services with Nginx Proxy (Docker Compose)](#9b-pattern-b-two-services-with-nginx-proxy-docker-compose)
-10. [Frontend Wiring: Buttons → Endpoints → UI](#-10-frontend-wiring-buttons--endpoints--ui)
-11. [CRUD Forms: Map Fields to Models](#-11-crud-forms-map-fields-to-models)
-12. [Production Polishing Checklist](#-12-production-polishing-checklist)
-13. [Quick Decision Flow](#-13-quick-decision-flow)
+* **Backend:** `Solutions/Day_03_Development_and_Coding/D3_Lab1_AI_Driven_Backend_Development_SOLUTION.ipynb` contains the FastAPI scaffolding (models, CRUD routes, chat endpoint). Export relevant cells into `app/main.py`.
+* **Database & RAG assets:** Day 2 and Day 5 labs produce schema diagrams, seed data, and RAG-ready Markdown files. Save them via `utils.artifacts.save_artifact()` so they can be copied into `artifacts/` during deployment.
+* **Agent workflows:** Day 6–7 labs extend the backend with LangGraph/LangChain orchestrations. Integrate those modules under `app/agents.py` or a similar file.
+* **Frontend:** Day 8 labs generate React components (e.g., onboarding dashboard, evaluation panels). Consolidate them under `frontend/src/components/`.
 
 ---
 
-## 🔹 1. Application Architecture: A Deeper Look
+## 2. Export Checklist
 
-```
- ┌────────────┐      ┌─────────────┐       ┌───────────────┐
- │  Frontend  │◀────▶│   Backend   │◀────▶ │   Database     │
- │   (React)  │      │  (FastAPI)  │       │   (SQLite)     │
- └────────────┘      └─────────────┘       └───────────────┘
-        ▲                     │
-        │                     ▼
-        └────────── RAG Agent & LangGraph ────────────┘
-```
+Use this checklist to ensure you gather every artifact before building the container. The “Source Notebook” column points to the canonical solution for reference.
 
-* **Backend (FastAPI):** Business logic, CRUD, DB ops, AI chat agent (`/chat`).
-* **Frontend (React):** User experience & API calls.
-* **Database (SQLite):** Persistent data (`onboarding.db`).
-* **Deployment (Docker):** Portable, reproducible, single command run.
+| Asset | Target Location | Source Notebook |
+| --- | --- | --- |
+| FastAPI app (`main.py`, routers, database helpers) | `app/` | Day 3 Lab 1 & Lab 2 |
+| SQLAlchemy models & schema | `app/models.py` | Day 2 Lab 1 (design) + Day 3 Lab 1 (implementation) |
+| Seed data (`onboarding.db`) | `artifacts/onboarding.db` | Day 2 Lab 2 |
+| Knowledge base docs (`*.md`) | `artifacts/docs/` | Day 1 Lab 2 (PRD) + Day 5 Lab 1 (RAG prep) |
+| Evaluation prompts / grading rubrics | `artifacts/evaluation/` | Day 4 Lab 1 |
+| Agent orchestration (`agents.py`, `workflows.py`) | `app/agents/` | Day 5 Lab 2, Day 6, Day 7 |
+| React screens (`*.jsx`) | `frontend/src/components/` | Day 8 Lab 1 & Lab 2 |
+| Environment configuration | `.env` | Environment Setup Guide |
 
----
+Export code by either:
 
-## 🔹 2. Connecting Frontend Components to Backend Endpoints
+1. Copying from your personal lab notebook into `.py`/`.jsx` files, or
+2. Using **File → Download as → Python (.py)** in Jupyter, then cleaning the output (remove magic commands, ensure proper imports).
 
-### 🔗 The API Data Contract
-
-**Backend Contract (FastAPI + Pydantic):**
-
-```python
-from pydantic import BaseModel
-
-class UserCreate(BaseModel):
-    name: str
-    email: str
-    role: str
-```
-
-**Frontend Implementation (React):**
-
-```jsx
-import { useState } from "react";
-
-const [formData, setFormData] = useState({
-  name: "",
-  email: "",
-  role: "New Hire"
-});
-```
-
-✅ Keys must **match exactly** between frontend state and backend Pydantic model.
+Remember to keep business logic (FastAPI, agents) in the backend and UI logic in the frontend. Shared configuration such as API base URLs should live in environment variables.
 
 ---
 
-### 🧑‍💻 Example: Full CRUD in React
+## 3. Wiring the Backend and Frontend
 
-See **UserManagement.jsx** (Create, Read, Update, Delete) pattern in [Section 11](#-11-crud-forms-map-fields-to-models).
-Includes form submission, editing, deletion, refresh, and error handling.
+### Backend: Runbook
 
----
+1. Create `app/main.py` and `app/dependencies.py` (or similar) in the repository root.
+2. Add a `get_settings()` helper that loads API keys using `utils.load_environment()` so both the web app and the agent modules share credentials.
+3. Mount routers for onboarding workflows, document retrieval, and the `/chat` endpoint that wraps the LangGraph agent from Day 7.
+4. Point SQLAlchemy to the SQLite file that lives under `artifacts/onboarding.db` (import `create_engine` from `sqlalchemy`):
 
-## 🔹 3. Inventory of Required Artifacts
+   ```python
+   DATABASE_URL = "sqlite:///./artifacts/onboarding.db"
+   engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+   ```
 
-| **Artifact**              | **Purpose**                                     | **Created In** | **AI-Generated?** |
-| ------------------------- | ----------------------------------------------- | -------------- | ----------------- |
-| `app/main.py`             | FastAPI backend (endpoints, DB logic, RAG chat) | Day 3, Day 6   | ✅                 |
-| `requirements.txt`        | Python dependencies                             | Day 4          | ✅                 |
-| `artifacts/onboarding.db` | SQLite database with schema + seed data         | Day 2          | ✅                 |
-| `artifacts/day1_prd.md`   | Knowledge base for RAG                          | Day 1          | ✅                 |
-| `frontend/*.jsx`          | React UI components                             | Day 8          | ✅                 |
-| `Dockerfile`              | Container instructions                          | Day 4          | ✅                 |
-| `.env`                    | Secrets (API keys, configs)                     | Setup          | ❌                 |
+5. When deploying, bundle the `artifacts/` directory alongside the app so migrations and RAG resources load automatically.
 
----
+### Frontend: Runbook
 
-## 🔹 4. Assembling the Application
-
-### 📂 Project Structure
-
-```
-onboarding-tool/
-├── app/                 # Backend
-│   └── main.py
-├── artifacts/           # DB + RAG docs
-│   ├── onboarding.db
-│   └── day1_prd.md
-├── frontend/            # React project
-│   └── src/components/
-├── tests/               # Unit tests
-├── requirements.txt
-├── Dockerfile
-├── .dockerignore
-└── .env
-```
-
-### ⚠️ Recommended `.dockerignore`
-
-```
-.git
-**/__pycache__/
-**/*.pyc
-node_modules
-frontend/node_modules
-frontend/dist
-.env
-```
+1. Create a Vite or Create React App project **or** follow the zero-build approach in the [React Components Viewing Guide](How_to_View_Your_React_Components_Locally.md).
+2. Ensure the base URL for API calls points to the FastAPI server (e.g., `http://localhost:8000`). Use environment variables such as `VITE_API_URL` or `REACT_APP_API_URL`.
+3. Map form fields to Pydantic models exactly—the Day 3 notebooks provide the canonical schema.
+4. Validate flows manually: create a new hire, update status, trigger the agent-based onboarding checklist, and review the generated knowledge base links.
 
 ---
 
-## 🔹 5. Containerization: The Enhanced Dockerfile
+## 4. Containerisation Strategy
+
+Once the backend and frontend are wired together locally, package everything into a Docker image. Below is a multi-stage Dockerfile that mirrors what you generate in the Day 5 CI/CD lab. Adjust paths if your folder structure differs.
 
 ```dockerfile
-# --- Stage 1: Build Frontend ---
+# Stage 1 – Build the React frontend
 FROM node:18-alpine AS frontend-builder
-WORKDIR /app/frontend
+WORKDIR /workspace/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
-# --- Stage 2: Build Backend + Final Image ---
+# Stage 2 – Assemble the FastAPI backend
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
-COPY --from=frontend-builder /app/frontend/dist ./app/static
 COPY artifacts/ ./artifacts/
+COPY --from=frontend-builder /workspace/frontend/dist ./app/static
+ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host","0.0.0.0","--port","8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
----
+Place this file at the project root next to `requirements.txt`. Create a `.dockerignore` containing `.env`, `**/__pycache__/`, and any local notebooks you do not want packaged.
 
-## 🔹 6. Deployment and Execution
-
-### ⚡ Quickstart
+### Build & Run
 
 ```bash
-# Build image
 docker build -t onboarding-tool .
-
-# Run container
 docker run -p 8000:8000 --env-file .env onboarding-tool
 ```
 
-### 🌐 Access
-
-* **Frontend UI:** [http://localhost:8000](http://localhost:8000)
-* **Backend API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+Visit `http://localhost:8000` to load the bundled React build. Interactive API docs remain available at `http://localhost:8000/docs`.
 
 ---
 
-## 🔹 7. Troubleshooting Guide for Beginners
+## 5. Deployment Options
 
-| ❌ **Issue**                   | 🛠️ **Cause**                    | ✅ **Fix**                                                         |
-| ----------------------------- | -------------------------------- | ----------------------------------------------------------------- |
-| `COPY failed: file not found` | Built from wrong folder          | Run `docker build` from repo **root** with the `Dockerfile`.      |
-| `Connection Refused`          | App crashed inside container     | `docker logs <container_id>` and fix the Python error.            |
-| API calls fail (404)          | Route mismatch or wrong base URL | Verify `/api/*` routes exist and frontend calls match.            |
-| `no such table: users`        | DB not copied or wrong path      | Verify `artifacts/` COPY & `sqlite:///./artifacts/onboarding.db`. |
-| API Key error                 | `.env` not passed to container   | Use `--env-file .env` on `docker run`.                            |
+| Pattern | When to Use | Notes |
+| --- | --- | --- |
+| **Single container (FastAPI serves React)** | Classroom demos, hackathon projects, initial pilot deployments. | Simplest setup. React build output is copied into `app/static` and served by FastAPI. |
+| **Docker Compose (separate services)** | Teams that want independent scaling or a dedicated Node.js server. | Define `frontend` and `backend` services, optionally add an `nginx` reverse proxy for TLS/HTTP2. |
+| **Cloud services (Render, Azure Web Apps, AWS App Runner)** | When you need managed infrastructure. | Use the same Docker image produced above. Configure environment variables and persistent storage for artifacts. |
 
----
-
-## 🔹 8. Stitching Overview (Intuition First)
-
-* **What “stitching” means:** Wiring your **React** UI events → **HTTP calls** → **FastAPI** endpoints, then rendering returned data.
-* **Where “base URL” comes from:** Environment variable in React (e.g., `VITE_API_URL` or `REACT_APP_API_URL`).
-* **Two painless ways to avoid CORS:**
-
-  1. Serve React **from FastAPI** (same origin).
-  2. Serve React with **Nginx** and **proxy** `/api/*` to FastAPI (still same origin from browser’s POV).
-
-> **Best practice:** Prefix backend routes with `/api` and use **relative calls** in React in production.
+For each option, ensure environment variables (API keys, vector store URLs, optional analytics keys) are injected securely. Avoid baking secrets into the container image.
 
 ---
 
-## 🔹 9. Choose Your Deployment Pattern
+## 6. Production Checklist
 
-### 9A. Pattern A: Single Image (FastAPI serves React)
-
-**Fastest & simplest**. Everything runs on port 8000, no CORS.
-
-**FastAPI SPA fallback** (ensure API routes are defined **before** the catch-all):
-
-```python
-# app/main.py
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
-
-app = FastAPI()
-
-# API routers mounted at /api/... (define these FIRST)
-# app.include_router(users_router, prefix="/api/users")
-# app.include_router(tasks_router, prefix="/api/tasks")
-# ...
-
-# Serve Vite assets
-STATIC_DIR = "app/static"
-app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
-
-# SPA fallback for client-side routing
-@app.get("/{full_path:path}")
-async def spa(full_path: str):
-    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
-```
-
-**React calls in production:**
-
-```jsx
-// Use relative path in production (same origin)
-await fetch(`/api/users`);
-```
+* ✅ **Logging:** Use `utils.logging.get_logger()` inside the FastAPI app so logs remain structured and consistent.
+* ✅ **Rate limiting:** Configure `UTILS_RATE_LIMIT_QPS_*` environment variables if you call provider APIs from the backend. See the Productionizing Utils guide for details.
+* ✅ **Health checks:** Add a `/health` endpoint that verifies database connectivity and optionally pings provider APIs with a lightweight request.
+* ✅ **Error handling:** Wrap agent calls in `try`/`except` blocks and return helpful HTTP status codes to the frontend.
+* ✅ **Security:** Enable CORS for the frontend domain only, validate user input, and avoid exposing API keys to the client.
+* ✅ **CI/CD:** Extend the Day 5 GitHub Actions workflow to run `pytest` (fast suite) and `docker build` on every push.
 
 ---
 
-### 9B. Pattern B: Two Services with Nginx Proxy (Docker Compose)
+## 7. Troubleshooting
 
-**More modular**. Nginx serves the SPA and proxies `/api/*` → FastAPI.
-
-**Backend Dockerfile**:
-
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-COPY app/ ./app/
-COPY artifacts/ ./artifacts/
-EXPOSE 8000
-CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
-```
-
-**Frontend Dockerfile**:
-
-```dockerfile
-FROM node:18 AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx","-g","daemon off;"]
-```
-
-**Nginx config** (`frontend/nginx.conf`):
-
-```nginx
-server {
-  listen 80;
-
-  location / {
-    root /usr/share/nginx/html;
-    try_files $uri $uri/ /index.html;
-  }
-
-  location /api/ {
-    proxy_pass http://backend:8000/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-  }
-}
-```
-
-**docker-compose.yml**:
-
-```yaml
-version: "3.8"
-services:
-  backend:
-    build: .
-    container_name: backend
-    ports: ["8000:8000"]
-    environment:
-      - DATABASE_URL=sqlite:///./artifacts/onboarding.db
-
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    ports: ["80:80"]
-    depends_on: [backend]
-```
-
-**React env for prod** (`frontend/.env.production`):
-
-```dotenv
-# Vite
-VITE_API_URL=/api
-# CRA
-REACT_APP_API_URL=/api
-```
-
-**Bring it up:**
-
-```bash
-docker compose up --build
-# Visit http://localhost
-```
-
-> **No CORS** needed here: browser only talks to Nginx origin; Nginx talks to FastAPI.
+| Symptom | Likely Cause | Fix |
+| --- | --- | --- |
+| `COPY failed: file not found` during `docker build` | Running the build from the wrong directory or missing exported files. | Ensure `app/`, `frontend/`, and `artifacts/` exist at the repository root before building. |
+| `sqlite3.OperationalError: no such table` | SQLite file not copied or migrations not applied. | Re-run the Day 2 schema notebook, export the database to `artifacts/onboarding.db`, and rebuild the image. |
+| Frontend shows network errors (`CORS` or 404) | API base URL mismatch or missing CORS configuration. | Update environment variables, confirm FastAPI routes, and enable CORS middleware for the frontend origin. |
+| Agent endpoint times out | Missing provider key or rate limit hit. | Verify `.env`, check logs for provider errors, and configure rate limiting/backoff in `utils.llm`. |
+| React build missing styling | Generated component relies on Tailwind or CSS not bundled. | Import required CSS files into the React entry point before running `npm run build`. |
 
 ---
 
-## 🔹 10. Frontend Wiring: Buttons → Endpoints → UI
+## 8. Putting It All Together
 
-**Pattern:** Each button gets an `onClick` → calls a function → performs `fetch` → updates component state → UI re-renders.
+1. Finish the core labs and export code/artifacts into source files.
+2. Test the FastAPI backend locally (`uvicorn app.main:app --reload`).
+3. Wire up the React frontend and confirm all flows against the live backend.
+4. Containerise using the multi-stage Dockerfile and run the image locally.
+5. Deploy to your chosen environment and monitor logs for the first set of user journeys.
 
-```jsx
-// src/components/ApiButtons.jsx
-import React, { useState } from "react";
-
-const API = import.meta?.env?.VITE_API_URL || process.env.REACT_APP_API_URL || "";
-
-export default function ApiButtons() {
-  const [data,setData] = useState(null);
-  const [loading,setLoading] = useState(false);
-  const [error,setError] = useState(null);
-
-  const call = async (path) => {
-    setLoading(true); setError(null);
-    try {
-      const res = await fetch(`${API}${path}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
-    } catch (e) { setError(String(e)); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <div>
-      <h2>API Controls</h2>
-      <button onClick={() => call("/api/users")}>Fetch Users</button>
-      <button onClick={() => call("/api/tasks")}>Fetch Tasks</button>
-      <button onClick={() => call("/api/project/info")}>Fetch Project</button>
-      <hr />
-      {loading && <p>Loading…</p>}
-      {error && <p style={{color:"red"}}>{error}</p>}
-      {data && <pre><code>{JSON.stringify(data, null, 2)}</code></pre>}
-    </div>
-  );
-}
-```
-
----
-
-## 🔹 11. CRUD Forms: Map Fields to Models
-
-* **Contract-first:** Pydantic keys ⇄ form `name` attributes.
-* **State-driven UI:** `onChange` updates state, submit triggers POST/PUT, refresh list.
-
-```jsx
-// src/components/UserManagement.jsx
-import React, { useEffect, useState } from "react";
-const API = import.meta?.env?.VITE_API_URL || process.env.REACT_APP_API_URL || "";
-
-const empty = { id:null, name:"", email:"", role:"New Hire" };
-
-export default function UserManagement() {
-  const [users, setUsers] = useState([]);
-  const [form, setForm] = useState(empty);
-  const [editing, setEditing] = useState(false);
-
-  const load = async () => setUsers(await (await fetch(`${API}/api/users`)).json());
-  useEffect(() => { load(); }, []);
-
-  const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    const url = editing ? `${API}/api/users/${form.id}` : `${API}/api/users/`;
-    const method = editing ? "PUT" : "POST";
-    await fetch(url, { method, headers:{ "Content-Type":"application/json" }, body: JSON.stringify(form) });
-    setEditing(false);
-    setForm(empty);
-    load();
-  };
-
-  const onEdit = u => { setEditing(true); setForm(u); };
-  const onDelete = async id => { await fetch(`${API}/api/users/${id}`, { method:"DELETE" }); load(); };
-
-  return (
-    <section>
-      <h2>User Management</h2>
-      <form onSubmit={onSubmit}>
-        <input name="name"  value={form.name}  onChange={onChange} placeholder="Name"  required />
-        <input name="email" value={form.email} onChange={onChange} placeholder="Email" required />
-        <input name="role"  value={form.role}  onChange={onChange} placeholder="Role"  required />
-        <button type="submit">{editing ? "Update User" : "Create User"}</button>
-      </form>
-
-      <h3>Users</h3>
-      <ul>
-        {users.map(u => (
-          <li key={u.id}>
-            {u.name} ({u.email}) - {u.role}
-            <button onClick={() => onEdit(u)}>Edit</button>
-            <button onClick={() => onDelete(u.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-```
-
-**Flow:**
-Create → POST `/api/users/` → refresh list
-Read → GET `/api/users` → render list
-Update → PUT `/api/users/{id}` → refresh
-Delete → DELETE `/api/users/{id}` → refresh
-
----
-
-## 🔹 12. Production Polishing Checklist
-
-* **API Prefix:** All backend endpoints under `/api/*`.
-* **SPA Fallback:** Catch-all route serves `index.html`.
-* **Env Config:**
-
-  * Dev: `VITE_API_URL=http://localhost:8000`
-  * Prod (Single Image or Proxy): `VITE_API_URL=/api` (use relative calls)
-* **Health Check:** Add `/api/healthz` for load balancers / uptime.
-* **Error UX:** Centralized `fetch` wrapper (timeouts, JSON errors, toasts).
-* **DB URL (SQLite):** `sqlite:///./artifacts/onboarding.db` works inside container.
-* **Nginx cache:** Long-lived cache for assets, SPA fallback for routes.
-* **Logs:** Uvicorn access logs to stdout (Docker-friendly).
-* **Security Headers:** Consider CSP, X-Frame-Options at Nginx in production.
-* **Auth (if applicable):** Prefer httpOnly cookies; avoid localStorage tokens.
-
----
-
-## 🔹 13. Quick Decision Flow
-
-* Want **fewest moving parts** and **no CORS**? → **Pattern A (Single Image)**
-* Want **edge proxy** + **clean separation** + **scale later**? → **Pattern B (Nginx + FastAPI via Compose)**
-
-Both approaches are fully aligned with course constraints (local hosting, Dockerized, small footprint, no GPU).
+When each layer passes acceptance tests, you have successfully transformed the daily lab outputs into a cohesive onboarding assistant ready for stakeholders to trial.

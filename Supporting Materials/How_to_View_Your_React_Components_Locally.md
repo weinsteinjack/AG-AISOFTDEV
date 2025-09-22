@@ -1,146 +1,133 @@
-# Student Guide: How to View Your React (.jsx) Components Locally
+# Student Guide: Previewing React Components Generated in the Labs
 
-This guide provides the simplest method to view and test your AI-generated React (`.jsx`) components on your local machine. This approach is perfect for the labs in this course as it requires **no complex build tools** like Vite, Webpack, or Create React App.
-
-We will use a single HTML file to load the necessary libraries directly in the browser and a simple, built-in web server to display the page.
-
-### Why Do We Need This Process?
-
-Browsers don't understand JSX syntax out of the box. JSX (e.g., `<div>Hello</div>`) needs to be converted (transpiled) into regular JavaScript function calls (e.g., `React.createElement('div', null, 'Hello')`).
-
-Instead of setting up a complex local development environment, we will load a tool called **Babel** directly in the browser. Babel will handle this transpilation for us automatically, on the fly.
+Day 8 focuses on AI-assisted front-end development. Most labs output `.jsx` snippets instead of a full React project so you can focus on reasoning about UI structure. This guide shows two lightweight ways to preview those components locally without scaffolding a large build system.
 
 ---
 
-## Step-by-Step Instructions
+## Option 1 – Zero-Build HTML Shell (Recommended for Quick Checks)
 
-### Step 1: Create the `index.html` File
+This approach uses a single `index.html` file plus CDN-hosted React, ReactDOM, Babel, and optional Tailwind CSS. It is perfect for verifying layout or styles immediately after a lab.
 
-This file will be the container for your React component.
+### Step-by-Step
 
-1.  Navigate to the **root directory** of your `AI_Driven_Software_Engineering` project.
-2.  Create a new file and name it `index.html`.
-3.  Copy and paste the following code into your new `index.html` file:
+1. **Create a folder for previews** (for example, `frontend_preview/` at the repository root).
+2. **Copy your generated component** from `Labs/Day_08_Vision_and_Evaluation` (or the matching file in `Solutions/`) into that folder. Example filename: `onboarding_dashboard.jsx`.
+3. **Create `index.html`** alongside the component and paste the template below. Update the final `<script>` tag so `src` points to your component file.
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>React Component Test</title>
-    
-    <!-- 1. Load React libraries -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React Component Preview</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-
-    <!-- 2. Load Babel to transpile JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- 3. (Optional) Load Tailwind CSS if your component uses it -->
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-        /* Basic styling to center the component on the page */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f2f5;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #f4f5f7;
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
+      }
     </style>
-</head>
-<body>
-    <!-- 4. This is the root element where your component will be rendered -->
+  </head>
+  <body>
     <div id="root"></div>
-
-    <!-- 5. IMPORTANT: Link to your generated .jsx file -->
-    <!-- The type="text/babel" attribute is essential! -->
-    <script type="text/babel" src="app/day8_login_refactored.jsx"></script> 
-    
-</body>
+    <script type="text/babel" src="onboarding_dashboard.jsx"></script>
+  </body>
 </html>
 ```
 
-#### **Action Required:** Update the File Path
+4. **Start a static web server** from the preview folder:
 
-In the code above, locate the final `<script>` tag. You **must** change the `src` attribute to point to the `.jsx` file you wish to view.
+   ```bash
+   cd frontend_preview
+   python -m http.server 8000
+   ```
 
-For example, if you are working on the weather app from the self-paced lab, you would change it to:
-`<script type="text/babel" src="app/day8_sp_weather_ui.jsx"></script>`
+5. **Open** `http://localhost:8000` in your browser. Save the `.jsx` file and refresh to see updates.
 
-### Step 2: Start a Local Web Server
-
-You need to serve the `index.html` file from a local web server to view it correctly. Here are two easy options.
-
-#### **Option 1: Python's Built-in `http.server` (Recommended)**
-
-This is the recommended method as Python is a prerequisite for the course.
-
-1.  Open your terminal or command prompt.
-2.  Make sure you are in the **root directory** of your `AI_Driven_Software_Engineering` project (the same location as your `index.html` file).
-3.  Run the following command:
-    ```bash
-    python -m http.server
-    ```
-4.  The server will start, and you will see a message like this:
-    ```
-    Serving HTTP on 0.0.0.0 port 8000 ([http://0.0.0.0:8000/](http://0.0.0.0:8000/)) ...
-    ```
-
-#### **Option 2: Node.js `npx serve` (Alternative)**
-
-If you have Node.js installed, this is another excellent and simple option.
-
-1.  Open your terminal in the root directory of your project.
-2.  Run the following command:
-    ```bash
-    npx serve
-    ```
-    *(`npx` is a tool included with Node.js that runs packages without a global installation.)*
-3.  The server will start and provide you with a local URL:
-    ```
-    ┌──────────────────────────────────────────────────┐
-    │                                                  │
-    │   Serving!                                       │
-    │                                                  │
-    │   - Local:    http://localhost:3000              │
-    │                                                  │
-    └──────────────────────────────────────────────────┘
-    ```
-
-### Step 3: View Your Component in the Browser
-
-1.  Open your web browser (Chrome, Firefox, etc.).
-2.  In the address bar, type the URL from the server you started:
-    * If you used Python: `localhost:8000`
-    * If you used `npx serve`: `localhost:3000`
-3.  Press Enter. You should now see your React component rendered on the page!
-
-If you make any changes to your `.jsx` file, simply save the file and refresh the browser page to see the updates.
-
----
-
-### Which Option Should I Choose?
-
-Both options accomplish the same goal: they start a simple, local web server from your project directory. For this course, either one is a great choice. Here’s a quick comparison to help you decide.
-
-|              | **Python `http.server`** | **Node.js `npx serve`** |
-| :----------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------- |
-| **Pros** | ✅ Already installed (comes with Python).<br>✅ Zero configuration needed.<br>✅ Perfect for simple file serving. | ✅ More user-friendly output.<br>✅ Automatically copies the URL to your clipboard.<br>✅ Can be slightly faster with more features. |
-| **Cons** | ❌ Very basic output.<br>❌ Doesn't automatically open the browser.                                      | ❌ Requires Node.js and npm to be installed.<br>❌ Downloads the `serve` package on first run.                          |
-
-**Recommendation:** If you're looking for the absolute fastest way to get started, use the **Python `http.server`**. It's guaranteed to be available on your system. If you already have Node.js installed and prefer a slightly more polished experience, **`npx serve`** is an excellent alternative.
+> **Tip:** Keep multiple preview folders if you want to compare different component variations side-by-side.
 
 ### Troubleshooting
 
-* **"My component is not showing up / I see a blank page."**
-    * Double-check the `src` path in your `index.html` file. Make sure it correctly points to your `.jsx` file.
-    * Open the browser's developer console (usually by pressing `F12` or `Ctrl+Shift+I`). Look for any error messages in the "Console" tab. This will often tell you if there's a typo in your path or a syntax error in your JSX.
-* **"I see my JSX code on the page instead of the component."**
-    * Make sure you have included `type="text/babel"` in the script tag that links your `.jsx` file. This attribute is what tells the Babel library to transpile your code.
-* **"The styling looks wrong."**
-    * If your component uses Tailwind CSS, ensure you have included the Tailwind CDN script in the `<head>` of your `index.html` file (it's included in the template above).
+| Issue | Fix |
+| --- | --- |
+| Seeing raw JSX in the browser | Ensure the `<script>` tag that imports your component includes `type="text/babel"`. |
+| Blank page with console errors | Check the browser dev tools (`F12`) for syntax errors or incorrect file paths. |
+| Tailwind classes not applied | Confirm the Tailwind CDN script is present and that class names are correct. |
+
+---
+
+## Option 2 – Minimal Vite Project (Great for Iteration)
+
+If you want hot reloading, TypeScript support, or integration tests, scaffold a lightweight Vite project dedicated to Day 8.
+
+### Initialise
+
+```bash
+npm create vite@latest onboarding-ui -- --template react
+cd onboarding-ui
+npm install
+```
+
+Copy the generated components into `src/components/`. Update `src/App.jsx` to render the component you want to preview.
+
+```jsx
+import OnboardingDashboard from "./components/onboarding_dashboard.jsx";
+
+function App() {
+  return <OnboardingDashboard />;
+}
+
+export default App;
+```
+
+Start the dev server:
+
+```bash
+npm run dev
+```
+
+Open the URL shown in the terminal (typically `http://localhost:5173`).
+
+### Integrating With the Course Backend
+
+When connecting to the FastAPI backend you build in Day 3:
+
+1. Create a `.env.local` file in the Vite project with `VITE_API_URL=http://localhost:8000`.
+2. Read the variable in your component: `const api = import.meta.env.VITE_API_URL;`.
+3. Use `fetch` or `axios` to call the FastAPI endpoints created during the backend labs.
+
+This mirrors the wiring you will perform later in the deployment guide.
+
+---
+
+## Organising Components
+
+* Store raw lab outputs under version control (e.g., `Labs/Day_08_Vision_and_Evaluation/generated_components/`).
+* Save polished versions to `frontend/src/components/` once you are ready to integrate them with the backend.
+* Document each component’s expected props and dependencies so teammates can consume them easily.
+
+---
+
+## Frequently Asked Questions
+
+**Do I need Node.js for Option 1?**  
+No. Python’s built-in `http.server` works because React and Babel are loaded via CDN.
+
+**How do I bundle multiple components on one page?**  
+Create additional `<script type="text/babel">` blocks that `import` the components you need and render them into different DOM nodes, or use a single entry file that aggregates them.
+
+**Can I use Tailwind or other CSS frameworks?**  
+Yes. Include the appropriate CDN link (as shown above) or configure the framework within Vite if you need custom builds.
+
+---
+
+Previewing components early keeps your AI-generated UI grounded in reality and highlights accessibility or layout issues before you wire everything to the backend.

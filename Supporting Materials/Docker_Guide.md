@@ -1,153 +1,182 @@
-# Welcome to the AI-Driven Software Engineering Program!
+# Docker Guide for the AI-Driven Software Engineering Program
 
-As you progress through this 10-day immersive course, you will be using Generative AI to accelerate every phase of the Software Development Lifecycle (SDLC). You will be building a real-world FastAPI application, and to ensure it can be deployed reliably and efficiently, we will be using a crucial technology called **Docker**.
+Docker is the bridge between the code you generate in the labs and a reliable deployment environment. This guide introduces Docker concepts, explains how they relate to our FastAPI + React onboarding tool, and shows you how to containerise the project using artifacts produced throughout the course.
 
-This guide will introduce you to Docker, explain how it works, and detail how it fits into this course and modern software engineering practices.
+---
 
------
+## 1. Why Docker Matters Here
 
-## A Detailed Guide to Docker
+By Day 3 you will have a working FastAPI backend, and by Day 8 you will pair it with a React interface. Without Docker, every teammate or CI server must manually install the right Python, Node.js, and system dependencies. Containers solve this by packaging:
 
-### 1. The Problem: "But it works on my machine!"
+* Your application code (`app/`, `frontend/`),
+* The utilities package and Python dependencies (`requirements.txt`), and
+* Runtime configuration (environment variables, artifact files).
 
-Imagine you’ve spent days coding a Python application. It relies on specific versions of libraries (like FastAPI and SQLAlchemy) and requires Python 3.11 (as specified in the course prerequisites). It works perfectly on your laptop.
+Running `docker run onboarding-tool` should feel the same whether you are on your laptop, a teammate’s Windows machine, or a cloud service like Azure Container Apps.
 
-You then try to run it on a production server or share it with a teammate. Suddenly, it breaks.
+---
 
-Why?
+## 2. Key Concepts Refresher
 
-Perhaps the server is running Python 3.9. Maybe some required system libraries are missing, or the configuration is slightly different. This problem—**environment inconsistency**—has plagued software development for decades. It leads to the classic excuse: "But it works on my machine!"
+| Term | Analogy | In this Course |
+| --- | --- | --- |
+| **Dockerfile** | Recipe | Instructions for building an image that contains FastAPI, the artifacts directory, and the compiled React bundle. |
+| **Image** | Baked cake | Output of `docker build`. Immutable snapshot ready for distribution. |
+| **Container** | Slice of cake | Running instance of an image started with `docker run`. |
+| **Registry** | Bakery display case | Optional storage for sharing images (Docker Hub, GitHub Container Registry). |
 
-### 2. What is Docker?
+Unlike full virtual machines, containers share the host OS kernel. They start quickly and use less disk space—ideal for iteration during class.
 
-**Docker is a platform that solves this problem by allowing you to package your application and all of its dependencies (code, libraries, system tools, runtime—everything it needs to run) into a single, standardized unit called a container.**
+---
 
-#### The Shipping Container Analogy
+## 3. Preparing Your Project Structure
 
-Think about the global shipping industry. Before standardized shipping containers, moving goods (barrels, boxes, machinery) was chaotic and inefficient because every item was a different shape and size.
+Before writing a Dockerfile, confirm that the repository contains the following folders. They are created by exporting code from the lab notebooks (see the Deployment Guide for export tips).
 
-The invention of the standard shipping container revolutionized logistics. It doesn't matter what is inside the container; the container itself is a standard unit that can be moved seamlessly between trucks, trains, and ships.
+```
+AG-AISOFTDEV/
+├── app/
+│   ├── main.py
+│   ├── agents/
+│   └── models.py
+├── artifacts/
+│   ├── onboarding.db
+│   └── docs/
+├── frontend/
+│   ├── package.json
+│   └── src/components/
+├── requirements.txt
+└── Dockerfile  # you will add this
+```
 
-Docker applies this concept to software:
+If any folder is missing, revisit the relevant day’s notebook or copy from the `Solutions/` directory.
 
-- **The Goods Inside:** Your application code (the Python FastAPI app you'll build in Week 1).
-- **The Dependencies:** The specific version of Python, the required libraries, and the operating system configuration.
-- **The Container:** The standardized Docker container that holds everything together.
-- **The Transport (Ships/Trucks):** Different computing environments (your laptop, a testing server, the cloud).
+---
 
-Because the container is standardized, the application will run the exact same way, regardless of where it is deployed.
+## 4. Authoring the Dockerfile
 
-### 3. How Docker Works: Containers vs. Virtual Machines
-
-You might wonder how this is different from a Virtual Machine (VM), like VMware or VirtualBox.
-
-- **Virtual Machines (VMs)** virtualize the *hardware*. Each VM runs a full, separate operating system (OS) on top of the host machine. This makes VMs heavy (gigabytes in size) and slow to boot.
-- **Containers** virtualize the *operating system*. They sit on top of the **Docker Engine** (the software that manages containers), which runs on the host OS. All containers share the host machine's OS kernel.
-
-This makes containers:
-
-- **Lightweight:** They don't need a full OS, so they use much less space and memory.
-- **Fast:** They can start up almost instantly.
-- **Portable:** They ensure consistency across different environments.
-
-Here is a visual representation of the difference:
-
-![VMs vs Containers](https://media.licdn.com/dms/image/v2/D4D12AQGqjSqEGElq1w/article-inline_image-shrink_400_744/article-inline_image-shrink_400_744/0/1688608296456?e=2147483647&v=beta&t=FgkL4P6Yvn0U_UosEH4KylVBmDgRz6r3FXWaDTWap78)
-
-### 4. Core Docker Artifacts
-
-To work with Docker, you need to understand the relationship between three key artifacts. A helpful analogy is baking a cake:
-
-#### A. The `Dockerfile` (The Recipe)
-
-The `Dockerfile` is a simple text file that contains a set of instructions on how to build a Docker image. It is the recipe for your application's environment.
-
-It defines things like:
-
-- **`FROM`**: The starting point (e.g., "Start with a standard Python 3.11 environment").
-- **`WORKDIR`**: Where to put the files inside the container.
-- **`COPY`**: Copying your application code into the container.
-- **`RUN`**: Commands to install dependencies (e.g., `pip install -r requirements.txt`).
-- **`CMD`**: The command to execute when the container starts.
-
-Here is a simplified example relevant to the FastAPI application you will build:
+Use a multi-stage build so Node dependencies and build tooling stay out of the final Python image:
 
 ```dockerfile
-# Start with a base Python image
+# Stage 1 – Frontend build
+FROM node:18-alpine AS frontend-builder
+WORKDIR /workspace/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2 – Backend runtime
 FROM python:3.11-slim
-
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy the dependency list
-COPY requirements.txt .
-
-# Install the Python dependencies
-RUN pip install -r requirements.txt
-
-# Copy the rest of the application code
-COPY . .
-
-# The command to run when the container starts
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app/ ./app/
+COPY artifacts/ ./artifacts/
+COPY --from=frontend-builder /workspace/frontend/dist ./app/static
+ENV PYTHONUNBUFFERED=1
+EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-#### B. The Docker Image (The Baked Cake)
+Place the file at the repository root. Create `.dockerignore` with entries such as:
 
-The Docker Image is the result of executing the instructions in the Dockerfile (using the `docker build` command). It is a static, read-only, executable package.
+```
+.env
+**/__pycache__/
+**/*.pyc
+node_modules
+frontend/dist
+Labs/
+Solutions/
+```
 
-It's the baked cake—complete and ready, but not yet being consumed. Images are portable and can be stored in a registry (like Docker Hub) and pulled down onto any machine running Docker.
+This keeps secrets and development artifacts out of the image.
 
-#### C. The Docker Container (The Slice)
+---
 
-The Container is a running instance of an Image (started using the `docker run` command).
+## 5. Building and Running Locally
 
-This is the "slice" of cake being served. It's where your application actually executes, isolated from the host system and other containers. You can run multiple containers from the same image.
+```bash
+docker build -t onboarding-tool .
+docker run -p 8000:8000 --env-file .env onboarding-tool
+```
 
-### 5. Docker in the Software Development Lifecycle (SDLC)
+* `-t onboarding-tool` names the image.
+* `--env-file .env` injects your API keys into the container. The FastAPI app loads them through `utils.load_environment()`.
 
-Docker streamlines the entire SDLC by ensuring consistency from the developer's laptop all the way to production.
+After the container starts, open `http://localhost:8000` to view the React UI served by FastAPI. API docs remain available at `http://localhost:8000/docs`.
 
-1. **Development:**
-   - Ensures every developer uses the exact same environment, eliminating setup inconsistencies and speeding up onboarding.
+---
 
-2. **Testing & QA (Continuous Integration - CI):**
-   - Automated tests can be run inside isolated containers. This guarantees that tests are consistent and reproducible because the environment is identical every time.
+## 6. Integrating with CI/CD
 
-3. **Deployment (Continuous Deployment - CD):**
-   - This is where Docker is essential. The process of moving code to production becomes the process of moving an image.
-   - If tests pass in the CI phase, that *exact same image* is deployed to production. There are no surprises because the environment is identical to what was tested.
+In Day 5 you use an LLM to draft a GitHub Actions workflow. Update that workflow so it builds the Docker image and runs tests:
 
-### 6. Docker in This Course
+```yaml
+name: CI
 
-In this AI-Driven Software Engineering program, Docker is the bridge between the code you write and the infrastructure it runs on.
+on: [push, pull_request]
 
-Here is the workflow you will experience in Week 1:
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: pytest tests
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false  # set to true and configure registry secrets when ready to publish
+          tags: onboarding-tool:ci
+```
 
-- **Days 1-3:** You focus on planning, designing, and coding your Python FastAPI application.
-- **Day 4:** You focus on testing and QA, generating automated tests.
-- **Day 5 (Deployment & Maintenance):** This is where Docker takes center stage.
+This mirrors what you should do manually before class demos: run tests, then build the container.
 
-#### The Key Lab: Day 5 - CI/CD Pipeline Lab
+---
 
-In the lab focused on CI/CD (labeled `D5_Lab1_CICD_Pipeline.ipynb` in the daily agenda), you will leverage Generative AI (LLMs) as your DevOps co-pilot to automate the creation of your deployment artifacts. This is a perfect example of the course theme: using AI to accelerate the SDLC.
+## 7. Deploying the Image
 
-1. **Generating `requirements.txt`:**
-   - You will prompt an LLM to analyze your FastAPI source code (developed on Day 3) and automatically generate this list of dependencies.
+Pick the option that matches your environment:
 
-2. **Generating the `Dockerfile`:**
-   - You will prompt an LLM to create the `Dockerfile` needed to containerize your application. The lab specifically focuses on generating an optimized, "multi-stage" Dockerfile for better security and efficiency.
+1. **Single VM / Laptop:** Run `docker run` directly. Great for workshops or user testing sessions.
+2. **Docker Compose:** Add a `docker-compose.yml` with `backend`, `frontend` (if running separately), and optional `db` services. Useful if you want a live reload experience during development.
+3. **Managed Container Service:** Push the image to a registry and deploy using Render, Azure Web Apps, AWS App Runner, or Google Cloud Run. Make sure to mount persistent storage if the onboarding database should retain state between deployments.
 
-3. **Generating the CI/CD Workflow (`ci.yml`):**
-   - You will prompt an LLM to generate a GitHub Actions workflow file. This file instructs the CI/CD system to automatically use your `Dockerfile` to build the Docker image and run your Day 4 tests inside the container.
+Regardless of platform, confirm the following after deployment:
 
-By the end of Week 1, you won't just have code; you will have a containerized application managed within a professional CI/CD pipeline.
+* Environment variables are present (`OPENAI_API_KEY`, etc.).
+* Logs show successful startup (`Application startup complete` from Uvicorn).
+* `/health` or `/docs` endpoints respond as expected.
 
------
+---
 
-## Summary
+## 8. Troubleshooting
 
-- **Docker solves** the "it works on my machine" problem by ensuring environment consistency.
-- A **`Dockerfile`** is the recipe used to build an **Image** (the package).
-- A **Container** is the standardized, lightweight running instance of an Image.
-- In this course, you will use AI on **Day 5** to generate the `Dockerfile` and set up your CI/CD pipeline to automate the containerization process.
+| Issue | Diagnosis | Resolution |
+| --- | --- | --- |
+| `ModuleNotFoundError: utils` inside the container | `utils` package not copied or `PYTHONPATH` incorrect. | Ensure `COPY app/ ./app/` is present and that your modules use absolute imports (`from utils import ...`). |
+| React assets 404 | Frontend build not copied into the container. | Confirm the multi-stage copy step is correct and `npm run build` succeeds locally. |
+| Container cannot reach provider APIs | Missing API keys or outbound network restrictions. | Verify `.env` is passed to `docker run` and check firewall policies. |
+| Image size too large | Node modules or build caches included. | Use multi-stage builds (as above) and prune dangling images with `docker image prune`. |
+| Database reset on every deploy | SQLite file not mounted or persisted. | Copy the database from `artifacts/` during build or mount a volume with `-v /host/path:/app/artifacts`. |
+
+---
+
+## 9. Beyond the Classroom
+
+The same Docker practices apply when you extend the onboarding tool after the course:
+
+* Swap SQLite for PostgreSQL by pointing SQLAlchemy at an external database and linking the container to it.
+* Enable HTTPS by placing Nginx or Traefik in front of the FastAPI container.
+* Add observability by shipping logs to an ELK stack or Datadog; the structured logs produced by `utils.logging.get_logger()` make this straightforward.
+
+Containers make these evolutions incremental—you can iterate safely without breaking the base application students build during the program.
+
+Keep this guide handy during Days 4–7 when DevOps, testing, and deployment topics take centre stage.

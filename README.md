@@ -1,304 +1,203 @@
 # AI-Driven Software Engineering Program
 
-A comprehensive 10-day intensive program designed to teach modern software development with AI assistance. This repository contains all course materials, labs, solutions, and supporting tools for building AI-enhanced applications.
+Welcome to the Digital Ethos Academy AI-Driven Software Engineering Program. This 10-day intensive curriculum shows software engineers how to weave large language models (LLMs) into every phase of the software development lifecycle (SDLC). The repository is the single source of truth for:
 
-## 🎯 Program Overview
+* daily lab notebooks and reference solutions,
+* a production-ready utilities package for working with multiple AI providers, and
+* the supporting guides you will lean on while planning, building, testing, and shipping AI-enabled software.
 
-This program focuses on integrating AI tools throughout the entire Software Development Lifecycle (SDLC), from requirements gathering to deployment. Students learn to leverage Large Language Models (LLMs) and AI coding assistants to accelerate development while maintaining code quality and best practices.
-
-### Key Learning Outcomes
-
-- Master AI-assisted software development workflows
-- Build complete applications using AI pair programming
-- Implement RAG (Retrieval-Augmented Generation) systems
-- Create intelligent agents and multi-agent workflows
-- Apply AI for testing, documentation, and code quality
-- Deploy AI-enhanced applications to production
-
-## 📋 Prerequisites
-
-- **Experience**: 1-3 years of software development (Python preferred)
-- **Skills**: Basic familiarity with Git, REST APIs, and SDLC
-- **Hardware**: Computer with minimum 8GB RAM and stable internet
-- **Accounts Required**:
-  - [GitHub Account](https://github.com/)
-  - [OpenAI API Key](https://platform.openai.com/account/api-keys)
-  - (Optional) [Hugging Face API Key](https://huggingface.co/settings/tokens)
-
-## 🚀 Quick Start
-
-### 1. Environment Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/Digital-Ethos-Academy/AG-AISOFTDEV.git
-cd AG-AISOFTDEV
-
-# Create and activate virtual environment
-python -m venv venv
-
-# On macOS/Linux:
-source venv/bin/activate
-
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 2. Configure API Keys
-
-Create a `.env` file in the root directory:
-
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-HUGGINGFACE_API_KEY=your_huggingface_api_key_here  # Optional
-```
-
-### 3. Verify Installation
-
-```bash
-# Run tests to verify setup
-pytest tests/
-
-# Start Jupyter for interactive labs
-jupyter notebook
-```
-
-### 4. Asynchronous LLM Calls (Optional)
-
-The `utils` package includes async counterparts for I/O helpers. You can run many
-model calls concurrently using `asyncio.gather`:
-
-```python
-import asyncio
-from utils import async_setup_llm_client, async_get_completion
-
-async def main():
-    client, model, provider = await async_setup_llm_client()
-    prompts = [f"Hello {i}!" for i in range(5)]
-    tasks = [async_get_completion(p, client, model, provider) for p in prompts]
-    return await asyncio.gather(*tasks)
-
-results = asyncio.run(main())
-```
-
-## 📚 Course Structure
-
-### Week 1: AI-Assisted Software Development
-
-**Focus**: Building complete web applications using AI throughout the SDLC
-
-#### Day 1: AI-Powered Planning & Requirements
-
-- **Content**: GenAI landscape, AI tools overview
-- **Labs**: AI-powered requirements gathering, user story generation
-- **Artifacts**: Product Requirements Document (PRD)
-
-#### Day 2: AI-Driven Design & Architecture
-
-- **Content**: AI for data modeling, architectural decisions
-- **Labs**: System design, database schema generation, ADRs
-- **Artifacts**: Database schema, Architectural Decision Records
-
-#### Day 3: AI-Assisted Development & Documentation
-
-- **Content**: AI pair programming, code generation best practices
-- **Labs**: FastAPI backend development, code refactoring
-- **Artifacts**: Complete backend application with documentation
-
-#### Day 4: Testing & Quality Assurance
-
-- **Content**: AI-powered testing strategies, quality metrics
-- **Labs**: Test generation, code review automation
-- **Artifacts**: Comprehensive test suite
-
-#### Day 5: Advanced Agents & RAG
-
-- **Content**: Agent frameworks, RAG fundamentals
-- **Labs**: Building intelligent agents, document processing
-- **Artifacts**: RAG-powered applications
-
-### Week 2: Advanced AI Engineering
-
-#### Day 6: Building RAG Systems
-
-- **Content**: Vector databases, embedding strategies
-- **Labs**: Enterprise RAG implementation
-- **Artifacts**: Production-ready RAG system
-
-#### Day 7: Advanced Agent Workflows
-
-- **Content**: Multi-agent systems, workflow orchestration
-- **Labs**: Complex agent coordination
-- **Artifacts**: Multi-agent applications
-
-#### Day 8: Vision & Evaluation
-
-- **Content**: Computer vision, model evaluation
-- **Labs**: Vision-powered applications, performance metrics
-- **Artifacts**: Vision-enabled systems
-
-#### Days 9-10: Capstone Project
-
-- **Content**: End-to-end project development
-- **Labs**: Individual capstone projects
-- **Artifacts**: Complete production application
-
-## 🛠 Key Technologies & Tools
-
-### AI/ML Frameworks
-
-- **Agent Frameworks**: AutoGen, CrewAI, LangChain, LangGraph
-- **Model Providers**: OpenAI, Anthropic, Hugging Face, Google Gemini
-- **RAG & Vector Stores**: FAISS, Sentence Transformers
-- **Vision & Audio**: PIL, PyTorch, Transformers
-
-### Development Stack
-
-- **Backend**: FastAPI, SQLAlchemy, Pydantic
-- **Frontend**: React, Streamlit
-- **Database**: SQLite (development), PostgreSQL (production)
-- **Testing**: Pytest
-- **Documentation**: Jupyter, Markdown
-
-### DevOps & Deployment
-
-- **Containerization**: Docker
-- **Environment Management**: Python venv, python-dotenv
-- **Version Control**: Git, GitHub
-- **CI/CD**: GitHub Actions (configured in labs)
-
-## 📁 Repository Structure
-
-```text
-├── Labs/                          # Day-by-day lab exercises
-│   ├── Day_01_Planning_and_Requirements/
-│   ├── Day_02_Design_and_Architecture/
-│   ├── Day_03_Development_and_Coding/
-│   ├── Day_04_Testing_and_Quality_Assurance/
-│   ├── Day_05_Advanced_Agents_and_RAG/
-│   ├── Day_06_Building_RAG_Systems/
-│   ├── Day_07_Advanced_Agent_Workflows/
-│   ├── Day_08_Vision_and_Evaluation/
-│   └── Days_9_and_10_Capstone/
-├── Solutions/                     # Complete lab solutions
-├── Supporting Materials/          # Setup guides and documentation
-├── app/                          # Sample applications
-├── artifacts/                    # Generated project artifacts
-├── templates/                    # PRD and ADR templates
-├── tests/                        # Test suite
-├── slides/                       # Course presentation materials
-├── utils.py                      # Unified AI provider interface
-├── requirements.txt              # Python dependencies
-├── Dockerfile                    # Container configuration
-└── Daily agenda.ipynb           # Course schedule and agenda
-```
-
-## 🔧 Core Utilities
-
-### `utils.py` - Unified AI Interface
-
-The `utils.py` module provides a standardized interface for multiple AI providers:
-
-```python
-from utils import text_generation, image_generation, vision_completion
-
-# Text generation with multiple providers
-response = text_generation(
-    prompt="Generate a Python function to calculate fibonacci",
-    model="gpt-4",
-    provider="openai"
-)
-
-# Image generation
-image_url = image_generation(
-    prompt="A modern web application interface",
-    provider="openai"
-)
-
-# Vision analysis
-analysis = vision_completion(
-    image_path="./screenshot.png",
-    prompt="Describe the UI elements in this image"
-)
-```
-
-## 🧪 Testing
-
-Run the comprehensive test suite:
-
-```bash
-# Run all tests
-pytest
-
-# Run specific test categories
-pytest tests/test_text_generation.py
-pytest tests/test_image_generation.py
-pytest tests/test_vision_completion.py
-
-# Run with coverage
-pytest --cov=utils tests/
-```
-
-## 🐳 Docker Deployment
-
-```bash
-# Build the container
-docker build -t ai-software-engineering .
-
-# Run the application
-docker run -p 8000:8000 --env-file .env ai-software-engineering
-```
-
-## 📖 Documentation
-
-- **[Environment Setup Guide](Supporting%20Materials/Environment_Setup_Guide.md)**: Detailed setup instructions
-- **[Docker Guide](Supporting%20Materials/Docker_Guide.md)**: Container deployment guide
-- **[API Key Generation Guide](Supporting%20Materials/🔑%20API%20Key%20Generation%20Guide%20for%20Labs.pdf)**: Step-by-step API setup
-- **[React Components Guide](Supporting%20Materials/How_to_View_Your_React_Components_Locally.md)**: Frontend development setup
-- **[Productionizing Utils](Supporting%20Materials/Productionizing_Utils.md)**: Timeouts, retries, rate limiting, and logging
-- **[Artifacts Guide](Supporting%20Materials/Artifacts_Guide.md)**: Artifact directory overrides and security
-
-## 🕰️ Deprecations
-
-Legacy helpers that returned ``(result, error_str)`` are deprecated.  Update
-existing code to call the standard functions and catch
-``ProviderOperationError`` instead.  Compatibility wrappers remain temporarily
-for transition but will be removed in a future release.
-
-## 🤝 Contributing
-
-This is an educational repository. For improvements or bug fixes:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/improvement`)
-5. Create a Pull Request
-
-## 📜 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For technical support or questions:
-
-- **Course Materials**: Check the `Supporting Materials/` directory
-- **Lab Issues**: Review the `Solutions/` directory for reference implementations
-- **Setup Problems**: Follow the detailed `Environment_Setup_Guide.md`
-- **API Issues**: Consult the `API Key Generation Guide`
-
-## 🌟 Acknowledgments
-
-- **Digital Ethos Academy**: Course design and curriculum development
-- **OpenAI**: GPT models and API access
-- **Hugging Face**: Open-source model ecosystem
-- **LangChain Community**: Agent framework development
-- **FastAPI Team**: Modern Python web framework
+Whether you are self-paced or teaching in a classroom, this README explains how the pieces fit together and how to get started quickly.
 
 ---
 
-**Ready to transform your software development with AI?** Start with the [Environment Setup Guide](Supporting%20Materials/Environment_Setup_Guide.md) and dive into Day 1 labs!
+## 📦 Repository Layout
+
+| Path | Description |
+| --- | --- |
+| `Labs/` | Student-facing Jupyter notebooks organised by day (`Day_01_...` through `Days_9_and_10_Capstone`). Each notebook scaffolds a hands-on lab aligned with the daily learning objectives. |
+| `Solutions/` | Fully worked notebooks that mirror the lab structure. These are the reference implementations instructors can demo or students can review after attempting a lab. |
+| `Supporting Materials/` | Long-form documentation that supplements the labs: setup instructions, Docker walkthroughs, artifact management, React viewing tips, and more. |
+| `templates/` | Markdown templates for Product Requirements Documents (PRDs), Architectural Decision Records (ADRs), evaluation rubrics, and other reusable assets. |
+| `slides/` | Presentation decks that support each day’s lectures. |
+| `utils/` | The Python package that powers AI interactions across the curriculum. It wraps provider SDKs (OpenAI, Anthropic, Google, Hugging Face, etc.), enforces artifact safety rules, and exposes helpers used throughout the labs. |
+| `tests/` | Fast unit tests for the utilities package (all safe to run offline). Integration and slow tests are annotated with pytest markers. |
+| `async_tests/` | Dedicated asyncio test coverage that demonstrates parallel LLM calls and provider patching patterns. |
+| `pyproject.toml`, `requirements.txt`, `pytest.ini` | Tooling configuration for formatters, dependency management, and test execution. |
+| `Daily agenda.ipynb` | Instructor agenda covering the minute-by-minute plan for the two-week experience. |
+
+> **Tip:** The repository intentionally starts without an `app/` or `artifacts/` directory. Those assets are produced inside the labs; you can always peek at the corresponding notebook in `Solutions/` if you want a completed reference.
+
+---
+
+## 🎯 Program Outcomes
+
+By the end of the program learners will be able to:
+
+1. Translate ambiguous stakeholder needs into AI-assisted product requirements and architectural plans.
+2. Co-develop FastAPI backends, Streamlit dashboards, and React components with LLM coding assistants while keeping humans in the loop.
+3. Implement Retrieval-Augmented Generation (RAG) systems, evaluation harnesses, and multi-agent workflows using the shared utilities.
+4. Automate quality workflows with AI: synthetic tests, docstring generation, PR reviews, and CI/CD scaffolding.
+5. Package and deploy AI-enabled applications with Docker while documenting operational decisions.
+
+Daily goals, labs, and artifacts live in each `Labs/Day_*` README; skim those summaries before class to stay aligned with the teaching plan.
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Prerequisites
+
+* **Experience:** 1–3 years of software development (Python familiarity recommended).
+* **Accounts:** GitHub plus any model provider accounts you intend to use (OpenAI is strongly recommended; Hugging Face, Google, and Anthropic keys unlock optional exercises).
+* **Software:** Python 3.11, Git, and a modern IDE (VS Code, PyCharm, etc.).
+* **Hardware:** 8 GB RAM minimum, solid internet connection, and permission to install Python packages.
+
+### 2. Clone the Repository
+
+```bash
+git clone https://github.com/Digital-Ethos-Academy/AG-AISOFTDEV.git
+cd AG-AISOFTDEV
+```
+
+If you received a `.zip` during an instructor-led cohort, extract it and open the folder in your IDE instead of cloning.
+
+### 3. Create and Activate a Virtual Environment
+
+```bash
+python -m venv venv
+# macOS / Linux
+source venv/bin/activate
+# Windows PowerShell
+.\venv\Scripts\Activate.ps1
+```
+
+### 4. Install Dependencies
+
+All notebooks and utilities use the shared dependency list in `requirements.txt`.
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 5. Configure API Keys
+
+Create a `.env` file at the project root (alongside this README) and add the secrets you plan to use. Only the OpenAI key is strictly required for the core labs.
+
+```env
+# .env
+OPENAI_API_KEY="sk-..."          # required for most labs
+ANTHROPIC_API_KEY="..."          # optional
+GOOGLE_API_KEY="..."             # optional for Gemini-based labs
+HUGGINGFACE_API_KEY="hf_..."     # optional for open-source experiments
+```
+
+The utilities package automatically loads this file via `python-dotenv` when you call `utils.load_environment()` or any helper that depends on provider credentials.
+
+### 6. Validate Your Environment
+
+Run the quick checks below after installing dependencies. They confirm that Python can import the utilities package and that pytest is configured correctly.
+
+```bash
+pytest tests
+pytest async_tests
+```
+
+> **Integration tests:** Files such as `tests/test_text_generation.py` contain `@pytest.mark.integration` markers and require real API keys plus network access. Skip them by default with `pytest -m "not integration"` unless you explicitly want to hit provider endpoints.
+
+### 7. Open the Lab Notebooks
+
+Start Jupyter Notebook or JupyterLab from the repository root:
+
+```bash
+jupyter notebook
+```
+
+Each lab notebook imports from the `utils` package. If you run a notebook from a subdirectory, set the working directory to the project root or add `sys.path` entries so imports resolve correctly.
+
+---
+
+## 🧰 Working with the `utils` Package
+
+The `utils` package consolidates course-wide helpers. Key modules include:
+
+* `utils.llm` – Synchronous and asynchronous text/vision completions plus prompt enhancement. Central entry points: `setup_llm_client()`, `get_completion()`, `async_get_completion()`, and `prompt_enhancer()`.
+* `utils.image_gen` – Text-to-image and image-edit APIs with async counterparts for OpenAI, Google, and Hugging Face.
+* `utils.audio` – Speech-to-text wrappers (and compatibility layers for legacy tuple-returning helpers).
+* `utils.artifacts` – Safe file persistence with directory sandboxing. Used heavily in labs to store generated assets.
+* `utils.settings` – Environment loading, Jupyter display shortcuts (`Markdown`, `IPyImage`, `PlantUML`), and global configuration helpers.
+* `utils.rate_limit` & `utils.http` – Provider-aware throttling and shared HTTP session utilities for production scenarios.
+* `utils.logging` – Structured loggers that standardise output across notebooks and scripts.
+
+A minimal text completion flow looks like this:
+
+```python
+from utils import setup_llm_client, get_completion
+
+client, model_name, provider = setup_llm_client(preferred_provider="openai")
+response = get_completion(
+    "Summarise the key risks from our onboarding PRD.",
+    client=client,
+    model_name=model_name,
+    api_provider=provider,
+    temperature=0.2,
+)
+print(response)
+```
+
+To parallelise prompts, pair `async_setup_llm_client()` with `async_get_completion()` inside an `asyncio.gather` call. The `async_tests/test_async_llm.py` file demonstrates this pattern in a test harness.
+
+---
+
+## 🧪 Testing and Quality Gates
+
+* **Unit tests:** `pytest tests` exercises artifact helpers, logging, HTTP wrappers, and synchronous compatibility shims without leaving your machine.
+* **Async coverage:** `pytest async_tests` verifies concurrency helpers.
+* **Integration tests:** Opt-in suites marked with `@pytest.mark.integration` call live provider APIs (text, vision, audio, and image generation). Run them only after supplying valid keys: `pytest -m integration`.
+* **Slow tests:** Image workflows that may take 10–30 seconds each use `@pytest.mark.slow`. Combine markers to run them selectively, e.g. `pytest -m "integration and slow"`.
+
+Before shipping new utilities or course assets, run the fast suite locally and ensure any provider-specific behaviour is guarded by feature flags or mocks so students without credentials are not blocked.
+
+---
+
+## 📚 Supporting Documentation
+
+The `Supporting Materials/` directory contains detailed guides that extend this README:
+
+* **Environment Setup Guide** – Step-by-step environment bootstrap with troubleshooting tips for common installation issues.
+* **Artifacts Guide** – Deep dive on `utils.artifacts`, directory overrides, and security guarantees.
+* **Docker Guide** – Conceptual and hands-on introduction to containerising the FastAPI projects you assemble in the labs.
+* **Deployment Guide (Onboarding Tool)** – Blueprint for stitching the Day 1–Day 7 artifacts into a full-stack onboarding assistant, including container choices and wiring diagrams.
+* **React Components Viewing Guide** – Zero-build workflow for rendering JSX snippets generated during the front-end labs.
+* **Productionizing Utils** – Environment variables, rate limiting, logging, and retry configuration for taking the helper library beyond notebooks.
+
+Each document has been refreshed to match the utilities and lab artefacts in this repository. Start there whenever you need deeper context or run into an edge case during class.
+
+---
+
+## 🤝 Contributing & Classroom Usage
+
+This repository is primarily used in a facilitated training environment. When proposing improvements:
+
+1. Fork the repository or create a feature branch (if you have write access).
+2. Install dependencies and run `pytest tests` plus any affected async or integration suites.
+3. Submit a pull request describing the change and how it supports the curriculum.
+
+For classroom delivery, instructors typically:
+
+* Distribute this repository and walk through the Environment Setup Guide on Day 0.
+* Use the `Daily agenda.ipynb` notebook and slide decks to anchor lectures.
+* Pair live coding with the lab notebooks, leaning on the `Solutions/` directory for demos.
+* Encourage students to save generated assets via `utils.artifacts.save_artifact()` so their work is reproducible between sessions.
+
+---
+
+## 📄 License & Support
+
+* **License:** These materials are licensed for classroom use by Digital Ethos Academy cohorts. If you need clarification on redistribution rights, contact your program coordinator before sharing content outside your organisation.
+* **Support:**
+  * Environment or dependency issues – follow the troubleshooting section in the Environment Setup Guide.
+  * Lab blockers – compare your progress with the matching notebook in `Solutions/`.
+  * Utilities questions – review docstrings in `utils/` and the Productionizing Utils guide.
+
+Ready to dive in? Launch the Day 1 notebooks from `Labs/Day_01_Planning_and_Requirements/` and begin crafting AI-assisted product requirements.
