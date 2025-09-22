@@ -74,7 +74,7 @@ Remember to keep business logic (FastAPI, agents) in the backend and UI logic in
 
 ---
 
-## 4. Containerisation Strategy
+## 4. Containerization Strategy
 
 Once the backend and frontend are wired together locally, package everything into a Docker image. Below is a multi-stage Dockerfile that mirrors what you generate in the Day 5 CI/CD lab. Adjust paths if your folder structure differs.
 
@@ -153,7 +153,7 @@ For each option, ensure environment variables (API keys, vector store URLs, opti
 1. Finish the core labs and export code/artifacts into source files.
 2. Test the FastAPI backend locally (`uvicorn app.main:app --reload`).
 3. Wire up the React frontend and confirm all flows against the live backend.
-4. Containerise using the multi-stage Dockerfile and run the image locally.
+4. Containerize using the multi-stage Dockerfile and run the image locally.
 5. Deploy to your chosen environment and monitor logs for the first set of user journeys.
 
 When each layer passes acceptance tests, you have successfully transformed the daily lab outputs into a cohesive onboarding assistant ready for stakeholders to trial.

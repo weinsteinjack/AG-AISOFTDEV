@@ -109,7 +109,7 @@ This mirrors the wiring you will perform later in the deployment guide.
 
 ---
 
-## Organising Components
+## Organizing Components
 
 * Store raw lab outputs under version control (e.g., `Labs/Day_08_Vision_and_Evaluation/generated_components/`).
 * Save polished versions to `frontend/src/components/` once you are ready to integrate them with the backend.
