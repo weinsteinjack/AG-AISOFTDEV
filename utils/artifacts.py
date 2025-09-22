@@ -106,6 +106,8 @@ def resolve_artifact_path(
         cleaned_target = target
         if subdir is None:
             base_name = base.name
+        if subdir is None:
+            base_name = base.name
             # Validate base_name: must be non-empty and not contain path separators
             if base_name and os.sep not in base_name and (os.altsep is None or os.altsep not in base_name):
                 base_segment = Path(base_name)
@@ -115,9 +117,7 @@ def resolve_artifact_path(
                     except ValueError:
                         break
                     if relative_target == Path('.'):
-                        raise ArtifactError(
-                            "Filename must not resolve to the artifacts directory itself."
-                        )
+                        break
                     cleaned_target = relative_target
         # allow optional subdir
         final = (
