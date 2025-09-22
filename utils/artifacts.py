@@ -106,8 +106,6 @@ def resolve_artifact_path(
         cleaned_target = target
         if subdir is None:
             base_name = base.name
-        if subdir is None:
-            base_name = base.name
             # Validate base_name: must be non-empty and not contain path separators
             if base_name and os.sep not in base_name and (os.altsep is None or os.altsep not in base_name):
                 base_segment = Path(base_name)
@@ -232,6 +230,6 @@ def load_artifact(
     ext = path.suffix.lower()
     if ext in {".json"}:
         return json.loads(path.read_text(encoding=encoding))
-    if ext in {".txt", ".md", ".csv", ".tsv", ".log"}:
+    if ext in {".txt", ".md", ".csv", ".tsv", ".log", ".sql"}:
         return path.read_text(encoding=encoding)
     return path.read_bytes()

@@ -2,6 +2,30 @@ import pytest
 from utils import artifacts, audio, image_gen, llm, models, rate_limit, settings, helpers, errors, http
 import utils.logging as utils_logging
 
+def test_save_and_load_artifact(tmp_path):
+    test_data = {'key': 'value'}
+    artifacts.set_artifacts_dir(str(tmp_path))
+    # Save as dict, which is supported by save_artifact
+    artifacts.save_artifact(test_data, 'test.json')
+    loaded = artifacts.load_artifact('test.json', as_='json')
+    assert loaded == test_data
+
+def test_save_artifact_invalid_path(tmp_path):
+    artifacts.set_artifacts_dir(str(tmp_path))
+    from utils.errors import ArtifactSecurityError
+    # Try to save to a path outside the artifacts dir
+    with pytest.raises(ArtifactSecurityError):
+        artifacts.save_artifact({'x': 1}, '/tmp/test.json')
+
+
+def test_save_artifact_strips_redundant_folder(tmp_path):
+    artifacts_dir = tmp_path / 'artifacts'
+    artifacts.set_artifacts_dir(str(artifacts_dir))
+    saved_path = artifacts.save_artifact('hello', 'artifacts/sample.txt', overwrite=True)
+    assert saved_path == artifacts_dir / 'sample.txt'
+    assert not (artifacts_dir / 'artifacts').exists()
+    loaded = artifacts.load_artifact('artifacts/sample.txt', as_='text')
+    assert loaded == 'hello'
 def test_save_artifact_with_artifacts_in_name(tmp_path):
     artifacts_dir = tmp_path / 'artifacts'
     artifacts.set_artifacts_dir(str(artifacts_dir))
