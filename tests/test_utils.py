@@ -47,6 +47,14 @@ def test_save_artifact_allows_filename_matching_directory(tmp_path):
     loaded = artifacts.load_artifact('artifacts/artifacts', as_='text')
     assert loaded == 'content'
 
+def test_save_artifact_with_conflicting_name(tmp_path):
+    artifacts_dir = tmp_path / 'artifacts'
+    artifacts.set_artifacts_dir(str(artifacts_dir))
+    saved_path = artifacts.save_artifact('content', 'artifacts', overwrite=True)
+    assert saved_path == artifacts_dir / 'artifacts'
+    loaded = artifacts.load_artifact('artifacts', as_='text')
+    assert loaded == 'content'
+
 def test_load_artifact_missing_file(tmp_path):
     artifacts.set_artifacts_dir(str(tmp_path))
     from utils.errors import ArtifactNotFoundError
