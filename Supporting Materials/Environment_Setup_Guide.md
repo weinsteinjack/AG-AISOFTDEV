@@ -1,75 +1,151 @@
-# AI-Driven Software Engineering Program: Setup Guide
+# AI-Driven Software Engineering Program: Environment Setup Guide
 
-Welcome to the AI-Driven Software Engineering Program! This guide provides detailed instructions for setting up your development environment. Completing these steps is crucial for a smooth and effective learning experience throughout the course.
+This guide walks you through preparing a reliable workspace for the Digital Ethos Academy AI-Driven Software Engineering Program. Follow each section in order before attempting the Day 1 labs. The entire process takes roughly 20–30 minutes on a typical laptop.
 
-## 1. Prerequisites
+---
 
-Before you begin, please ensure you have the following:
+## 1. Confirm Prerequisites
 
-* **Experience:**
-  * 1–3 years of software development experience (Python is preferred).
-  * Basic familiarity with Git, REST APIs, and the software development lifecycle.
-* **Accounts & Software:**
-  * A [GitHub](https://github.com/) account.
-  * An [OpenAI API Key](https://platform.openai.com/account/api-keys). The labs are optimized for OpenAI models.
-  * **(Optional)** A [Hugging Face API Key](https://huggingface.co/settings/tokens) for experimenting with open-source models.
-  * Python (version 3.9 or higher) installed on your system.
-  * [Git](https://git-scm.com/downloads) installed and configured.
-  * A modern IDE, such as [Visual Studio Code](https://code.visualstudio.com/).
-* **Recommended VS Code Extensions:**
-  * [Python Extension Pack](https://marketplace.visualstudio.com/items?itemName=ms-python.python-extension-pack)
-  * [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
-* **Hardware & Environment:**
-  * A computer with a minimum of 8 GB of RAM.
-  * A stable internet connection.
+| Requirement | Details |
+| --- | --- |
+| **Operating System** | Windows 10/11, macOS 12+, or a modern Linux distribution. |
+| **Python** | Version 3.11 (check with `python --version`). Install from [python.org](https://www.python.org/downloads/) if needed. |
+| **Git** | Required for cloning and version control. Install from [git-scm.com](https://git-scm.com/downloads). |
+| **IDE / Editor** | VS Code (recommended), PyCharm, or similar. Enable Python extensions (linting, notebooks, etc.). |
+| **Hardware** | Minimum 8 GB RAM, 10 GB free disk space, stable internet connection. |
+| **Accounts** | GitHub, OpenAI API key (core labs), plus optional Anthropic, Google Gemini, or Hugging Face keys for advanced exercises. |
 
-### 2. Environment Setup Instructions
+> If you are learning in a classroom, ask your facilitator to confirm which providers your organisation allows.
 
-Follow these steps precisely to prepare your local project folder:
+---
 
-1. **Download and Unzip Course Files:**
-    * Download the course materials `.zip` file provided and extract it to a dedicated project folder on your computer.
+## 2. Obtain the Course Repository
 
-2. **Create a Python Virtual Environment:**
-    * Open your terminal and navigate to the root of your project folder.
-    * Run the following command to create a virtual environment named `venv`. This isolates the project's dependencies.
+### Option A – Git Clone (preferred)
 
-        ```shell
-        python -m venv venv
-        ```
+```bash
+git clone https://github.com/Digital-Ethos-Academy/AG-AISOFTDEV.git
+cd AG-AISOFTDEV
+```
 
-3. **Activate the Virtual Environment:**
-    * Before installing packages or running notebooks, you must activate the environment in your terminal session.
-    * **On macOS/Linux:**
+### Option B – Instructor Zip File
 
-        ```shell
-        source venv/bin/activate
-        ```
+1. Download the `.zip` distributed for your cohort.
+2. Extract it to a convenient location (e.g., `~/Projects/AG-AISOFTDEV`).
+3. Open the folder in your IDE or `cd` into it from the terminal.
 
-    * **On Windows:**
+> Regardless of the option you choose, the remainder of this guide assumes your terminal is pointed at the repository root (where `README.md` lives).
 
-        ```shell
-        .\venv\Scripts\activate
-        ```
+---
 
-    * Your terminal prompt should now be prefixed with `(venv)`.
+## 3. Create an Isolated Python Environment
 
-4. **Create Your `.env` File for API Keys:**
-    * This file will securely store your secret API keys, so they are not hardcoded in the notebooks.
-    * In the root of your project folder, find the example file named `.env.example`.
-    * Duplicate this file and rename the copy to `.env`.
-    * Open the new `.env` file in a text editor and paste your API keys:
+Keeping project dependencies separate avoids conflicts with other work.
 
-        ```env
-        OPENAI_API_KEY="sk-..."
-        # HUGGINGFACE_API_KEY="hf_..." # Optional
-        ```
+```bash
+python -m venv venv
+```
 
-5. **Install Dependencies:**
-    * With your virtual environment still active, run the following command to install all the required Python libraries listed in the `requirements.txt` file:
+Activate the environment before installing packages:
 
-        ```shell
-        pip install -r requirements.txt
-        ```
+```bash
+# macOS / Linux
+source venv/bin/activate
 
-You are now fully set up and ready to begin Day 1!
+# Windows PowerShell
+.\venv\Scripts\Activate.ps1
+```
+
+Your prompt should now start with `(venv)` indicating the environment is active. Repeat the activation command whenever you open a new terminal.
+
+---
+
+## 4. Install Dependencies
+
+Upgrade `pip`, then install the required packages:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+The requirements file includes Jupyter, pytest, FastAPI, LangChain, CrewAI, and other frameworks used throughout the labs. Installation may take several minutes the first time.
+
+---
+
+## 5. Configure API Keys with `.env`
+
+The utilities package loads API keys from a `.env` file using `python-dotenv`. Create the file manually in the project root if it does not exist:
+
+```env
+# .env - store secrets locally only
+OPENAI_API_KEY="sk-..."          # Required for core labs
+ANTHROPIC_API_KEY="..."          # Optional, unlocks Claude-based exercises
+GOOGLE_API_KEY="..."             # Optional, used by Gemini demos
+HUGGINGFACE_API_KEY="hf_..."     # Optional, for open-source model exploration
+```
+
+**Best practices:**
+
+* Never commit `.env` to version control.
+* Use separate keys for development vs. production if your organisation requires audit logging.
+* If you cannot obtain a provider key, you can still run planning and design labs; code execution labs will require keys to access LLM functionality.
+
+---
+
+## 6. Validate the Installation
+
+Run the fast test suites to verify that imports, pytest configuration, and asyncio helpers all work on your machine.
+
+```bash
+pytest tests
+pytest async_tests
+```
+
+*If you see `ModuleNotFoundError`, double-check that your virtual environment is activated.*
+
+### Optional: Integration Tests
+
+Some tests make real API calls to OpenAI, Google, or Hugging Face. They are marked with `@pytest.mark.integration` and `@pytest.mark.slow`. Run them only after you configure credentials and are comfortable with the associated usage costs:
+
+```bash
+pytest -m integration
+pytest -m "integration and slow"
+```
+
+---
+
+## 7. Launch Jupyter Notebooks
+
+Start Jupyter from the repository root so notebooks can import the `utils` package without extra path manipulation:
+
+```bash
+jupyter notebook
+```
+
+Open `Labs/Day_01_Planning_and_Requirements/D1_Lab1_AI_Powered_Requirements_User_Stories.ipynb` to begin the first exercise. The `Solutions/` directory hosts completed notebooks for reference—save them for after you attempt each lab yourself.
+
+---
+
+## 8. Troubleshooting
+
+| Issue | Cause | Resolution |
+| --- | --- | --- |
+| `pip install` fails with build errors | Missing system packages (e.g., Rust, C++ build tools) on Windows/Linux. | Install the recommended build tools for your OS, then retry. Many wheels ship as binaries so retries often succeed. |
+| `ModuleNotFoundError: utils` inside a notebook | Notebook launched from a nested directory without project root on `sys.path`. | Start Jupyter from the repository root **or** add `import sys; sys.path.append("..")` in the first cell. |
+| `openai.AuthenticationError` during labs | API key missing or incorrect. | Confirm the key in `.env`, restart the kernel, and run `from utils import load_environment; load_environment()` to reload variables. |
+| `pytest` cannot find tests | Command executed outside the repository root. | `cd` into the project directory before running tests. |
+| Slow package installation | Large ML libraries (PyTorch, Transformers) downloading for the first time. | Allow the download to finish. Future installs will reuse cached wheels. |
+
+If you become stuck, capture the full error message and share it with your instructor or peers in the course Slack channel.
+
+---
+
+## 9. Next Steps
+
+1. Review the main [README](../README.md) for a program overview and repository map.
+2. Read the **Artifacts Guide** to understand how generated assets are stored.
+3. Keep the **Docker Guide** handy—you will revisit it during the testing and deployment modules.
+4. For front-end labs, bookmark the **React Components Viewing Guide** so you can preview JSX components without scaffolding a full build system.
+
+With your environment ready, you can confidently jump into Day 1 and start applying AI to real software engineering workflows.
