@@ -230,6 +230,7 @@ def load_artifact(
     ext = path.suffix.lower()
     if ext in {".json"}:
         return json.loads(path.read_text(encoding=encoding))
-    if ext in {".txt", ".md", ".csv", ".tsv", ".log", ".sql"}:
+    # Include Python files in the text category
+    if ext in {".txt", ".md", ".csv", ".tsv", ".log", ".sql", ".py"}:
         return path.read_text(encoding=encoding)
     return path.read_bytes()
