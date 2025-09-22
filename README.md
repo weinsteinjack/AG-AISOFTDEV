@@ -166,12 +166,12 @@ The `Supporting Materials/` directory contains detailed guides that extend this 
 
 * **Environment Setup Guide** – Step-by-step environment bootstrap with troubleshooting tips for common installation issues.
 * **Artifacts Guide** – Deep dive on `utils.artifacts`, directory overrides, and security guarantees.
-* **Docker Guide** – Conceptual and hands-on introduction to containerising the FastAPI projects you assemble in the labs.
+* **Docker Guide** – Conceptual and hands-on introduction to containerizing the FastAPI projects you assemble in the labs.
 * **Deployment Guide (Onboarding Tool)** – Blueprint for stitching the Day 1–Day 7 artifacts into a full-stack onboarding assistant, including container choices and wiring diagrams.
 * **React Components Viewing Guide** – Zero-build workflow for rendering JSX snippets generated during the front-end labs.
 * **Productionizing Utils** – Environment variables, rate limiting, logging, and retry configuration for taking the helper library beyond notebooks.
 
-Each document has been refreshed to match the utilities and lab artefacts in this repository. Start there whenever you need deeper context or run into an edge case during class.
+Each document has been refreshed to match the utilities and lab artifacts in this repository. Start there whenever you need deeper context or run into an edge case during class.
 
 ---
 
@@ -194,7 +194,7 @@ For classroom delivery, instructors typically:
 
 ## 📄 License & Support
 
-* **License:** These materials are licensed for classroom use by Digital Ethos Academy cohorts. If you need clarification on redistribution rights, contact your program coordinator before sharing content outside your organisation.
+* **License:** These materials are licensed for classroom use by Digital Ethos Academy cohorts. If you need clarification on redistribution rights, contact your program coordinator before sharing content outside your organization.
 * **Support:**
   * Environment or dependency issues – follow the troubleshooting section in the Environment Setup Guide.
   * Lab blockers – compare your progress with the matching notebook in `Solutions/`.

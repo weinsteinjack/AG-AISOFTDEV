@@ -1,6 +1,6 @@
 # Docker Guide for the AI-Driven Software Engineering Program
 
-Docker is the bridge between the code you generate in the labs and a reliable deployment environment. This guide introduces Docker concepts, explains how they relate to our FastAPI + React onboarding tool, and shows you how to containerise the project using artifacts produced throughout the course.
+Docker is the bridge between the code you generate in the labs and a reliable deployment environment. This guide introduces Docker concepts, explains how they relate to our FastAPI + React onboarding tool, and shows you how to containerize the project using artifacts produced throughout the course.
 
 ---
 

@@ -15,7 +15,7 @@ This guide walks you through preparing a reliable workspace for the Digital Etho
 | **Hardware** | Minimum 8 GB RAM, 10 GB free disk space, stable internet connection. |
 | **Accounts** | GitHub, OpenAI API key (core labs), plus optional Anthropic, Google Gemini, or Hugging Face keys for advanced exercises. |
 
-> If you are learning in a classroom, ask your facilitator to confirm which providers your organisation allows.
+> If you are learning in a classroom, ask your facilitator to confirm which providers your organization allows.
 
 ---
 
@@ -88,7 +88,7 @@ HUGGINGFACE_API_KEY="hf_..."     # Optional, for open-source model exploration
 **Best practices:**
 
 * Never commit `.env` to version control.
-* Use separate keys for development vs. production if your organisation requires audit logging.
+* Use separate keys for development vs. production if your organization requires audit logging.
 * If you cannot obtain a provider key, you can still run planning and design labs; code execution labs will require keys to access LLM functionality.
 
 ---
