@@ -106,7 +106,8 @@ def resolve_artifact_path(
         cleaned_target = target
         if subdir is None:
             base_name = base.name
-            if base_name:
+            # Validate base_name: must be non-empty and not contain path separators
+            if base_name and os.sep not in base_name and (os.altsep is None or os.altsep not in base_name):
                 base_segment = Path(base_name)
                 stripped_prefix = False
                 while True:

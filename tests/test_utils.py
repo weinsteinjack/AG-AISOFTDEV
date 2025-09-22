@@ -27,6 +27,17 @@ def test_save_artifact_strips_redundant_folder(tmp_path):
     loaded = artifacts.load_artifact('artifacts/sample.txt', as_='text')
     assert loaded == 'hello'
 
+def test_save_artifact_with_artifacts_in_name(tmp_path):
+    artifacts_dir = tmp_path / 'artifacts'
+    artifacts.set_artifacts_dir(str(artifacts_dir))
+    # should create .../artifacts/artifacts
+    saved_path = artifacts.save_artifact('hello', 'artifacts/artifacts', overwrite=True)
+    assert saved_path == artifacts_dir / 'artifacts'
+    assert saved_path.is_file()
+    assert saved_path.read_text() == 'hello'
+    # and loading should work
+    loaded = artifacts.load_artifact('artifacts/artifacts', as_='text')
+    assert loaded == 'hello'
 
 def test_save_artifact_allows_filename_matching_directory(tmp_path):
     artifacts_dir = tmp_path / 'artifacts'
