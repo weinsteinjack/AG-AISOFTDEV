@@ -28,12 +28,65 @@ async def async_setup_client(model_name: str, config: dict[str, Any]) -> Any:
     return AsyncOpenAI(api_key=api_key)
 
 
-# Some OpenAI models (e.g., reasoning models like o3, o3-mini, o1)
-# do not support custom temperature values. Only the default is allowed.
 def _supports_temperature(model_name: str) -> bool:
-    # Heuristic: current reasoning models start with "o" (e.g., o3, o3-mini, o1)
-    # Keep temperature for other families (e.g., gpt-4o, gpt-4.1, gpt-3.5, etc.).
+    """Return True if we should attempt to set temperature for the model."""
+    # Reasoning models (o*) have never supported temperature overrides, so skip
+    # them up front. Other families are probed optimistically and retried below
+    # if the API rejects the value.
     return not model_name.lower().startswith("o")
+
+
+def _temperature_unsupported(error: Exception) -> bool:
+    """Detect "temperature" unsupported errors from the OpenAI client."""
+
+    # Prefer structured attributes when available.
+    for attr in ("error", "body"):
+        payload = getattr(error, attr, None)
+        if isinstance(payload, dict):
+            details = payload.get("error") if attr == "body" else payload
+            if isinstance(details, dict):
+                if (
+                    details.get("param") == "temperature"
+                    and details.get("code") == "unsupported_value"
+                ):
+                    return True
+
+    # Fall back to string matching to handle SDK variations.
+    message = str(error).lower()
+    if "temperature" not in message:
+        return False
+    keywords = (
+        "unsupported value",
+        "does not support",
+        "only the default (1) value is supported",
+    )
+    return any(keyword in message for keyword in keywords)
+
+
+def _call_with_temperature_retry(
+    operation: Any, params: dict[str, Any]
+) -> Any:
+    try:
+        return operation(**params)
+    except Exception as error:
+        if "temperature" in params and _temperature_unsupported(error):
+            retry_params = dict(params)
+            retry_params.pop("temperature", None)
+            return operation(**retry_params)
+        raise
+
+
+async def _async_call_with_temperature_retry(
+    operation: Any, params: dict[str, Any]
+) -> Any:
+    try:
+        return await operation(**params)
+    except Exception as error:
+        if "temperature" in params and _temperature_unsupported(error):
+            retry_params = dict(params)
+            retry_params.pop("temperature", None)
+            return await operation(**retry_params)
+        raise
 
 
 def text_completion(
@@ -50,7 +103,9 @@ def text_completion(
             }
             if _supports_temperature(model_name):
                 chat_params["temperature"] = temperature
-            response = client.chat.completions.create(**chat_params)
+            response = _call_with_temperature_retry(
+                client.chat.completions.create, chat_params
+            )
             return response.choices[0].message.content
         except Exception as api_error:
             if "v1/responses" in str(api_error):
@@ -61,7 +116,9 @@ def text_completion(
                 }
                 if _supports_temperature(model_name):
                     resp_params["temperature"] = temperature
-                response = client.responses.create(**resp_params)
+                response = _call_with_temperature_retry(
+                    client.responses.create, resp_params
+                )
                 if hasattr(response, "text"):
                     return response.text
                 return response.choices[0].text
@@ -84,7 +141,9 @@ async def async_text_completion(
             }
             if _supports_temperature(model_name):
                 chat_params["temperature"] = temperature
-            response = await client.chat.completions.create(**chat_params)
+            response = await _async_call_with_temperature_retry(
+                client.chat.completions.create, chat_params
+            )
             return response.choices[0].message.content
         except Exception as api_error:
             if "v1/responses" in str(api_error):
@@ -95,7 +154,9 @@ async def async_text_completion(
                 }
                 if _supports_temperature(model_name):
                     resp_params["temperature"] = temperature
-                response = await client.responses.create(**resp_params)
+                response = await _async_call_with_temperature_retry(
+                    client.responses.create, resp_params
+                )
                 if hasattr(response, "text"):
                     return response.text
                 return response.choices[0].text
