@@ -61,7 +61,12 @@ async def async_vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: 
 def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
     api_key = os.getenv("HUGGINGFACE_API_KEY", "")
     rate_limit("huggingface", api_key, model_name)
-    pil_image = client.text_to_image(prompt, timeout=TOTAL_TIMEOUT)
+    # Some versions of huggingface_hub do not support a per-call `timeout` kwarg.
+    # Prefer using it when available, but gracefully fall back if not.
+    try:
+        pil_image = client.text_to_image(prompt, timeout=TOTAL_TIMEOUT)
+    except TypeError:
+        pil_image = client.text_to_image(prompt)
     buffered = BytesIO()
     pil_image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8"), "image/png"
@@ -74,9 +79,45 @@ async def async_image_generation(
 
 
 def image_edit(*args: Any, **kwargs: Any) -> Tuple[str, str]:  # pragma: no cover
-    raise ProviderOperationError(
-        "huggingface", kwargs.get("model_name", ""), "image edit", "Not implemented"
-    )
+    try:
+        client = args[0] if args else kwargs.get("client")
+        prompt = args[1] if len(args) > 1 else kwargs.get("prompt", "")
+        image_path = args[2] if len(args) > 2 else kwargs.get("image_path")
+        model_name = args[3] if len(args) > 3 else kwargs.get("model_name", "")
+        # Remaining kwargs are edit params (guidance_scale, strength, num_inference_steps, seed, etc.)
+        edit_params = dict(kwargs)
+        for k in ("client", "prompt", "image_path", "model_name"):
+            edit_params.pop(k, None)
+
+        api_key = os.getenv("HUGGINGFACE_API_KEY", "")
+        rate_limit("huggingface", api_key, model_name)
+
+        # Load image as PIL if possible; otherwise pass raw bytes (InferenceClient accepts both)
+        src_image: Any
+        try:
+            from PIL import Image  # type: ignore
+
+            with open(image_path, "rb") as f:
+                src_image = Image.open(f)
+                # Ensure the image is loaded before file closes
+                src_image.load()
+        except Exception:
+            with open(image_path, "rb") as f:
+                src_image = f.read()
+
+        # Some versions support timeout kwarg; fall back if not
+        try:
+            pil_image = client.image_to_image(
+                prompt=prompt, image=src_image, timeout=TOTAL_TIMEOUT, **edit_params
+            )
+        except TypeError:
+            pil_image = client.image_to_image(prompt=prompt, image=src_image, **edit_params)
+
+        buffered = BytesIO()
+        pil_image.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode("utf-8"), "image/png"
+    except Exception as e:  # pragma: no cover - network dependent
+        raise ProviderOperationError("huggingface", kwargs.get("model_name", ""), "image edit", str(e))
 
 
 async def async_image_edit(
