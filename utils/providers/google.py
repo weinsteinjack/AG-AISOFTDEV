@@ -1,3 +1,16 @@
+"""Google AI (Gemini) Provider Implementation.
+
+This module implements support for Google's Gemini models through the new
+google.genai client API. It handles text generation, vision (multimodal),
+and image generation tasks.
+
+API Documentation: https://ai.google.dev/gemini-api/docs
+
+Key Changes (2025):
+- Uses google.genai.Client instead of google.generativeai.GenerativeModel
+- All content generation goes through client.models.generate_content()
+- Supports response_modalities for controlling output types
+"""
 from __future__ import annotations
 
 import asyncio
@@ -84,7 +97,7 @@ def _is_client_not_found(error: Exception) -> bool:
 
 def image_generation(
     client: Any, prompt: str, model_name: str
-) -> tuple[bytes, str]:
+) -> tuple[str, str]:
     """
     Generate an image using a Google image generation model.
 
@@ -94,7 +107,7 @@ def image_generation(
         model_name (str): The name of the image generation model.
 
     Returns:
-        A tuple containing the image bytes and its MIME type.
+        A tuple containing the base64-encoded image data and its MIME type.
     """
     _, genai_types = _get_google_genai_imports()
     if not genai_types:
@@ -102,7 +115,7 @@ def image_generation(
             "google",
             model_name,
             "image_generation",
-            "google.generativeai is not installed",
+            "google.genai is not installed",
         )
 
     try:
@@ -116,16 +129,29 @@ def image_generation(
         )
 
         # Extract the image data from the response
-        parts = response.candidates[0].content.parts
-        for part in parts:
-            blob = getattr(part, "inline_data", None)
-            if blob and getattr(blob, "data", None):
-                return blob.data, blob.mime_type
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        # Check for inline_data with image content
+                        blob = getattr(part, "inline_data", None)
+                        if blob:
+                            data = getattr(blob, "data", None)
+                            mime_type = getattr(blob, "mime_type", "image/png")
+                            if data:
+                                # Return base64-encoded string
+                                if isinstance(data, bytes):
+                                    return base64.b64encode(data).decode("utf-8"), mime_type
+                                elif isinstance(data, str):
+                                    # Already base64 encoded
+                                    return data, mime_type
 
         raise ProviderOperationError(
             "google", model_name, "image_generation", "No image data found in response"
         )
 
+    except ProviderOperationError:
+        raise
     except Exception as e:
         # Wrap exceptions in ProviderOperationError for consistent error handling
         raise ProviderOperationError(
@@ -134,7 +160,11 @@ def image_generation(
 
 
 def setup_client(model_name: str, config: dict[str, Any]) -> Any:
-    """Set up the appropriate Google client based on the model's task."""
+    """Set up the appropriate Google client based on the model's task.
+    
+    Returns a genai.Client for text/vision/image generation tasks,
+    or a SpeechClient for audio transcription.
+    """
     if config.get("audio_transcription"):
         from google.cloud import speech
 
@@ -146,9 +176,9 @@ def setup_client(model_name: str, config: dict[str, Any]) -> Any:
 
     from google import genai
 
-    # For text models, configure the API key and return the model object.
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel(model_name)
+    # Return a Client instance for all text/vision/image models
+    # The client.models.generate_content API will be used for all content generation
+    return genai.Client(api_key=api_key)
 
 
 async def async_setup_client(model_name: str, config: dict[str, Any]) -> Any:
@@ -161,15 +191,40 @@ def text_completion(
     try:
         api_key = os.getenv("GOOGLE_API_KEY", "")
         rate_limit("google", api_key, model_name)
-        # google.generativeai's GenerativeModel does not accept a `timeout` kwarg.
-        # Use `request_options={"timeout": ...}` instead. Also pass temperature via
-        # generation_config so callers can control creativity similar to other providers.
-        response = client.generate_content(
-            prompt,
-            request_options={"timeout": TOTAL_TIMEOUT},
-            generation_config={"temperature": temperature},
+        
+        _, genai_types = _get_google_genai_imports()
+        if not genai_types:
+            raise ProviderOperationError(
+                "google",
+                model_name,
+                "text_completion",
+                "google.genai is not installed",
+            )
+        
+        # Use the client.models.generate_content API
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                temperature=temperature,
+                response_modalities=["TEXT"],
+            ),
         )
-        return response.text
+        
+        # Extract text from the response
+        if hasattr(response, 'text'):
+            return response.text
+        elif response.candidates:
+            # Fallback to extracting from parts
+            text_parts = []
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, 'text'):
+                            text_parts.append(part.text)
+            return ''.join(text_parts)
+        else:
+            return ""
     except Exception as e:  # pragma: no cover - network dependent
         raise ProviderOperationError("google", model_name, "completion", str(e))
 
@@ -182,10 +237,102 @@ async def async_text_completion(
     )
 
 
-def vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
-    raise ProviderOperationError(
-        "google", kwargs.get("model_name", ""), "vision", "Not implemented"
-    )
+def vision_completion(
+    client: Any, prompt: str, image_path_or_url: str, model_name: str
+) -> str:
+    """Process vision inputs with Google's multimodal models.
+    
+    Args:
+        client: The google.genai.Client object.
+        prompt: Text prompt describing what to analyze.
+        image_path_or_url: Path to local image file or URL.
+        model_name: The name of the vision model.
+    
+    Returns:
+        Text response from the model.
+    """
+    _, genai_types = _get_google_genai_imports()
+    if not genai_types:
+        raise ProviderOperationError(
+            "google",
+            model_name,
+            "vision_completion",
+            "google.genai is not installed",
+        )
+    
+    try:
+        # Load image data
+        image_data = None
+        mime_type = "image/png"
+        
+        if image_path_or_url.startswith(('http://', 'https://')):
+            # Download from URL
+            import requests
+            response = requests.get(image_path_or_url, timeout=30)
+            response.raise_for_status()
+            image_data = response.content
+            # Try to detect mime type from headers
+            content_type = response.headers.get('content-type', '')
+            if 'image/' in content_type:
+                mime_type = content_type.split(';')[0]
+        else:
+            # Read from local file
+            with open(image_path_or_url, 'rb') as f:
+                image_data = f.read()
+            # Detect mime type from extension
+            import mimetypes
+            detected_type = mimetypes.guess_type(image_path_or_url)[0]
+            if detected_type and detected_type.startswith('image/'):
+                mime_type = detected_type
+        
+        if not image_data:
+            raise ProviderOperationError(
+                "google",
+                model_name,
+                "vision_completion",
+                f"Could not load image from {image_path_or_url}"
+            )
+        
+        # Build the content with text and image parts
+        # Google's API expects contents to be a single structured object, not a list
+        image_part = genai_types.Part(
+            inline_data=genai_types.Blob(
+                mime_type=mime_type,
+                data=image_data  # Pass raw bytes, not base64
+            )
+        )
+        
+        contents = [prompt, image_part]
+        
+        # Generate response
+        response = client.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=genai_types.GenerateContentConfig(
+                response_modalities=["TEXT"],
+            ),
+        )
+        
+        # Extract text from response
+        if hasattr(response, 'text'):
+            return response.text
+        elif response.candidates:
+            text_parts = []
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, 'text'):
+                            text_parts.append(part.text)
+            return ''.join(text_parts)
+        else:
+            return ""
+            
+    except ProviderOperationError:
+        raise
+    except Exception as e:
+        raise ProviderOperationError(
+            "google", model_name, "vision_completion", f"API call failed: {e}"
+        )
 
 
 async def async_vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover

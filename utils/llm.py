@@ -301,46 +301,24 @@ async def async_get_vision_completion_compat(
 
 def get_image_generation_completion(
     client: Any, prompt: str, model_name: str, api_provider: str
-) -> Tuple[bytes, str] | Tuple[None, str]:
+) -> Tuple[str, str]:
     """
     Generates an image based on a prompt using the specified API provider.
 
     Args:
-        client: The API client (can be None for Google provider).
+        client: The API client.
         prompt (str): The text prompt for image generation.
         model_name (str): The name of the model to use.
         api_provider (str): The API provider ('google', 'openai', etc.).
 
     Returns:
-        A tuple containing the image bytes and the MIME type, or (None, str) on failure.
+        A tuple containing the base64-encoded image and the MIME type.
     """
     prompt = normalize_prompt(prompt)
     provider_module = ensure_provider(
         client, api_provider, model_name, "image generation"
     )
-
-    # --- Start of Hotfix for Google Image Generation ---
-    # If the provider is Google, we will create a dedicated client here
-    # to bypass issues with the shared `setup_llm_client`.
-    if api_provider == "google":
-        try:
-            from google import genai
-            import os
-
-            api_key = os.getenv("GOOGLE_API_KEY")
-            if not api_key:
-                raise ValueError("GOOGLE_API_KEY not found in environment.")
-            # Instantiate a new client specifically for this operation.
-            client = genai.Client(api_key=api_key)
-        except (ImportError, ValueError) as e:
-            raise ProviderOperationError(
-                "google",
-                model_name,
-                "image_generation",
-                f"[google_image_fix] Failed to create dedicated client: {e}",
-            ) from e
-    # --- End of Hotfix ---
-
+    
     return provider_module.image_generation(client, prompt, model_name)
 
 
