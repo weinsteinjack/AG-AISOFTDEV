@@ -78,6 +78,12 @@ class _FakeResponse:
         self.generated_images = generated_images
 
 
+class _PositivePrompt:
+    def __init__(self):
+        self.image = None
+        self.safety_attributes = types.SimpleNamespace(content_type="Positive Prompt")
+
+
 class _FakeModels:
     def __init__(self, response):
         self._response = response
@@ -97,9 +103,12 @@ class _FakeGenAiClient:
 
 def test_google_image_generation_uses_models_api():
     image_bytes = b"test-bytes"
-    response = _FakeResponse([
-        _FakeGeneratedImage(_FakeImage(image_bytes=image_bytes, mime_type="image/jpeg"))
-    ])
+    response = _FakeResponse(
+        [
+            _PositivePrompt(),
+            _FakeGeneratedImage(_FakeImage(image_bytes=image_bytes, mime_type="image/jpeg")),
+        ]
+    )
     client = _FakeGenAiClient(response)
 
     b64, mime = google.image_generation(
@@ -148,3 +157,154 @@ def test_google_image_generation_non_image_model():
 
     with pytest.raises(ProviderOperationError):
         google.image_generation(_NoopClient(), "prompt", "gemini-2.5-pro")
+
+
+def test_google_image_generation_retries_v1_api():
+    class StubClientError(Exception):
+        def __init__(self, code, response):
+            self.code = code
+            self.message = response.get("error", {}).get("message", "")
+            super().__init__(response)
+
+    stub_errors = types.SimpleNamespace(ClientError=StubClientError)
+
+    class StubHttpOptions:
+        def __init__(self, api_version=None):
+            self.api_version = api_version
+
+    class StubGenerateImagesConfig:
+        def __init__(self, http_options=None):
+            self.http_options = http_options
+
+    class StubImage:
+        def __init__(self, image_bytes=b"abc", mime_type="image/png"):
+            self.image_bytes = image_bytes
+            self.mime_type = mime_type
+            self.bytes_base64 = None
+
+    class StubGeneratedImage:
+        def __init__(self):
+            self.image = StubImage()
+            self.safety_attributes = None
+
+    class StubResponse:
+        def __init__(self, images):
+            self.generated_images = images
+
+    stub_types = types.SimpleNamespace(
+        HttpOptions=StubHttpOptions,
+        GenerateImagesConfig=StubGenerateImagesConfig,
+        Image=StubImage,
+        GeneratedImage=StubGeneratedImage,
+        GenerateImagesResponse=StubResponse,
+    )
+
+    google._GENAI_IMPORTS = (stub_errors, stub_types)
+
+    try:
+        class DummyModels:
+            def __init__(self):
+                self.config_calls = []
+
+            def generate_images(self, *, model, prompt, config=None):
+                self.config_calls.append(config)
+                if config is None:
+                    raise stub_errors.ClientError(
+                        404,
+                        {
+                            "error": {
+                                "message": "",
+                                "status": "NOT_FOUND",
+                            }
+                        },
+                    )
+                return stub_types.GenerateImagesResponse([stub_types.GeneratedImage()])
+
+        client = types.SimpleNamespace(models=DummyModels())
+
+        data_b64, mime = google.image_generation(
+            client, "prompt", "gemini-2.5-flash-image-preview"
+        )
+
+        assert base64.b64decode(data_b64) == b"abc"
+        assert mime == "image/png"
+        assert len(client.models.config_calls) == 2
+        assert client.models.config_calls[0] is None
+        assert (
+            client.models.config_calls[1].http_options.api_version == "v1"
+        )
+    finally:
+        google._GENAI_IMPORTS = None
+
+
+def test_google_image_generation_falls_back_to_images_api():
+    class StubClientError(Exception):
+        def __init__(self, code, response):
+            self.code = code
+            self.message = response.get("error", {}).get("message", "")
+            super().__init__(response)
+
+    stub_errors = types.SimpleNamespace(ClientError=StubClientError)
+
+    class StubHttpOptions:
+        def __init__(self, api_version=None):
+            self.api_version = api_version
+
+    class StubGenerateImagesConfig:
+        def __init__(self, http_options=None):
+            self.http_options = http_options
+
+    class StubImage:
+        def __init__(self, image_bytes=b"xyz", mime_type="image/png"):
+            self.image_bytes = image_bytes
+            self.mime_type = mime_type
+            self.bytes_base64 = None
+
+    class StubGeneratedImage:
+        def __init__(self):
+            self.image = StubImage()
+            self.safety_attributes = None
+
+    class StubResponse:
+        def __init__(self, images):
+            self.generated_images = images
+
+    stub_types = types.SimpleNamespace(
+        HttpOptions=StubHttpOptions,
+        GenerateImagesConfig=StubGenerateImagesConfig,
+        Image=StubImage,
+        GeneratedImage=StubGeneratedImage,
+        GenerateImagesResponse=StubResponse,
+    )
+
+    google._GENAI_IMPORTS = (stub_errors, stub_types)
+
+    try:
+        class DummyModels:
+            def __init__(self):
+                self.calls = []
+
+            def generate_images(self, *, model, prompt, config=None):
+                self.calls.append(config)
+                raise stub_errors.ClientError(404, {"error": {"message": "", "status": "NOT_FOUND"}})
+
+        class DummyImages:
+            def __init__(self):
+                self.calls = []
+
+            def generate(self, *, model, prompt):
+                self.calls.append((model, prompt))
+                return stub_types.GenerateImagesResponse([stub_types.GeneratedImage()])
+
+        client = types.SimpleNamespace(models=DummyModels(), images=DummyImages())
+
+        data_b64, mime = google.image_generation(
+            client, "prompt", "gemini-2.5-flash-image-preview"
+        )
+
+        assert base64.b64decode(data_b64) == b"xyz"
+        assert mime == "image/png"
+        assert len(client.models.calls) == 2  # initial attempt + v1 retry
+        assert client.images.calls == [("gemini-2.5-flash-image-preview", "prompt")]
+    finally:
+        google._GENAI_IMPORTS = None

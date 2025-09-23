@@ -20,6 +20,15 @@ class DummyPlantUML:
         return b"\x89PNG\r\n\x1a\n\x00dummy"
 
 
+class DummyPlantUMLNoOutfile:
+    def __init__(self, url=None):
+        self.url = url
+
+    def processes(self, diagram_source):  # type: ignore[override]
+        assert diagram_source.startswith("@startuml")
+        return b"\x89PNG\r\n\x1a\n\x00dummy"
+
+
 def test_render_writes_inside_artifacts(monkeypatch):
     # Monkeypatch PlantUML to avoid network calls
     monkeypatch.setattr(utils, "PlantUML", DummyPlantUML)
@@ -41,9 +50,18 @@ def test_render_accepts_artifacts_prefixed_path(monkeypatch):
     assert os.path.getsize(expected) > 0
 
 
+def test_render_handles_clients_without_outfile(monkeypatch):
+    monkeypatch.setattr(utils, "PlantUML", DummyPlantUMLNoOutfile)
+    out_rel = "diagrams/test_plantuml_no_outfile.png"
+    utils.render_plantuml_diagram("@startuml\nA -> B: hi\n@enduml", out_rel)
+
+    expected = os.path.join(utils._find_project_root(), "artifacts", out_rel)
+    assert os.path.exists(expected)
+    assert os.path.getsize(expected) > 0
+
+
 @pytest.mark.parametrize("bad", ["../outside.png", "/tmp/out.png"]) 
 def test_render_rejects_outside_artifacts(monkeypatch, bad):
     monkeypatch.setattr(utils, "PlantUML", DummyPlantUML)
     with pytest.raises(ValueError):
         utils.render_plantuml_diagram("@startuml\nA->B\n@enduml", bad)
-

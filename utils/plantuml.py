@@ -50,10 +50,34 @@ def render_plantuml_diagram(
 
     client = _instantiate_plantuml(server_url)
 
+    attempts = []
+    result = None
+
     try:
         result = client.processes(diagram_source, outfile=str(destination))
+    except TypeError as exc:  # Older plantuml libraries reject the keyword.
+        attempts.append(("outfile", exc))
     except Exception as exc:  # pragma: no cover - pass through diagnostics
         raise ArtifactError(f"PlantUML rendering failed: {exc}") from exc
+
+    if result is None:
+        try:
+            result = client.processes(diagram_source, str(destination))
+        except TypeError as exc:
+            attempts.append(("outfile positional", exc))
+        except Exception as exc:  # pragma: no cover - pass through diagnostics
+            raise ArtifactError(f"PlantUML rendering failed: {exc}") from exc
+
+    if result is None:
+        try:
+            result = client.processes(diagram_source)
+        except Exception as exc:  # pragma: no cover - pass through diagnostics
+            if attempts:
+                detail = "; ".join(f"{label}: {err}" for label, err in attempts)
+                message = f"PlantUML rendering failed after attempts [{detail}]: {exc}"
+            else:
+                message = f"PlantUML rendering failed: {exc}"
+            raise ArtifactError(message) from exc
 
     if isinstance(result, (bytes, bytearray)):
         destination.write_bytes(result)

@@ -299,6 +299,108 @@ async def async_get_vision_completion_compat(
         return None, str(e)
 
 
+def get_image_generation_completion(
+    client: Any, prompt: str, model_name: str, api_provider: str
+) -> Tuple[bytes, str] | Tuple[None, str]:
+    """
+    Generates an image based on a prompt using the specified API provider.
+
+    Args:
+        client: The API client (can be None for Google provider).
+        prompt (str): The text prompt for image generation.
+        model_name (str): The name of the model to use.
+        api_provider (str): The API provider ('google', 'openai', etc.).
+
+    Returns:
+        A tuple containing the image bytes and the MIME type, or (None, str) on failure.
+    """
+    prompt = normalize_prompt(prompt)
+    provider_module = ensure_provider(
+        client, api_provider, model_name, "image generation"
+    )
+
+    # --- Start of Hotfix for Google Image Generation ---
+    # If the provider is Google, we will create a dedicated client here
+    # to bypass issues with the shared `setup_llm_client`.
+    if api_provider == "google":
+        try:
+            from google import genai
+            import os
+
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                raise ValueError("GOOGLE_API_KEY not found in environment.")
+            # Instantiate a new client specifically for this operation.
+            client = genai.Client(api_key=api_key)
+        except (ImportError, ValueError) as e:
+            raise ProviderOperationError(
+                "google",
+                model_name,
+                "image_generation",
+                f"[google_image_fix] Failed to create dedicated client: {e}",
+            ) from e
+    # --- End of Hotfix ---
+
+    return provider_module.image_generation(client, prompt, model_name)
+
+
+async def async_get_image_generation_completion(
+    client: Any, prompt: str, model_name: str, api_provider: str
+) -> Tuple[str, str]:
+    """Asynchronously fetch an image generation completion."""
+    prompt = normalize_prompt(prompt)
+    provider_module = ensure_provider(
+        client, api_provider, model_name, "image generation"
+    )
+    if hasattr(provider_module, "async_image_generation"):
+        if api_provider == "google":
+            return await provider_module.async_image_generation(client, prompt, model_name)
+        return await provider_module.async_image_generation(
+            client, prompt, model_name
+        )
+    if api_provider == "google":
+        return await asyncio.to_thread(
+            provider_module.image_generation, client, prompt, model_name
+        )
+    return await asyncio.to_thread(
+        provider_module.image_generation, client, prompt, model_name
+    )
+
+
+def get_image_generation_completion_compat(
+    client: Any, prompt: str, model_name: str, api_provider: str
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """Compatibility wrapper returning ``(base64_str, mime_type, error_str)``.
+
+    .. deprecated:: 1.0
+       Use :func:`get_image_generation_completion` and catch :class:`ProviderOperationError`.
+    """
+    try:
+        b64, mime = get_image_generation_completion(
+            client, prompt, model_name, api_provider
+        )
+        return b64, mime, None
+    except ProviderOperationError as e:
+        return None, None, str(e)
+
+
+async def async_get_image_generation_completion_compat(
+    client: Any, prompt: str, model_name: str, api_provider: str
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """Async compatibility wrapper for image generation.
+
+    .. deprecated:: 1.0
+       Use :func:`async_get_image_generation_completion` and catch :class:`ProviderOperationError`.
+    """
+    try:
+        b64, mime = await async_get_image_generation_completion(
+            client, prompt, model_name, api_provider
+        )
+        return b64, mime, None
+    except ProviderOperationError as e:
+        return None, None, str(e)
+
+
 def clean_llm_output(output_str: str, language: str = "json") -> str:
     """Cleans markdown code fences from LLM output."""
     if "```" in output_str:
@@ -474,6 +576,10 @@ __all__ = [
     "get_vision_completion_compat",
     "async_get_vision_completion",
     "async_get_vision_completion_compat",
+    "get_image_generation_completion",
+    "get_image_generation_completion_compat",
+    "async_get_image_generation_completion",
+    "async_get_image_generation_completion_compat",
     "clean_llm_output",
     "prompt_enhancer",
     "prompt_enhancer_compat",

@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import os
+import random
+import time
 from typing import Any, Tuple
 
 from ..errors import ProviderOperationError
@@ -23,18 +25,19 @@ def _extract_generated_image(response: Any, model_name: str) -> Tuple[str, str]:
         raise ProviderOperationError(
             "google", model_name, "image generation", "No image data returned by API"
         )
-    image_obj = getattr(generated[0], "image", None)
-    if not image_obj:
-        raise ProviderOperationError(
-            "google", model_name, "image generation", "Missing image payload in response"
-        )
-    mime_type = getattr(image_obj, "mime_type", None) or "image/png"
-    image_bytes = getattr(image_obj, "image_bytes", None)
-    if isinstance(image_bytes, bytes) and image_bytes:
-        return base64.b64encode(image_bytes).decode("utf-8"), mime_type
-    inline_b64 = getattr(image_obj, "bytes_base64", None)
-    if isinstance(inline_b64, str) and inline_b64:
-        return inline_b64, mime_type
+
+    for candidate in generated:
+        image_obj = getattr(candidate, "image", None)
+        if not image_obj:
+            continue
+        mime_type = getattr(image_obj, "mime_type", None) or "image/png"
+        image_bytes = getattr(image_obj, "image_bytes", None)
+        if isinstance(image_bytes, bytes) and image_bytes:
+            return base64.b64encode(image_bytes).decode("utf-8"), mime_type
+        inline_b64 = getattr(image_obj, "bytes_base64", None)
+        if isinstance(inline_b64, str) and inline_b64:
+            return inline_b64, mime_type
+
     raise ProviderOperationError(
         "google",
         model_name,
@@ -43,20 +46,107 @@ def _extract_generated_image(response: Any, model_name: str) -> Tuple[str, str]:
     )
 
 
+_GENAI_IMPORTS: tuple[Any, Any] | None = None
+
+
+def _get_google_genai_imports() -> tuple[Any, Any]:
+    """Lazily import google.genai helpers so tests can stub behavior."""
+    global _GENAI_IMPORTS
+    if _GENAI_IMPORTS is None:
+        try:
+            from google.genai import errors as genai_errors  # type: ignore
+            from google.genai import types as genai_types  # type: ignore
+        except ImportError:  # pragma: no cover - optional dependency
+            _GENAI_IMPORTS = (None, None)
+        else:
+            _GENAI_IMPORTS = (genai_errors, genai_types)
+    return _GENAI_IMPORTS
+
+
+def _should_retry_with_v1(error: Exception) -> bool:
+    genai_errors, _ = _get_google_genai_imports()
+    if not genai_errors or not isinstance(error, genai_errors.ClientError):
+        return False
+    if getattr(error, "code", None) == 404:
+        return True
+    message = (getattr(error, "message", "") or str(error) or "").lower()
+    return "api version" in message or "predict" in message
+
+
+def _is_client_not_found(error: Exception) -> bool:
+    genai_errors, _ = _get_google_genai_imports()
+    return bool(
+        genai_errors
+        and isinstance(error, genai_errors.ClientError)
+        and getattr(error, "code", None) == 404
+    )
+
+
+def image_generation(
+    client: Any, prompt: str, model_name: str
+) -> tuple[bytes, str]:
+    """
+    Generate an image using a Google image generation model.
+
+    Args:
+        client: The google.genai.Client object.
+        prompt (str): The text prompt for image generation.
+        model_name (str): The name of the image generation model.
+
+    Returns:
+        A tuple containing the image bytes and its MIME type.
+    """
+    _, genai_types = _get_google_genai_imports()
+    if not genai_types:
+        raise ProviderOperationError(
+            "google",
+            model_name,
+            "image_generation",
+            "google.generativeai is not installed",
+        )
+
+    try:
+        # Generate the image content
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+            ),
+        )
+
+        # Extract the image data from the response
+        parts = response.candidates[0].content.parts
+        for part in parts:
+            blob = getattr(part, "inline_data", None)
+            if blob and getattr(blob, "data", None):
+                return blob.data, blob.mime_type
+
+        raise ProviderOperationError(
+            "google", model_name, "image_generation", "No image data found in response"
+        )
+
+    except Exception as e:
+        # Wrap exceptions in ProviderOperationError for consistent error handling
+        raise ProviderOperationError(
+            "google", model_name, "image_generation", f"API call failed: {e}"
+        )
+
+
 def setup_client(model_name: str, config: dict[str, Any]) -> Any:
+    """Set up the appropriate Google client based on the model's task."""
     if config.get("audio_transcription"):
         from google.cloud import speech
 
         return speech.SpeechClient()
+
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in .env file.")
-    if _is_image_model(model_name):
-        from google import genai as google_genai
 
-        return google_genai.Client(api_key=api_key)
-    import google.generativeai as genai
+    from google import genai
 
+    # For text models, configure the API key and return the model object.
     genai.configure(api_key=api_key)
     return genai.GenerativeModel(model_name)
 
@@ -100,43 +190,6 @@ def vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
 
 async def async_vision_completion(*args: Any, **kwargs: Any) -> str:  # pragma: no cover
     return await asyncio.to_thread(vision_completion, *args, **kwargs)
-
-
-def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
-    api_key = os.getenv("GOOGLE_API_KEY", "")
-    rate_limit("google", api_key, model_name)
-    if _is_image_model(model_name) and hasattr(client, "models"):
-        response = client.models.generate_images(model=model_name, prompt=prompt)
-        return _extract_generated_image(response, model_name)
-
-    if _is_image_model(model_name) and hasattr(client, "generate_content"):
-        response = client.generate_content(
-            prompt,
-            request_options={"timeout": TOTAL_TIMEOUT},
-        )
-        for part in getattr(response, "parts", []):
-            inline_data = getattr(part, "inline_data", None)
-            if not inline_data:
-                continue
-            data = getattr(inline_data, "data", None)
-            mime_type = getattr(inline_data, "mime_type", None) or "image/png"
-            if isinstance(data, bytes) and data:
-                return base64.b64encode(data).decode("utf-8"), mime_type
-            if isinstance(data, str) and data:
-                return data, mime_type
-        raise ProviderOperationError(
-            "google",
-            model_name,
-            "image generation",
-            "generate_content did not return inline image data",
-        )
-
-    raise ProviderOperationError(
-        "google",
-        model_name,
-        "image generation",
-        "Not implemented for this model",
-    )
 
 
 async def async_image_generation(
