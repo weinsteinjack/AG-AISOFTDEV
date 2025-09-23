@@ -166,25 +166,139 @@ async def async_text_completion(
 
 
 def vision_completion(
-    *args: Any, **kwargs: Any
-) -> str:  # pragma: no cover - heavy network
-    raise ProviderOperationError(
-        "openai",
-        kwargs.get("model_name", ""),
-        "vision",
-        "Not implemented in this environment",
-    )
+    client: Any, prompt: str, image_path_or_url: str, model_name: str
+) -> str:
+    """Process vision inputs with OpenAI's multimodal models (GPT-4o, GPT-4 Vision, etc.).
+    
+    OpenAI vision models accept images as base64-encoded data URLs in the message content.
+    """
+    import mimetypes
+    import requests
+    
+    try:
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        rate_limit("openai", api_key, model_name)
+        
+        # Load image data
+        image_data = None
+        mime_type = "image/png"
+        
+        if image_path_or_url.startswith(('http://', 'https://')):
+            # For URLs, OpenAI can handle them directly
+            image_url = image_path_or_url
+        else:
+            # For local files, convert to base64 data URL
+            with open(image_path_or_url, 'rb') as f:
+                image_data = f.read()
+            
+            # Detect mime type
+            detected_type = mimetypes.guess_type(image_path_or_url)[0]
+            if detected_type and detected_type.startswith('image/'):
+                mime_type = detected_type
+            
+            # Create base64 data URL
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+            image_url = f"data:{mime_type};base64,{image_base64}"
+        
+        # Build the message with image
+        messages = [{
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": prompt
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_url
+                    }
+                }
+            ]
+        }]
+        
+        # Make the API call
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+            max_tokens=4096,
+            timeout=TOTAL_TIMEOUT,
+        )
+        
+        # Extract text from response
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        raise ProviderOperationError(
+            "openai", model_name, "vision_completion", str(e)
+        )
 
 
 async def async_vision_completion(
-    *args: Any, **kwargs: Any
-) -> str:  # pragma: no cover - heavy network
-    raise ProviderOperationError(
-        "openai",
-        kwargs.get("model_name", ""),
-        "vision",
-        "Not implemented in this environment",
-    )
+    client: Any, prompt: str, image_path_or_url: str, model_name: str
+) -> str:
+    """Async version of vision_completion for OpenAI models."""
+    import mimetypes
+    import aiofiles
+    
+    try:
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        rate_limit("openai", api_key, model_name)
+        
+        # Load image data
+        image_data = None
+        mime_type = "image/png"
+        
+        if image_path_or_url.startswith(('http://', 'https://')):
+            # For URLs, OpenAI can handle them directly
+            image_url = image_path_or_url
+        else:
+            # For local files, convert to base64 data URL
+            # Use sync file reading in thread for simplicity
+            with open(image_path_or_url, 'rb') as f:
+                image_data = f.read()
+            
+            # Detect mime type
+            detected_type = mimetypes.guess_type(image_path_or_url)[0]
+            if detected_type and detected_type.startswith('image/'):
+                mime_type = detected_type
+            
+            # Create base64 data URL
+            image_base64 = base64.b64encode(image_data).decode('utf-8')
+            image_url = f"data:{mime_type};base64,{image_base64}"
+        
+        # Build the message with image
+        messages = [{
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": prompt
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_url
+                    }
+                }
+            ]
+        }]
+        
+        # Make the API call
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=messages,
+            max_tokens=4096,
+            timeout=TOTAL_TIMEOUT,
+        )
+        
+        # Extract text from response
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        raise ProviderOperationError(
+            "openai", model_name, "vision_completion", str(e)
+        )
 
 
 def image_generation(client: Any, prompt: str, model_name: str) -> Tuple[str, str]:
