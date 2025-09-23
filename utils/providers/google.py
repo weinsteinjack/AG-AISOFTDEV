@@ -345,10 +345,82 @@ async def async_image_generation(
     return await asyncio.to_thread(image_generation, client, prompt, model_name)
 
 
-def image_edit(*args: Any, **kwargs: Any) -> Tuple[str, str]:  # pragma: no cover
-    raise ProviderOperationError(
-        "google", kwargs.get("model_name", ""), "image edit", "Not implemented"
-    )
+def image_edit(
+    client: Any, prompt: str, image_path: str, model_name: str, **edit_params: Any
+) -> Tuple[str, str]:
+    """Edit an image using Google's Gemini image models.
+    
+    Gemini models support image editing through text+image prompts.
+    """
+    _, genai_types = _get_google_genai_imports()
+    if not genai_types:
+        raise ProviderOperationError(
+            "google",
+            model_name,
+            "image_edit",
+            "google.genai is not installed",
+        )
+    
+    try:
+        # Load the image to edit
+        import mimetypes
+        from PIL import Image as PILImage
+        
+        # Read the original image
+        with open(image_path, 'rb') as f:
+            image_data = f.read()
+        
+        # Detect mime type
+        mime_type = mimetypes.guess_type(image_path)[0] or "image/png"
+        
+        # Create image part
+        image_part = genai_types.Part(
+            inline_data=genai_types.Blob(
+                mime_type=mime_type,
+                data=image_data
+            )
+        )
+        
+        # Build contents with edit instruction and image
+        contents = [image_part, prompt]
+        
+        # Generate edited image
+        response = client.models.generate_content(
+            model=model_name,
+            contents=contents,
+            config=genai_types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+            ),
+        )
+        
+        # Extract the edited image from response
+        if response.candidates:
+            for candidate in response.candidates:
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        # Check for inline_data with image content
+                        blob = getattr(part, "inline_data", None)
+                        if blob:
+                            data = getattr(blob, "data", None)
+                            result_mime_type = getattr(blob, "mime_type", "image/png")
+                            if data:
+                                # Return base64-encoded string
+                                if isinstance(data, bytes):
+                                    return base64.b64encode(data).decode("utf-8"), result_mime_type
+                                elif isinstance(data, str):
+                                    # Already base64 encoded
+                                    return data, result_mime_type
+        
+        raise ProviderOperationError(
+            "google", model_name, "image_edit", "No edited image in response"
+        )
+        
+    except ProviderOperationError:
+        raise
+    except Exception as e:
+        raise ProviderOperationError(
+            "google", model_name, "image_edit", f"Edit failed: {e}"
+        )
 
 
 async def async_image_edit(
