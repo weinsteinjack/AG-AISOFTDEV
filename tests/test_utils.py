@@ -26,6 +26,7 @@ def test_save_artifact_strips_redundant_folder(tmp_path):
     assert not (artifacts_dir / 'artifacts').exists()
     loaded = artifacts.load_artifact('artifacts/sample.txt', as_='text')
     assert loaded == 'hello'
+
 def test_save_artifact_with_artifacts_in_name(tmp_path):
     artifacts_dir = tmp_path / 'artifacts'
     artifacts.set_artifacts_dir(str(artifacts_dir))
