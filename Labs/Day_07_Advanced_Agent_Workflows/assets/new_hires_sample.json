@@ -1,0 +1,99 @@
+{
+  "new_hires": [
+    {
+      "id": "NH-001",
+      "name": "Alice Johnson",
+      "email": "alice.johnson@company.com",
+      "role": "engineer",
+      "level": "senior",
+      "department": "Engineering",
+      "manager": "Bob Smith",
+      "manager_email": "bob.smith@company.com",
+      "start_date": "2024-01-15",
+      "location": "San Francisco, CA",
+      "remote_status": "hybrid",
+      "device_preference": "mac",
+      "special_requirements": [],
+      "buddy_assigned": "Charlie Davis",
+      "buddy_email": "charlie.davis@company.com"
+    },
+    {
+      "id": "NH-002",
+      "name": "David Kim",
+      "email": "david.kim@company.com",
+      "role": "data-analyst",
+      "level": "mid",
+      "department": "Analytics",
+      "manager": "Emily Chen",
+      "manager_email": "emily.chen@company.com",
+      "start_date": "2024-01-15",
+      "location": "New York, NY",
+      "remote_status": "remote",
+      "device_preference": "mac",
+      "special_requirements": ["standing_desk", "ergonomic_keyboard"],
+      "buddy_assigned": "Frank Wilson",
+      "buddy_email": "frank.wilson@company.com"
+    },
+    {
+      "id": "NH-003",
+      "name": "Sarah Martinez",
+      "email": "sarah.martinez@company.com",
+      "role": "product-manager",
+      "level": "senior",
+      "department": "Product",
+      "manager": "George Taylor",
+      "manager_email": "george.taylor@company.com",
+      "start_date": "2024-01-22",
+      "location": "Austin, TX",
+      "remote_status": "hybrid",
+      "device_preference": "mac",
+      "special_requirements": ["external_monitor_4k"],
+      "buddy_assigned": "Helen Brown",
+      "buddy_email": "helen.brown@company.com"
+    }
+  ],
+  "onboarding_timeline": {
+    "day_minus_7": [
+      "Order equipment",
+      "Create email account",
+      "Schedule orientation"
+    ],
+    "day_minus_3": [
+      "Ship equipment",
+      "Send welcome email",
+      "Share pre-boarding materials"
+    ],
+    "day_1": [
+      "IT setup session",
+      "Company orientation",
+      "Meet with manager",
+      "Meet with buddy"
+    ],
+    "week_1": [
+      "Complete mandatory training",
+      "System access setup",
+      "Department introduction",
+      "First team meeting"
+    ],
+    "week_2": [
+      "Role-specific training",
+      "Project assignment",
+      "Stakeholder meetings"
+    ],
+    "day_30": [
+      "30-day check-in",
+      "Feedback session",
+      "Goal setting"
+    ],
+    "day_60": [
+      "60-day review",
+      "Performance discussion",
+      "Career planning"
+    ],
+    "day_90": [
+      "90-day evaluation",
+      "Full integration assessment",
+      "Long-term planning"
+    ]
+  }
+}

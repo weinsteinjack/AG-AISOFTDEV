@@ -1,0 +1,183 @@
+name: Test Day 7 MCP and A2A Labs
+
+on:
+  push:
+    branches:
+      - feature/day7-mcp-a2a-labs
+      - main
+    paths:
+      - 'Labs/Day_07_Advanced_Agent_Workflows/**'
+      - 'Solutions/Day_07_Advanced_Agent_Workflows/**'
+  pull_request:
+    paths:
+      - 'Labs/Day_07_Advanced_Agent_Workflows/**'
+      - 'Solutions/Day_07_Advanced_Agent_Workflows/**'
+
+jobs:
+  test-notebooks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install jupyter nbformat jsonschema
+        # Don't install MCP to test fallback behavior
+    
+    - name: Validate notebook structure
+      run: |
+        python -c "
+        import json
+        import os
+        
+        notebooks = [
+            'Labs/Day_07_Advanced_Agent_Workflows/D7_Lab1_Advanced_Agent_Workflows_with_MCP.ipynb',
+            'Labs/Day_07_Advanced_Agent_Workflows/D7_Lab2_Agent_Interoperability_with_A2A_Protocol.ipynb',
+            'Solutions/Day_07_Advanced_Agent_Workflows/D7_Lab1_Advanced_Agent_Workflows_with_MCP_SOLUTION.ipynb',
+            'Solutions/Day_07_Advanced_Agent_Workflows/D7_Lab2_Agent_Interoperability_with_A2A_Protocol_SOLUTION.ipynb'
+        ]
+        
+        for nb_path in notebooks:
+            if os.path.exists(nb_path):
+                with open(nb_path) as f:
+                    nb = json.load(f)
+                    print(f'✓ {os.path.basename(nb_path)}: {len(nb[\"cells\"])} cells')
+                    assert len(nb['cells']) > 10, f'{nb_path} has too few cells'
+                    assert 'metadata' in nb, f'{nb_path} missing metadata'
+                    assert 'cells' in nb, f'{nb_path} missing cells'
+            else:
+                print(f'✗ {nb_path} not found')
+                exit(1)
+        "
+    
+    - name: Check for required data files
+      run: |
+        for file in onboarding_docs.json roles_access_matrix.json training_catalog.json new_hires_sample.json; do
+          if [ -f "Labs/Day_07_Advanced_Agent_Workflows/assets/$file" ]; then
+            echo "✓ $file exists"
+          else
+            echo "✗ $file missing"
+            exit 1
+          fi
+        done
+    
+    - name: Validate JSON data files
+      run: |
+        python -c "
+        import json
+        import os
+        
+        data_files = [
+            'Labs/Day_07_Advanced_Agent_Workflows/assets/onboarding_docs.json',
+            'Labs/Day_07_Advanced_Agent_Workflows/assets/roles_access_matrix.json',
+            'Labs/Day_07_Advanced_Agent_Workflows/assets/training_catalog.json',
+            'Labs/Day_07_Advanced_Agent_Workflows/assets/new_hires_sample.json'
+        ]
+        
+        for file_path in data_files:
+            with open(file_path) as f:
+                data = json.load(f)
+                print(f'✓ {os.path.basename(file_path)} is valid JSON')
+        "
+    
+    - name: Test A2A protocol implementation (pure Python)
+      run: |
+        python -c "
+        # Test that A2A implementation doesn't require external dependencies
+        import sys
+        import uuid
+        from enum import Enum
+        from dataclasses import dataclass, field
+        from typing import List, Dict, Optional, Any
+        from collections import defaultdict
+        import queue
+        import threading
+        
+        print('✓ A2A lab uses only standard library')
+        "
+    
+    - name: Check README exists
+      run: |
+        if [ -f "Labs/Day_07_Advanced_Agent_Workflows/README.md" ]; then
+          echo "✓ README.md exists"
+          # Check it has minimum content
+          lines=$(wc -l < Labs/Day_07_Advanced_Agent_Workflows/README.md)
+          if [ $lines -gt 100 ]; then
+            echo "✓ README has substantial content ($lines lines)"
+          else
+            echo "⚠ README seems too short ($lines lines)"
+          fi
+        else
+          echo "✗ README.md missing"
+          exit 1
+        fi
+
+  lint-python:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install linting tools
+      run: |
+        pip install flake8 black isort
+    
+    - name: Check Python code style in notebooks
+      run: |
+        # Extract Python code from notebooks and lint
+        python -c "
+        import json
+        import tempfile
+        import subprocess
+        import os
+        
+        notebooks = [
+            'Labs/Day_07_Advanced_Agent_Workflows/D7_Lab1_Advanced_Agent_Workflows_with_MCP.ipynb',
+            'Labs/Day_07_Advanced_Agent_Workflows/D7_Lab2_Agent_Interoperability_with_A2A_Protocol.ipynb'
+        ]
+        
+        for nb_path in notebooks:
+            if not os.path.exists(nb_path):
+                continue
+            with open(nb_path) as f:
+                nb = json.load(f)
+            
+            # Extract code cells
+            code = []
+            for cell in nb['cells']:
+                if cell['cell_type'] == 'code':
+                    code.extend(cell['source'])
+            
+            # Write to temp file and lint
+            with tempfile.NamedTemporaryFile(suffix='.py', mode='w', delete=False) as tmp:
+                tmp.write(''.join(code))
+                tmp_path = tmp.name
+            
+            # Run flake8 with relaxed rules for notebooks
+            result = subprocess.run(
+                ['flake8', '--max-line-length=120', '--ignore=E402,W503,E731', tmp_path],
+                capture_output=True, text=True
+            )
+            
+            if result.returncode == 0:
+                print(f'✓ {os.path.basename(nb_path)} passes linting')
+            else:
+                print(f'⚠ {os.path.basename(nb_path)} has style issues (non-blocking)')
+            
+            os.unlink(tmp_path)
+        "

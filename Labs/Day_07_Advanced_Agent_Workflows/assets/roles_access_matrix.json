@@ -1,0 +1,158 @@
+{
+  "roles": {
+    "engineer": {
+      "title": "Software Engineer",
+      "department": "Engineering",
+      "required_systems": [
+        "github",
+        "jira",
+        "aws-console",
+        "kubernetes-dashboard",
+        "ci-cd-pipeline",
+        "monitoring-tools",
+        "vpn",
+        "slack",
+        "confluence"
+      ],
+      "optional_systems": [
+        "datadog",
+        "sentry"
+      ],
+      "equipment": {
+        "laptop": "MacBook Pro 16\" or ThinkPad X1",
+        "monitors": 2,
+        "accessories": ["keyboard", "mouse", "headset"]
+      }
+    },
+    "data-analyst": {
+      "title": "Data Analyst",
+      "department": "Analytics",
+      "required_systems": [
+        "snowflake",
+        "tableau",
+        "github",
+        "jira",
+        "vpn",
+        "slack",
+        "confluence"
+      ],
+      "optional_systems": [
+        "databricks",
+        "looker"
+      ],
+      "equipment": {
+        "laptop": "MacBook Pro 14\"",
+        "monitors": 2,
+        "accessories": ["keyboard", "mouse"]
+      }
+    },
+    "product-manager": {
+      "title": "Product Manager",
+      "department": "Product",
+      "required_systems": [
+        "jira",
+        "confluence",
+        "figma",
+        "analytics-dashboard",
+        "slack",
+        "miro"
+      ],
+      "optional_systems": [
+        "amplitude",
+        "fullstory"
+      ],
+      "equipment": {
+        "laptop": "MacBook Air or Pro 13\"",
+        "monitors": 1,
+        "accessories": ["keyboard", "mouse", "tablet"]
+      }
+    },
+    "marketing": {
+      "title": "Marketing Specialist",
+      "department": "Marketing",
+      "required_systems": [
+        "hubspot",
+        "google-analytics",
+        "wordpress",
+        "canva",
+        "slack",
+        "asana"
+      ],
+      "optional_systems": [
+        "mailchimp",
+        "hootsuite"
+      ],
+      "equipment": {
+        "laptop": "MacBook Air",
+        "monitors": 1,
+        "accessories": ["keyboard", "mouse"]
+      }
+    },
+    "security": {
+      "title": "Security Engineer",
+      "department": "Security",
+      "required_systems": [
+        "github",
+        "jira",
+        "aws-console",
+        "security-hub",
+        "splunk",
+        "vault",
+        "vpn",
+        "slack",
+        "confluence"
+      ],
+      "optional_systems": [
+        "metasploit",
+        "burp-suite"
+      ],
+      "equipment": {
+        "laptop": "MacBook Pro 16\" (encrypted)",
+        "monitors": 2,
+        "accessories": ["keyboard", "mouse", "yubikey"]
+      }
+    }
+  },
+  "systems": {
+    "github": {
+      "name": "GitHub Enterprise",
+      "type": "development",
+      "access_request_url": "https://it.company.com/request/github",
+      "approval_required": true,
+      "approvers": ["engineering-manager", "tech-lead"]
+    },
+    "jira": {
+      "name": "Jira Cloud",
+      "type": "project-management",
+      "access_request_url": "https://it.company.com/request/jira",
+      "approval_required": false
+    },
+    "aws-console": {
+      "name": "AWS Management Console",
+      "type": "infrastructure",
+      "access_request_url": "https://it.company.com/request/aws",
+      "approval_required": true,
+      "approvers": ["engineering-manager", "devops-lead"]
+    },
+    "slack": {
+      "name": "Slack Workspace",
+      "type": "communication",
+      "access_request_url": "https://it.company.com/request/slack",
+      "approval_required": false
+    },
+    "snowflake": {
+      "name": "Snowflake Data Warehouse",
+      "type": "data",
+      "access_request_url": "https://it.company.com/request/snowflake",
+      "approval_required": true,
+      "approvers": ["data-manager", "analytics-lead"]
+    },
+    "vpn": {
+      "name": "Corporate VPN",
+      "type": "security",
+      "access_request_url": "https://it.company.com/request/vpn",
+      "approval_required": true,
+      "approvers": ["it-security"]
+    }
+  }
+}

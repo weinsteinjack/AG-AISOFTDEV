@@ -1,0 +1,82 @@
+{
+  "policies": [
+    {
+      "id": "POL-001",
+      "title": "Code of Conduct",
+      "summary": "Guidelines for professional behavior, ethics, and workplace interactions",
+      "url": "https://docs.company.com/policies/code-of-conduct",
+      "required_for_roles": ["all"],
+      "compliance_type": "mandatory"
+    },
+    {
+      "id": "POL-002",
+      "title": "Information Security Policy",
+      "summary": "Data protection, password requirements, and security protocols",
+      "url": "https://docs.company.com/policies/infosec",
+      "required_for_roles": ["all"],
+      "compliance_type": "mandatory"
+    },
+    {
+      "id": "POL-003",
+      "title": "SOC2 Compliance Training",
+      "summary": "Security, availability, processing integrity, confidentiality, and privacy principles",
+      "url": "https://docs.company.com/policies/soc2",
+      "required_for_roles": ["engineer", "data-analyst", "product-manager", "security"],
+      "compliance_type": "mandatory"
+    },
+    {
+      "id": "POL-004",
+      "title": "Remote Work Policy",
+      "summary": "Guidelines for remote work, equipment, hours, and communication expectations",
+      "url": "https://docs.company.com/policies/remote-work",
+      "required_for_roles": ["all"],
+      "compliance_type": "recommended"
+    },
+    {
+      "id": "POL-005",
+      "title": "Data Privacy and GDPR",
+      "summary": "Personal data handling, user rights, and compliance requirements",
+      "url": "https://docs.company.com/policies/gdpr",
+      "required_for_roles": ["engineer", "data-analyst", "product-manager", "marketing"],
+      "compliance_type": "mandatory"
+    }
+  ],
+  "procedures": [
+    {
+      "id": "PROC-001",
+      "title": "Equipment Setup Guide",
+      "summary": "Step-by-step instructions for setting up company laptop and accessing systems",
+      "url": "https://docs.company.com/procedures/equipment-setup",
+      "estimated_time": "2 hours"
+    },
+    {
+      "id": "PROC-002",
+      "title": "Development Environment Setup",
+      "summary": "Installing IDEs, configuring Git, accessing repositories, and setting up local dev environment",
+      "url": "https://docs.company.com/procedures/dev-setup",
+      "estimated_time": "4 hours",
+      "required_for_roles": ["engineer", "data-analyst"]
+    },
+    {
+      "id": "PROC-003",
+      "title": "Benefits Enrollment",
+      "summary": "Health insurance, retirement plans, and other benefit selections",
+      "url": "https://docs.company.com/procedures/benefits",
+      "estimated_time": "1 hour"
+    }
+  ],
+  "glossary": {
+    "VPN": "Virtual Private Network - secure connection to company resources",
+    "SSO": "Single Sign-On - unified authentication system",
+    "PTO": "Paid Time Off - vacation and sick leave policy",
+    "OKR": "Objectives and Key Results - goal-setting framework",
+    "CI/CD": "Continuous Integration/Continuous Deployment - automated testing and deployment pipeline",
+    "SOC2": "Service Organization Control 2 - security compliance standard"
+  },
+  "quick_links": {
+    "hr_portal": "https://hr.company.com",
+    "it_helpdesk": "https://helpdesk.company.com",
+    "learning_portal": "https://learning.company.com",
+    "expense_system": "https://expenses.company.com"
+  }
+}

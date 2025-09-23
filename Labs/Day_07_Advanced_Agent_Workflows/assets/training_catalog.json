@@ -1,0 +1,135 @@
+{
+  "courses": [
+    {
+      "id": "TRN-001",
+      "title": "Company Orientation",
+      "description": "Introduction to company culture, values, and organizational structure",
+      "duration": "4 hours",
+      "delivery": "virtual-live",
+      "required_for_roles": ["all"],
+      "prerequisites": [],
+      "due_within_days": 3
+    },
+    {
+      "id": "TRN-002",
+      "title": "Security Awareness Training",
+      "description": "Basic security practices, phishing awareness, and data protection",
+      "duration": "2 hours",
+      "delivery": "self-paced",
+      "required_for_roles": ["all"],
+      "prerequisites": [],
+      "due_within_days": 7
+    },
+    {
+      "id": "TRN-003",
+      "title": "Engineering Onboarding",
+      "description": "Development workflow, code standards, CI/CD pipeline, and architecture overview",
+      "duration": "8 hours",
+      "delivery": "hybrid",
+      "required_for_roles": ["engineer"],
+      "prerequisites": ["TRN-001"],
+      "due_within_days": 14
+    },
+    {
+      "id": "TRN-004",
+      "title": "Data Platform Training",
+      "description": "Data warehouse architecture, ETL processes, and analytics tools",
+      "duration": "6 hours",
+      "delivery": "self-paced",
+      "required_for_roles": ["data-analyst"],
+      "prerequisites": ["TRN-001"],
+      "due_within_days": 14
+    },
+    {
+      "id": "TRN-005",
+      "title": "Product Management Fundamentals",
+      "description": "Product lifecycle, roadmap planning, and stakeholder management",
+      "duration": "4 hours",
+      "delivery": "virtual-live",
+      "required_for_roles": ["product-manager"],
+      "prerequisites": ["TRN-001"],
+      "due_within_days": 7
+    },
+    {
+      "id": "TRN-006",
+      "title": "SOC2 Compliance Deep Dive",
+      "description": "Detailed SOC2 requirements, audit procedures, and compliance practices",
+      "duration": "3 hours",
+      "delivery": "self-paced",
+      "required_for_roles": ["engineer", "security", "data-analyst"],
+      "prerequisites": ["TRN-002"],
+      "due_within_days": 30
+    },
+    {
+      "id": "TRN-007",
+      "title": "AWS Cloud Fundamentals",
+      "description": "AWS services overview, IAM, EC2, S3, and best practices",
+      "duration": "6 hours",
+      "delivery": "self-paced",
+      "required_for_roles": ["engineer", "security"],
+      "prerequisites": ["TRN-003"],
+      "due_within_days": 30
+    },
+    {
+      "id": "TRN-008",
+      "title": "Marketing Tools and Analytics",
+      "description": "Marketing automation, campaign management, and analytics platforms",
+      "duration": "4 hours",
+      "delivery": "hybrid",
+      "required_for_roles": ["marketing"],
+      "prerequisites": ["TRN-001"],
+      "due_within_days": 14
+    },
+    {
+      "id": "TRN-009",
+      "title": "Advanced Security Operations",
+      "description": "Incident response, threat detection, and security monitoring",
+      "duration": "8 hours",
+      "delivery": "virtual-live",
+      "required_for_roles": ["security"],
+      "prerequisites": ["TRN-002", "TRN-006"],
+      "due_within_days": 45
+    },
+    {
+      "id": "TRN-010",
+      "title": "Management and Leadership",
+      "description": "People management, performance reviews, and team building",
+      "duration": "6 hours",
+      "delivery": "virtual-live",
+      "required_for_levels": ["manager", "senior", "lead"],
+      "prerequisites": ["TRN-001"],
+      "due_within_days": 60
+    }
+  ],
+  "delivery_methods": {
+    "self-paced": {
+      "description": "Online modules completed at your own pace",
+      "platform": "learning.company.com"
+    },
+    "virtual-live": {
+      "description": "Live instructor-led sessions via video conference",
+      "platform": "zoom.company.com"
+    },
+    "hybrid": {
+      "description": "Combination of self-paced and live sessions",
+      "platform": "multiple"
+    }
+  },
+  "certification_tracks": {
+    "engineering": {
+      "required_courses": ["TRN-001", "TRN-002", "TRN-003", "TRN-006", "TRN-007"],
+      "optional_courses": ["TRN-010"],
+      "certification_name": "Certified Engineering Team Member"
+    },
+    "data": {
+      "required_courses": ["TRN-001", "TRN-002", "TRN-004", "TRN-006"],
+      "optional_courses": ["TRN-007"],
+      "certification_name": "Certified Data Professional"
+    },
+    "security": {
+      "required_courses": ["TRN-001", "TRN-002", "TRN-003", "TRN-006", "TRN-007", "TRN-009"],
+      "optional_courses": ["TRN-010"],
+      "certification_name": "Certified Security Specialist"
+    }
+  }
+}
