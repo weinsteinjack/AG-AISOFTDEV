@@ -1,0 +1,1 @@
+"""Shared utilities for Day 7 MCP and A2A labs"""
