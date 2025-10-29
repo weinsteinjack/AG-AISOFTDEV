@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import ssl
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -12,9 +13,25 @@ from .logging import get_logger
 from .settings import PlantUML
 
 logger = get_logger()
+# Use HTTP by default to avoid SSL certificate issues in corporate environments
 DEFAULT_PLANTUML_SERVER = os.getenv(
-    "PLANTUML_SERVER_URL", "https://www.plantuml.com/plantuml/img/"
+    "PLANTUML_SERVER_URL", "http://www.plantuml.com/plantuml/img/"
 )
+
+
+def _disable_ssl_verification():
+    """Disable SSL certificate verification for corporate environments."""
+    try:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    except ImportError:
+        pass
+    
+    # Create an unverified SSL context
+    try:
+        ssl._create_default_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
 
 
 def _instantiate_plantuml(server_url: Optional[str]) -> PlantUML:
@@ -24,6 +41,12 @@ def _instantiate_plantuml(server_url: Optional[str]) -> PlantUML:
     plantuml_cls = getattr(utils_module, "PlantUML", PlantUML) if utils_module else PlantUML
 
     url = server_url or DEFAULT_PLANTUML_SERVER
+    
+    # If using HTTPS, disable SSL verification for corporate environments
+    if url and url.startswith("https://"):
+        logger.info("Using HTTPS PlantUML server - disabling SSL verification for corporate environment")
+        _disable_ssl_verification()
+    
     try:
         return plantuml_cls(url=url) if url else plantuml_cls()
     except TypeError:
