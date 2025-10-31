@@ -1,0 +1,73 @@
+name: Python FastAPI CI
+
+# This workflow defines the Continuous Integration (CI) pipeline for the FastAPI application.
+# It runs on pushes and pull requests to the main branch, and can also be triggered manually.
+
+on:
+  # Trigger on push events to the main branch
+  push:
+    branches: [ "main" ]
+  # Trigger on pull request events targeting the main branch
+  pull_request:
+    branches: [ "main" ]
+  # Allow manual triggering of the workflow from the GitHub Actions UI
+  workflow_dispatch:
+
+# Concurrency configuration ensures that for a given branch, only the latest workflow run
+# will proceed, cancelling any older, in-progress runs. This saves runner minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The main job for building, linting, and testing the application.
+  build-and-test:
+    name: Build and Test Application
+    # Use the latest stable version of Ubuntu provided by GitHub.
+    runs-on: ubuntu-latest
+    # Set a timeout to prevent jobs from running indefinitely.
+    timeout-minutes: 10
+
+    steps:
+      # Step 1: Checkout the repository code
+      # This step checks out a copy of your repository on the runner.
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+        with:
+          # Fetch all git history. This is useful for tools that perform git analysis.
+          fetch-depth: 0
+
+      # Step 2: Set up the Python environment
+      # This step installs a specific version of Python and sets up caching for dependencies.
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          # Enable caching for pip. This will cache downloaded packages to speed up
+          # subsequent workflow runs. The cache is invalidated when requirements.txt changes.
+          cache: 'pip'
+
+      # Step 3: Install Python dependencies
+      # This step installs the packages required by the application and for testing.
+      - name: Install Python dependencies
+        run: |
+          # Upgrade pip to its latest version for better performance and features.
+          python -m pip install --upgrade pip
+          # Install testing-specific dependencies. It's a good practice to install them
+          # explicitly here in case they are not in the main requirements file.
+          pip install pytest pytest-cov
+          # Install application dependencies from the requirements.txt file.
+          # The --no-cache-dir flag is used to disable the local pip cache, which is
+          # redundant with the runner-level cache configured in the previous step.
+          pip install --no-cache-dir -r requirements.txt
+
+      # Step 4: Run the test suite with pytest
+      # This step executes the test suite and generates a code coverage report.
+      - name: Run tests with pytest and generate coverage report
+        run: |
+          # Execute pytest on the 'artifacts/tests/' directory.
+          # -v: Enables verbose output for detailed test results.
+          # --cov: Specifies the source code directory to measure coverage against.
+          # --cov-report=xml: Generates a coverage report in XML format, which can be
+          # consumed by external tools like Codecov or SonarQube.
+          pytest artifacts/tests/ -v --cov=artifacts/app --cov-report=xml

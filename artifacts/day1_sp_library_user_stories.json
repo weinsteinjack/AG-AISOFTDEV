@@ -1,0 +1,83 @@
+[
+  {
+    "id": 1,
+    "persona": "Casual Reader",
+    "user_story": "As a Casual Reader, I want to see a list of all books I currently have borrowed, so that I can easily keep track of what I'm reading and their due dates.",
+    "acceptance_criteria": [
+      "Given I have logged in with my library account",
+      "When I navigate to the 'My Books' section",
+      "Then I should see a list of all books currently borrowed under my account, including title, author, and due date for each.",
+      "And I should see a visual indicator for books due soon (e.g., within 3 days)."
+    ]
+  },
+  {
+    "id": 2,
+    "persona": "Student",
+    "user_story": "As a Student, I want to receive push notifications reminding me when my borrowed books are due, so that I can avoid overdue fines and return them on time.",
+    "acceptance_criteria": [
+      "Given I have enabled push notifications for the app",
+      "And I have a book due in X days (e.g., 3 days)",
+      "When the reminder threshold is met",
+      "Then I should receive a push notification stating the book title and its upcoming due date.",
+      "And I should receive a separate notification if a book becomes overdue."
+    ]
+  },
+  {
+    "id": 3,
+    "persona": "Avid Reader",
+    "user_story": "As an Avid Reader, I want to receive personalized book recommendations based on my borrowing history, so that I can discover new books and authors that align with my interests.",
+    "acceptance_criteria": [
+      "Given I have a borrowing history linked to my library account",
+      "When I navigate to the 'Recommendations' section",
+      "Then I should see a list of recommended books with titles, authors, and a brief description.",
+      "And the recommendations should be relevant to genres or authors from my past borrowed books.",
+      "And I should be able to tap on a recommendation to view more details (e.g., availability in the library)."
+    ]
+  },
+  {
+    "id": 4,
+    "persona": "New User",
+    "user_story": "As a New User, I want to easily link my library card to the app, so that I can access my personal borrowing information and library services.",
+    "acceptance_criteria": [
+      "Given I have downloaded the app for the first time",
+      "When I am prompted to link my library card",
+      "Then I should be able to enter my library card number and PIN/password.",
+      "And upon successful entry, my account details (e.g., borrowed books) should be displayed.",
+      "And if the details are incorrect, I should receive an error message."
+    ]
+  },
+  {
+    "id": 5,
+    "persona": "Casual Reader",
+    "user_story": "As a Casual Reader, I want to renew my borrowed books directly through the app, so that I don't have to visit the library in person to extend my loan period.",
+    "acceptance_criteria": [
+      "Given I am viewing my list of borrowed books",
+      "When I select a renewable book and tap 'Renew'",
+      "Then I should receive a confirmation that the book has been renewed with a new due date.",
+      "And if a book cannot be renewed (e.g., on hold for another patron), I should receive an appropriate message."
+    ]
+  },
+  {
+    "id": 6,
+    "persona": "Parent",
+    "user_story": "As a Parent, I want to manage multiple library cards within the app, so that I can track books for myself and my children from a single interface.",
+    "acceptance_criteria": [
+      "Given I have linked my primary library card",
+      "When I navigate to the 'Account' settings",
+      "Then I should be able to add additional library card numbers and PINs.",
+      "And I should be able to switch between linked library accounts to view their respective borrowed books.",
+      "And each account's borrowed books should be displayed separately."
+    ]
+  },
+  {
+    "id": 7,
+    "persona": "Student",
+    "user_story": "As a Student, I want to search the library's full catalog for books, so that I can quickly find specific titles or authors and check their availability.",
+    "acceptance_criteria": [
+      "Given I am on the app's main screen",
+      "When I use the search bar to enter a book title or author",
+      "Then I should see a list of matching results from the library catalog.",
+      "And for each result, I should see its availability status (e.g., 'Available', 'Checked Out', 'On Hold') and its location within the library."
+    ]
+  }
+]

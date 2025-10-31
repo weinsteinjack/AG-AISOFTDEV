@@ -1,0 +1,57 @@
+# Environment and secrets
+.env
+.env.*
+*.key
+
+# Python cache and artifacts
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Development and testing
+Labs/
+Solutions/
+tests/
+test_*.py
+pytest.ini
+
+# Documentation and guides
+*.md
+slides/
+Supporting Materials/
+
+# Notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if any)
+node_modules/
+

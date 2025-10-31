@@ -1,0 +1,91 @@
+[
+  {
+    "id": "US001",
+    "user_story": "As an Eager Newbie, I want to access a personalized welcome portal before my start date so that I feel prepared and excited for my first day.",
+    "persona": "The Eager Newbie (Alex Chen)",
+    "acceptance_criteria": [
+      "Given I have received my welcome email with a secure portal access link,",
+      "When I click the link and successfully log in with my provided credentials,",
+      "Then I should see a personalized welcome message from leadership, my first-day agenda, and a company overview video.",
+      "And I should be able to view essential logistical information like office map, directions, parking details, and dress code.",
+      "And I should feel a sense of excitement and reduced anxiety about starting."
+    ]
+  },
+  {
+    "id": "US002",
+    "user_story": "As an Eager Newbie, I want to complete all necessary HR and payroll forms digitally before my start date so that I can focus on learning and integration on Day 1.",
+    "persona": "The Eager Newbie (Alex Chen)",
+    "acceptance_criteria": [
+      "Given I am logged into the onboarding portal and have access to the 'Forms & Documents' section,",
+      "When I navigate to this section,",
+      "Then I should see a clear list of all required HR, payroll, and benefits forms (e.g., W-4, I-9, Direct Deposit, Benefits Enrollment).",
+      "And I should be able to fill out each form electronically and apply an e-signature.",
+      "And upon successful completion and submission, each form's status should update to 'Completed' and be accessible for my review."
+    ]
+  },
+  {
+    "id": "US003",
+    "user_story": "As an Onboarding Orchestrator, I want to customize onboarding paths for different roles and departments so that new hires receive relevant information and training.",
+    "persona": "The Onboarding Orchestrator (Sarah Jenkins)",
+    "acceptance_criteria": [
+      "Given I am logged into the admin panel with 'Onboarding Path Management' permissions,",
+      "When I navigate to the 'Manage Paths' section,",
+      "Then I should be able to create a new onboarding path, assign it a unique name (e.g., 'Software Engineer Onboarding', 'Marketing Coordinator Onboarding'), and add a description.",
+      "And I should be able to select from a library of existing modules, tasks, and resources, and add them to the new path.",
+      "And I should be able to reorder, edit, or remove items within a specific path.",
+      "And I should be able to assign this custom path to new hires based on their role, department, or location during the new hire setup process."
+    ]
+  },
+  {
+    "id": "US004",
+    "user_story": "As an Onboarding Orchestrator, I want to track new hire progress and view analytics so that I can identify bottlenecks and measure program effectiveness.",
+    "persona": "The Onboarding Orchestrator (Sarah Jenkins)",
+    "acceptance_criteria": [
+      "Given I am logged into the admin panel and have access to the 'Analytics Dashboard',",
+      "When I view the dashboard,",
+      "Then I should see a summary of all active new hires, their current overall progress percentage, and completion rates for mandatory modules.",
+      "And I should be able to filter this data by department, start date, or specific onboarding path.",
+      "And I should receive automated alerts for any new hires who are significantly behind schedule on critical tasks or compliance training.",
+      "And I should be able to export detailed reports on completion rates and time-to-completion for further analysis."
+    ]
+  },
+  {
+    "id": "US005",
+    "user_story": "As a Knowledge Curator, I want to easily create and update knowledge base articles so that new hires always have access to accurate and up-to-date information.",
+    "persona": "The Knowledge Curator (David Lee)",
+    "acceptance_criteria": [
+      "Given I am logged in with content creation and editing permissions,",
+      "When I navigate to the 'Knowledge Base Management' section,",
+      "Then I should be able to create a new article using an intuitive rich-text editor with formatting options (bold, italics, lists, headings).",
+      "And I should be able to add tags, assign categories, and embed multimedia content (images, videos, links to external documents).",
+      "And I should be able to save an article as a draft, publish it immediately, or submit it for review by an administrator.",
+      "And I should be able to view the version history of any article and revert to a previous version if needed."
+    ]
+  },
+  {
+    "id": "US006",
+    "user_story": "As an Eager Newbie, I want to quickly find answers to my questions using a searchable knowledge base so that I can self-serve information without interrupting colleagues.",
+    "persona": "The Eager Newbie (Alex Chen)",
+    "acceptance_criteria": [
+      "Given I am logged into the onboarding portal and have a question about company policy or a process,",
+      "When I use the search bar within the 'Knowledge Base / FAQ' section and enter keywords,",
+      "Then I should receive a list of relevant articles, FAQs, and how-to guides.",
+      "And the search results should be ranked by relevance and clearly display the article title and a brief snippet.",
+      "And I should be able to filter the search results by category (e.g., HR, IT, Benefits) or tags.",
+      "And I should be able to easily navigate to the full article content from the search results."
+    ]
+  },
+  {
+    "id": "US007",
+    "user_story": "As an Eager Newbie, I want to be introduced to my assigned mentor or buddy through the tool so that I have a go-to person for informal questions and support.",
+    "persona": "The Eager Newbie (Alex Chen)",
+    "acceptance_criteria": [
+      "Given I have completed my initial setup and a mentor/buddy has been assigned to me,",
+      "When I navigate to the 'My Team' or 'Support' section of the portal,",
+      "Then I should see a dedicated profile card for my assigned mentor/buddy, including their photo, role, and contact information.",
+      "And the profile should include a brief bio or fun fact about them to help break the ice.",
+      "And I should see suggested conversation starters or topics for our first meeting.",
+      "And I should be able to initiate a direct message or schedule a meeting with them directly through the tool (if integrated with communication platforms)."
+    ]
+  }
+]
