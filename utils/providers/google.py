@@ -268,7 +268,10 @@ def vision_completion(
         if image_path_or_url.startswith(('http://', 'https://')):
             # Download from URL
             import requests
-            response = requests.get(image_path_or_url, timeout=30)
+            import urllib3
+            # Disable SSL warnings when verify=False is used
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            response = requests.get(image_path_or_url, timeout=30, verify=False)
             response.raise_for_status()
             image_data = response.content
             # Try to detect mime type from headers
