@@ -29,6 +29,7 @@ from typing import List, Optional, Dict, Any, Generator
 import logging
 import os
 import enum
+import uuid
 
 from fastapi import FastAPI, HTTPException, status, Query, Depends
 from pydantic import BaseModel, EmailStr, Field
@@ -124,6 +125,26 @@ class UserResponse(UserBase):
     class Config:
         """Pydantic config to enable ORM mode (works with dicts too)."""
         from_attributes = True
+
+class ChatRequest(BaseModel):
+    """
+    Model for chat requests to the agent.
+    """
+    question: str = Field(..., min_length=1, example="What is the onboarding process?")
+    session_id: Optional[str] = Field(None, example="550e8400-e29b-41d4-a716-446655440000")
+
+class ChatResponse(BaseModel):
+    """
+    Model for chat responses from the agent.
+    """
+    answer: str = Field(..., example="The onboarding process includes...")
+
+class StatefulChatResponse(BaseModel):
+    """
+    Model for stateful chat responses from the agent.
+    """
+    answer: str = Field(..., example="The onboarding process includes...")
+    session_id: str = Field(..., example="550e8400-e29b-41d4-a716-446655440000")
 
 # --- 3. SQLAlchemy Models ---
 
@@ -795,6 +816,155 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user_to_delete)
     db.commit()
     return {"message": f"User with ID {user_id} was successfully deleted."}
+
+# --- Chat Endpoints ---
+
+# Mock LangGraph agent for demonstration
+class MockAgent:
+    """Mock agent for demonstration purposes."""
+    
+    def __init__(self):
+        # Simple in-memory conversation storage
+        self.conversations: Dict[str, List[Dict[str, str]]] = {}
+    
+    def invoke(self, input_data: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Mock invoke method that returns a simple response."""
+        question = input_data.get("messages", [{"content": "No question provided"}])[-1]["content"]
+        session_id = None
+        
+        # Extract session_id from config if provided (for stateful conversations)
+        if config and "configurable" in config:
+            session_id = config["configurable"].get("session_id")
+        
+        # Get conversation history for this session
+        conversation_history = []
+        if session_id and session_id in self.conversations:
+            conversation_history = self.conversations[session_id]
+        
+        # Generate context-aware response
+        answer = self._generate_response(question, conversation_history)
+        
+        # Store the conversation if session_id is provided
+        if session_id:
+            if session_id not in self.conversations:
+                self.conversations[session_id] = []
+            
+            self.conversations[session_id].append({
+                "question": question,
+                "answer": answer
+            })
+        
+        return {"answer": answer}
+    
+    def _generate_response(self, question: str, history: List[Dict[str, str]]) -> str:
+        """Generate a response based on the question and conversation history."""
+        
+        # Check for follow-up questions
+        follow_up_patterns = [
+            "tell me more", "more about", "can you elaborate", "explain further",
+            "what about", "how about", "and what", "more detail", "expand on"
+        ]
+        
+        is_follow_up = any(pattern in question.lower() for pattern in follow_up_patterns)
+        
+        # If it's a follow-up and we have history, reference the previous topic
+        if is_follow_up and history:
+            last_answer = history[-1]["answer"]
+            if "onboarding" in last_answer.lower():
+                return "The onboarding process typically takes 2-4 weeks depending on the role. It includes orientation sessions, completing required forms, meeting with HR, getting system access, and being assigned a mentor. New hires also receive department-specific training and have regular check-ins with their manager."
+            elif "user" in last_answer.lower():
+                return "Each user role has specific permissions and responsibilities. New Hires focus on completing their onboarding tasks, HR Admins manage user accounts and oversee the process, Managers approve documents and track progress, while Mentors provide guidance and support to new employees."
+            elif "task" in last_answer.lower():
+                return "Tasks are organized in a specific sequence within onboarding paths. FORM tasks include employment contracts and emergency contacts. READING tasks cover company policies and procedures. VIDEO tasks include training modules and welcome messages. MEETING tasks involve one-on-ones with managers and team introductions."
+            else:
+                return "I can provide more details about any aspect of the employee onboarding system. What specific area would you like me to elaborate on?"
+        
+        # Standard responses based on keywords
+        if "onboarding" in question.lower():
+            return "The onboarding process includes several steps: user registration, document submission, task completion, and mentor assignment. Each new hire follows a structured path tailored to their role."
+        elif "user" in question.lower():
+            return "Users in our system can have different roles: New Hire, HR Admin, Content Creator, Manager, or Mentor. Each user has an associated onboarding path and can be assigned a mentor."
+        elif "task" in question.lower():
+            return "Onboarding tasks can be of different types: FORM (forms to fill), READING (documents to read), VIDEO (videos to watch), or MEETING (meetings to attend). Tasks are tracked with statuses like 'Not Started', 'In Progress', 'Completed', or 'Blocked'."
+        elif "hello" in question.lower() or "hi" in question.lower():
+            return "Hello! I'm here to help you with questions about the employee onboarding system. Feel free to ask about users, onboarding processes, tasks, or any other aspect of the system."
+        else:
+            return f"I received your question: '{question}'. This is a mock agent response with conversation history (I remember {len(history)} previous exchanges in this session). In a real implementation, this would be processed by a sophisticated LangGraph multi-agent system."
+
+# Initialize mock agent
+mock_agent = MockAgent()
+
+@app.post(
+    "/chat",
+    response_model=ChatResponse,
+    tags=["Chat"],
+    summary="Chat with the agent (stateless)",
+    description="Send a question to the agent and receive an answer. This endpoint is stateless - no conversation history is maintained.",
+)
+async def chat(request: ChatRequest) -> ChatResponse:
+    """
+    Stateless chat endpoint that processes a single question and returns an answer.
+    """
+    try:
+        # Format the input for the agent
+        agent_input = {
+            "messages": [{"role": "user", "content": request.question}]
+        }
+        
+        # Call the mock agent
+        response = mock_agent.invoke(agent_input)
+        
+        return ChatResponse(answer=response["answer"])
+    
+    except Exception as e:
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while processing your request."
+        )
+
+@app.post(
+    "/stateful_chat",
+    response_model=StatefulChatResponse,
+    tags=["Chat"],
+    summary="Chat with the agent (stateful with memory)",
+    description="Send a question to the agent and receive an answer. This endpoint maintains conversation history using session IDs.",
+)
+async def stateful_chat(request: ChatRequest) -> StatefulChatResponse:
+    """
+    Stateful chat endpoint that maintains conversation history across multiple interactions.
+    If no session_id is provided, a new one will be generated.
+    """
+    try:
+        # Generate a new session ID if none provided
+        session_id = request.session_id or str(uuid.uuid4())
+        
+        # Format the input for the agent
+        agent_input = {
+            "messages": [{"role": "user", "content": request.question}]
+        }
+        
+        # Prepare config with session_id for stateful conversations
+        config = {
+            "configurable": {
+                "session_id": session_id
+            }
+        }
+        
+        # Call the mock agent with session config
+        response = mock_agent.invoke(agent_input, config=config)
+        
+        return StatefulChatResponse(
+            answer=response["answer"],
+            session_id=session_id
+        )
+    
+    except Exception as e:
+        logger.error(f"Error in stateful_chat endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while processing your request."
+        )
 
 # --- 6. Application Startup Logic ---
 

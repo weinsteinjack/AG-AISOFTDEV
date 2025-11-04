@@ -1,0 +1,15 @@
+# Requirements for the Conversational Multi-Agent System
+# Core FastAPI dependencies
+fastapi[all]==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database and ORM
+sqlalchemy==2.0.23
+pydantic-settings==2.0.3
+
+# Chat UI dependencies
+streamlit==1.28.1
+requests==2.31.0
+
+# Utility dependencies
+python-multipart==0.0.6
